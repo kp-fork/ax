@@ -50,7 +50,6 @@ func (s *Server) TriggerSession(req *proto.TriggerSessionRequest, stream grpc.Se
 
 	// Trigger the session
 	if err := s.controller.TriggerSession(stream.Context(), sessionID, inputs, checkpointID); err != nil {
-		// Send failure response
 		stream.Send(&proto.TriggerSessionResponse{
 			SessionId: sessionID,
 			State:     proto.State_STATE_FAILED,
@@ -61,6 +60,10 @@ func (s *Server) TriggerSession(req *proto.TriggerSessionRequest, stream grpc.Se
 	// Get session state
 	session, err := s.controller.GetSession(sessionID)
 	if err != nil {
+		stream.Send(&proto.TriggerSessionResponse{
+			SessionId: sessionID,
+			State:     proto.State_STATE_FAILED,
+		})
 		return err
 	}
 
