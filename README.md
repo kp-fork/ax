@@ -139,17 +139,6 @@ gar trigger --server localhost:8494 --session-id abc123 \
     --input "Try a different approach"
 ```
 
-#### List All Sessions
-
-```bash
-gar list --server <address>
-```
-
-Shows all sessions from the controller server.
-
-Options:
-- `--server`: gRPC controller server address (e.g., "localhost:8494") (required)
-
 #### Inspect a Session
 
 ```bash

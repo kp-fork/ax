@@ -119,7 +119,6 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("Commands:")
 	fmt.Println("  trigger    Trigger a new session or resume an existing one")
-	fmt.Println("  list       List all sessions")
 	fmt.Println("  inspect    Inspect a session")
 	fmt.Println("  register   Register a remote agent")
 	fmt.Println("  serve      Run controller as a gRPC server")
