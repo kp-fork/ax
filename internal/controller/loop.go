@@ -57,7 +57,12 @@ func NewLoopExecutor(config LoopConfig) (*LoopExecutor, error) {
 
 	// Provide default plan function if not specified
 	if config.PlanFunc == nil {
-		config.PlanFunc = defaultPlanFunc(config.Registry)
+		// Use Gemini planner by default
+		geminiPlanFunc, err := NewGeminiPlanFunc(config.Registry, GeminiPlannerConfig{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize default Gemini planner: %w (set GEMINI_API_KEY env var or provide custom PlanFunc)", err)
+		}
+		config.PlanFunc = geminiPlanFunc
 	}
 
 	// Provide default evaluate function if not specified
@@ -230,39 +235,6 @@ func (e *LoopExecutor) HandleLifecycleEvent(session *Session, event *proto.Lifec
 	}
 }
 
-// defaultPlanFunc is a simple default planning function.
-// It selects the first healthy agent and uses recent message history as input.
-func defaultPlanFunc(registry *Registry) PlanFunc {
-	return func(session *Session) (*AgentTask, error) {
-		// Get the first healthy agent
-		healthyAgents := registry.ListHealthy()
-		if len(healthyAgents) == 0 {
-			return nil, fmt.Errorf("no healthy agents available")
-		}
-
-		agentID := healthyAgents[0]
-
-		// Use last few messages as input (or all if fewer than 10)
-		inputSize := 10
-		startIdx := len(session.MessageHistory) - inputSize
-		if startIdx < 0 {
-			startIdx = 0
-		}
-		input := session.MessageHistory[startIdx:]
-
-		// If no more input, we're done
-		if len(input) == 0 {
-			return nil, nil
-		}
-
-		return &AgentTask{
-			AgentID:   agentID,
-			Input:     input,
-			Goal:      "Process input and generate response",
-			StepIndex: session.CurrentStep,
-		}, nil
-	}
-}
 
 // defaultEvaluateFunc is a simple default evaluation function.
 // It considers the goal achieved after processing one step.
