@@ -69,7 +69,6 @@ message TriggerSessionResponse {
   string checkpoint_id = 4;   // Checkpoint UUID for this response
 }
 
-
 // GetSessionRequest for retrieving session details
 message GetSessionRequest {
   string session_id = 1;
