@@ -33,9 +33,6 @@ type EventLog interface {
 	// AppendContent appends a content message to the event log with a checkpoint UUID.
 	AppendContent(ctx context.Context, t EventType, checkpointID string, content *proto.Content) error
 
-	// AppendLifecycleEvent appends a lifecycle event to the event log.
-	AppendLifecycleEvent(ctx context.Context, event *proto.LifecycleEvent) error
-
 	// RetrieveEntries returns all entries from the event log in order.
 	RetrieveEntries(ctx context.Context) ([]Entry, error)
 

@@ -200,9 +200,6 @@ func (e *LoopExecutor) executeTask(ctx context.Context, session *Session, ag age
 	defer cancelLifecycle()
 
 	lifecycleHandler := func(event *proto.LifecycleEvent) error {
-		if err := session.WriteLifecycleEvent(ctx, event); err != nil {
-			return fmt.Errorf("failed to write lifecycle event: %w", err)
-		}
 		e.HandleLifecycleEvent(session, event)
 		return nil
 	}

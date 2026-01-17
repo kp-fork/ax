@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/google/gar/internal/eventlog"
 	"github.com/google/gar/proto"
 	"github.com/google/uuid"
@@ -154,25 +152,8 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(sessionID string, checkpoint
 			}
 
 		case eventlog.EventTypeLifecycle:
-			// Extract timestamp seconds and nanos
-			var timestamp *timestamppb.Timestamp
-			if seconds, ok := entry.Data["timestamp_seconds"]; ok {
-				timestampSeconds := int64(seconds.(float64))
-				timestampNanos := int32(0)
-				if nanos, ok := entry.Data["timestamp_nanos"]; ok {
-					timestampNanos = int32(nanos.(float64))
-				}
-				timestamp = &timestamppb.Timestamp{
-					Seconds: timestampSeconds,
-					Nanos:   timestampNanos,
-				}
-			}
-
-			event := &proto.LifecycleEvent{
-				EventType: getStringFromData(entry.Data, "event_type"),
-				Timestamp: timestamp,
-			}
-			session.LifecycleEvents = append(session.LifecycleEvents, event)
+			// Lifecycle events are no longer persisted to event log
+			// Skip this entry type
 		}
 
 		session.UpdatedAt = entry.Timestamp
@@ -273,20 +254,6 @@ func (s *Session) WriteContentOut(ctx context.Context, content *proto.Content) (
 	s.CheckpointIDs = append(s.CheckpointIDs, checkpointID)
 	s.UpdatedAt = time.Now()
 	return checkpointID, nil
-}
-
-// WriteLifecycleEvent appends a lifecycle event to the session.
-func (s *Session) WriteLifecycleEvent(ctx context.Context, event *proto.LifecycleEvent) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if err := s.eventLog.AppendLifecycleEvent(ctx, event); err != nil {
-		return err
-	}
-
-	s.LifecycleEvents = append(s.LifecycleEvents, event)
-	s.UpdatedAt = time.Now()
-	return nil
 }
 
 // SetState updates the session state.
