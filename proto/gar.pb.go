@@ -731,11 +731,10 @@ func (x *ListSessionsResponse) GetSessionIds() []string {
 type RegisterAgentRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                            // Human-readable name for the agent
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`              // Description of agent capabilities
-	AgentType     string                 `protobuf:"bytes,4,opt,name=agent_type,json=agentType,proto3" json:"agent_type,omitempty"` // "local" or "remote"
-	Address       string                 `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`                      // gRPC address for remote agents
-	Metadata      map[string]string      `protobuf:"bytes,6,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`               // Human-readable name for the agent
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"` // Description of agent capabilities
+	Address       string                 `protobuf:"bytes,4,opt,name=address,proto3" json:"address,omitempty"`         // gRPC address for remote agents
+	Metadata      map[string]string      `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -787,13 +786,6 @@ func (x *RegisterAgentRequest) GetName() string {
 func (x *RegisterAgentRequest) GetDescription() string {
 	if x != nil {
 		return x.Description
-	}
-	return ""
-}
-
-func (x *RegisterAgentRequest) GetAgentType() string {
-	if x != nil {
-		return x.AgentType
 	}
 	return ""
 }
@@ -990,15 +982,13 @@ const file_proto_gar_proto_rawDesc = "" +
 	"\x13ListSessionsRequest\"7\n" +
 	"\x14ListSessionsResponse\x12\x1f\n" +
 	"\vsession_ids\x18\x01 \x03(\tR\n" +
-	"sessionIds\"\xa4\x02\n" +
+	"sessionIds\"\x85\x02\n" +
 	"\x14RegisterAgentRequest\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1d\n" +
-	"\n" +
-	"agent_type\x18\x04 \x01(\tR\tagentType\x12\x18\n" +
-	"\aaddress\x18\x05 \x01(\tR\aaddress\x12E\n" +
-	"\bmetadata\x18\x06 \x03(\v2).proto.RegisterAgentRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x18\n" +
+	"\aaddress\x18\x04 \x01(\tR\aaddress\x12E\n" +
+	"\bmetadata\x18\x05 \x03(\v2).proto.RegisterAgentRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x17\n" +

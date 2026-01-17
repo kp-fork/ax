@@ -106,9 +106,8 @@ message RegisterAgentRequest {
   string agent_id = 1;
   string name = 2;        // Human-readable name for the agent
   string description = 3; // Description of agent capabilities
-  string agent_type = 4;  // "local" or "remote"
-  string address = 5;     // gRPC address for remote agents
-  map<string, string> metadata = 6;
+  string address = 4;     // gRPC address for remote agents
+  map<string, string> metadata = 5;
 }
 
 // RegisterAgentResponse contains registration result

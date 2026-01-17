@@ -53,7 +53,6 @@ func runRegister(cmd *cobra.Command, args []string) error {
 	// Register remote agent
 	_, err = client.RegisterAgent(context.Background(), &proto.RegisterAgentRequest{
 		AgentId:     registerAgentID,
-		AgentType:   "remote",
 		Name:        registerAgentName,
 		Description: registerAgentDesc,
 		Address:     registerAgentAddr,

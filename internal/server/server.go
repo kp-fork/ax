@@ -129,7 +129,7 @@ func (s *Server) ListSessions(ctx context.Context, req *proto.ListSessionsReques
 	}, nil
 }
 
-// RegisterAgent registers a new agent with the dispatcher.
+// RegisterAgent registers a new remote agent with the dispatcher.
 func (s *Server) RegisterAgent(ctx context.Context, req *proto.RegisterAgentRequest) (*proto.RegisterAgentResponse, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -138,22 +138,14 @@ func (s *Server) RegisterAgent(ctx context.Context, req *proto.RegisterAgentRequ
 		return nil, fmt.Errorf("agent_id is required")
 	}
 
-	registry := s.controller.Registry()
-
-	// Register based on agent type
-	var err error
-	switch req.AgentType {
-	case "remote":
-		if req.Address == "" {
-			return nil, fmt.Errorf("address is required for remote agents")
-		}
-		err = registry.RegisterRemote(req.AgentId, req.Name, req.Description, req.Address, req.Metadata)
-	case "local":
-		return nil, fmt.Errorf("local agents must be registered programmatically")
-	default:
-		return nil, fmt.Errorf("unknown agent type: %s", req.AgentType)
+	if req.Address == "" {
+		return nil, fmt.Errorf("address is required for remote agents")
 	}
 
+	registry := s.controller.Registry()
+
+	// All registered agents are remote
+	err := registry.RegisterRemote(req.AgentId, req.Name, req.Description, req.Address, req.Metadata)
 	if err != nil {
 		return nil, fmt.Errorf("failed to register agent: %w", err)
 	}
