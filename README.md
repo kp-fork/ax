@@ -84,8 +84,8 @@ The gar server exposes the GARService on port :8494.
 # Register the remote agent with gar
 gar register \
     --agent-id remote-echo-agent \
-    --name "Echo Agent" \
-    --description "Echoes input in uppercase" \
+    --agent-name "Echo Agent" \
+    --agent-description "Echoes input in uppercase" \
     --agent-addr localhost:50051
 
 # Trigger a session - gar will trigger the remote agent via Process RPC
@@ -152,16 +152,16 @@ Options:
 gar register \
     --agent-id <id> \
     --agent-addr <address> \
-    --name <name> \
-    --description <desc> \
+    --agent-name <name> \
+    --agent-description <desc> \
     [--server <address>]
 ```
 
 Options:
 - `--agent-id`: Unique agent identifier (required)
 - `--agent-addr`: gRPC agent server address (e.g., "localhost:50051") (required)
-- `--name`: Human-readable name for the agent (required)
-- `--description`: Description of agent capabilities (required)
+- `--agent-name`: Human-readable name for the agent (required)
+- `--agent-description`: Description of agent capabilities (required)
 - `--server`: gRPC controller server address (default: "localhost:8494")
 
 #### Run Server
@@ -336,7 +336,7 @@ func (s *server) HealthCheck(ctx context.Context, req *proto.HealthCheckRequest)
 **Workflow:**
 1. Remote agent starts as gRPC server on a port (e.g., :50051)
 2. Start gar controller: `gar serve`
-3. Register with gar: `gar register --agent-id my-agent --name "My Agent" --description "Agent description" --agent-addr localhost:50051`
+3. Register with gar: `gar register --agent-id my-agent --agent-name "My Agent" --agent-description "Agent description" --agent-addr localhost:50051`
 4. When gar triggers a session, it calls the agent's `Process` RPC
 5. GAR streams input content → Agent processes → Agent streams output back
 
@@ -391,8 +391,8 @@ python agent.py
 # Register with gar (in another terminal)
 gar register \
   --agent-id python-agent \
-  --name "Python Agent" \
-  --description "Python-based agent" \
+  --agent-name "Python Agent" \
+  --agent-description "Python-based agent" \
   --agent-addr localhost:50051
 
 # Trigger a session
