@@ -28,9 +28,6 @@ type GeminiPlannerConfig struct {
 // to invoke based on the session context and agent capabilities.
 func NewGeminiPlanFunc(ctx context.Context, registry *Registry, config GeminiPlannerConfig) (PlanFunc, error) {
 	// Set defaults
-	if config.Model == "" {
-		config.Model = "gemini-2.0-flash-exp"
-	}
 	if config.Timeout == 0 {
 		config.Timeout = 60 * time.Second
 	}
