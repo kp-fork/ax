@@ -65,7 +65,7 @@ func (r *Registry) RegisterLocal(a agent.Agent, name, description string, metada
 	defer r.mu.Unlock()
 
 	id := a.ID()
-	if _, exists := r.agents[id]; exists {
+	if _, ok := r.agents[id]; ok {
 		return fmt.Errorf("agent %s already registered", id)
 	}
 
