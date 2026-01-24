@@ -171,7 +171,7 @@ Guidelines:
 				return &AgentTask{
 					AgentID:   agentID,
 					Input:     input,
-					Goal:      "Process user request using Gemini-selected agent",
+					Goal:      &Goal{Description: "Process user request using model selected agent"},
 					StepIndex: session.CurrentStep,
 				}, nil
 			}

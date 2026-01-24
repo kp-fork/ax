@@ -8,11 +8,16 @@ import (
 	"github.com/google/gar/proto"
 )
 
+// Goal represents the objective of an agent task.
+type Goal struct {
+	Description string
+}
+
 // AgentTask represents a task to be executed by an agent.
 type AgentTask struct {
 	AgentID   string
 	Input     []*proto.Content
-	Goal      string
+	Goal      *Goal
 	StepIndex int
 }
 
