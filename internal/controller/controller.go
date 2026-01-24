@@ -114,11 +114,6 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, input
 	return nil
 }
 
-// GetSession retrieves a session by ID.
-func (d *Controller) GetSession(ctx context.Context, sessionID string) (*Session, error) {
-	return d.sessionManager.GetSession(sessionID)
-}
-
 // LoadSession loads a session from event log.
 func (d *Controller) LoadSession(ctx context.Context, sessionID string) (*Session, error) {
 	return d.sessionManager.LoadSession(sessionID)
