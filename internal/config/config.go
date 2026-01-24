@@ -11,11 +11,12 @@ import (
 
 // Config represents the main configuration for GAR server.
 type Config struct {
-	Server              ServerConfig        `yaml:"server"`
-	EventLog            EventLogConfig      `yaml:"eventlog"`
-	MaxSteps            int                 `yaml:"max_steps"`             // Maximum steps per trigger
-	HealthCheckInterval time.Duration       `yaml:"health_check_interval"` // Health check interval for agents
-	GeminiPlanner       GeminiPlannerConfig `yaml:"gemini_planner,omitempty"`
+	Server              ServerConfig          `yaml:"server"`
+	EventLog            EventLogConfig        `yaml:"eventlog"`
+	MaxSteps            int                   `yaml:"max_steps"`             // Maximum steps per trigger
+	HealthCheckInterval time.Duration         `yaml:"health_check_interval"` // Health check interval for agents
+	GeminiPlanner       GeminiPlannerConfig   `yaml:"gemini_planner,omitempty"`
+	RemoteAgents        []RemoteAgentConfig   `yaml:"remote_agents,omitempty"` // List of remote agents to register
 }
 
 // ServerConfig configures the gRPC server.
@@ -44,6 +45,15 @@ type GeminiPlannerConfig struct {
 	Timeout       time.Duration `yaml:"timeout,omitempty"`
 	ContextWindow int           `yaml:"context_window,omitempty"`
 	SystemPrompt  string        `yaml:"system_prompt,omitempty"`
+}
+
+// RemoteAgentConfig configures a remote agent to register on startup.
+type RemoteAgentConfig struct {
+	ID          string            `yaml:"id"`          // Unique agent identifier
+	Name        string            `yaml:"name"`        // Human-readable name
+	Description string            `yaml:"description"` // Description of agent capabilities
+	Address     string            `yaml:"address"`     // gRPC address (e.g., "localhost:50051")
+	Metadata    map[string]string `yaml:"metadata,omitempty"` // Optional metadata
 }
 
 // LoadFromFile loads configuration from a YAML file.

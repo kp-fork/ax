@@ -188,6 +188,16 @@ max_steps: 50
 
 # Health check interval for agents
 health_check_interval: 30s
+
+# Remote agents to register on startup
+remote_agents:
+  - id: "python-agent"
+    name: "Python Agent"
+    description: "Python-based agent for text processing"
+    address: "localhost:50051"
+    metadata:
+      version: "1.0"
+      language: "python"
 ```
 
 Example:
@@ -335,7 +345,9 @@ func (s *server) HealthCheck(ctx context.Context, req *proto.HealthCheckRequest)
 **Workflow:**
 1. Remote agent starts as gRPC server on a port (e.g., :50051)
 2. Start gar controller: `gar serve`
-3. Register with gar: `gar register --agent-id my-agent --agent-name "My Agent" --agent-description "Agent description" --agent-addr localhost:50051`
+3. Register with gar using one of these methods:
+   - **Option A - Config file**: Add the agent to `remote_agents` in `gar.yaml` (agents will be registered on startup)
+   - **Option B - CLI command**: `gar register --agent-id my-agent --agent-name "My Agent" --agent-description "Agent description" --agent-addr localhost:50051`
 4. When gar triggers a session, it calls the agent's `Process` RPC
 5. GAR streams input content → Agent processes → Agent streams output back
 

@@ -42,3 +42,21 @@ health_check_interval: 30s
 #
 #   # Custom system prompt for the planner (optional)
 #   system_prompt: ""
+
+# Remote agents configuration (optional)
+# List of remote agents to register on startup.
+# Remote agents run as separate gRPC servers.
+#
+# remote_agents:
+#   - id: "python-agent"
+#     name: "Python Agent"
+#     description: "Python-based agent for text processing"
+#     address: "localhost:50051"
+#     metadata:
+#       version: "1.0"
+#       language: "python"
+#
+#   - id: "custom-agent"
+#     name: "Custom Agent"
+#     description: "Custom agent implementation"
+#     address: "localhost:50052"

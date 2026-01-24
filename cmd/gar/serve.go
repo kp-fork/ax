@@ -95,5 +95,19 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 	if err != nil {
 		return nil, err
 	}
+
+	// Register remote agents from config
+	for _, agentCfg := range cfg.RemoteAgents {
+		if err := c.Registry().RegisterRemote(
+			agentCfg.ID,
+			agentCfg.Name,
+			agentCfg.Description,
+			agentCfg.Address,
+			agentCfg.Metadata,
+		); err != nil {
+			return nil, fmt.Errorf("failed to register remote agent %s: %w", agentCfg.ID, err)
+		}
+	}
+
 	return c, nil
 }
