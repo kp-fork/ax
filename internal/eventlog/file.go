@@ -91,7 +91,7 @@ func NewFileConfig(config FileConfig) (EventLog, error) {
 
 // Append writes an entry to the event log.
 // Entries are written in JSON Lines format with atomic appends.
-func (e *FileEventLog) Append(entryType EventType, checkpointID string, data map[string]interface{}) error {
+func (e *FileEventLog) Append(entryType EventType, checkpointID string, data map[string]any) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -130,7 +130,7 @@ func (e *FileEventLog) Append(entryType EventType, checkpointID string, data map
 
 // AppendContent writes a content message to the event log with a checkpoint UUID.
 func (e *FileEventLog) AppendContent(ctx context.Context, direction EventType, checkpointID string, content *proto.Content) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"role":     content.Role,
 		"type":     content.Type,
 		"mimetype": content.Mimetype,

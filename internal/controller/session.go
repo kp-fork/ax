@@ -274,8 +274,8 @@ func (s *Session) AdvanceStep() {
 	s.UpdatedAt = time.Now()
 }
 
-// Helper function to extract string from map[string]interface{}
-func getStringFromData(data map[string]interface{}, key string) string {
+// Helper function to extract string from map[string]any
+func getStringFromData(data map[string]any, key string) string {
 	if val, ok := data[key]; ok {
 		if str, ok := val.(string); ok {
 			return str

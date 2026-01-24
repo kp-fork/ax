@@ -20,12 +20,12 @@ const (
 
 // Entry represents a single entry in the event log.
 type Entry struct {
-	SessionID    string                 `json:"session_id"`
-	Timestamp    time.Time              `json:"timestamp"`
-	Sequence     int64                  `json:"seq"`                     // Monotonic sequence number
-	Type         EventType              `json:"type"`
-	CheckpointID string                 `json:"checkpoint_id,omitempty"` // UUID for checkpoint tracking
-	Data         map[string]interface{} `json:"data"`
+	SessionID    string         `json:"session_id"`
+	Timestamp    time.Time      `json:"timestamp"`
+	Sequence     int64          `json:"seq"` // Monotonic sequence number
+	Type         EventType      `json:"type"`
+	CheckpointID string         `json:"checkpoint_id,omitempty"` // UUID for checkpoint tracking
+	Data         map[string]any `json:"data"`
 }
 
 // EventLog is the interface that all event log implementations must satisfy.
