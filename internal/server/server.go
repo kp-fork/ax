@@ -58,21 +58,8 @@ func (s *Server) TriggerSession(req *proto.TriggerSessionRequest, stream grpc.Se
 		return err
 	}
 
-	// Get session state
-	session, err := s.controller.LoadSession(stream.Context(), sessionID)
-	if err != nil {
-		stream.Send(&proto.TriggerSessionResponse{
-			State:     proto.State_STATE_FAILED,
-			SessionId: sessionID,
-		})
-		return err
-	}
-
-	// Send final success response
-	return stream.Send(&proto.TriggerSessionResponse{
-		State:     session.State,
-		SessionId: sessionID,
-	})
+	// TODO(jbd): Return outputs.
+	return nil
 }
 
 // GetSession retrieves session details.
