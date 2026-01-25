@@ -64,8 +64,9 @@ message TriggerSessionRequest {
 
 // TriggerSessionResponse contains the result of triggering a session
 message TriggerSessionResponse {
-  State state = 1;     // Session state
-  Content output = 2;  // Output content
+  string session_id = 1;  // Session ID (in case it was generated or modified by server)
+  State state = 2;        // Session state
+  Content output = 3;     // Output content
 }
 
 // GetSessionRequest for retrieving session details
