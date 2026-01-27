@@ -27,18 +27,18 @@ type EventType int32
 
 const (
 	EventType_EVENT_TYPE_UNSPECIFIED EventType = 0 // Unspecified event type
-	EventType_EVENT_TYPE_HEARTBEAT   EventType = 2 // Heartbeat signal
+	EventType_EVENT_TYPE_HEARTBEAT   EventType = 1 // Heartbeat signal
 )
 
 // Enum value maps for EventType.
 var (
 	EventType_name = map[int32]string{
 		0: "EVENT_TYPE_UNSPECIFIED",
-		2: "EVENT_TYPE_HEARTBEAT",
+		1: "EVENT_TYPE_HEARTBEAT",
 	}
 	EventType_value = map[string]int32{
 		"EVENT_TYPE_UNSPECIFIED": 0,
-		"EVENT_TYPE_HEARTBEAT":   2,
+		"EVENT_TYPE_HEARTBEAT":   1,
 	}
 )
 
@@ -911,7 +911,7 @@ const file_proto_gar_proto_rawDesc = "" +
 	"\x17UnregisterAgentResponse*A\n" +
 	"\tEventType\x12\x1a\n" +
 	"\x16EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x14EVENT_TYPE_HEARTBEAT\x10\x02*C\n" +
+	"\x14EVENT_TYPE_HEARTBEAT\x10\x01*C\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTATE_RUNNING\x10\x01\x12\x10\n" +
