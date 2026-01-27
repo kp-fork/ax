@@ -14,17 +14,18 @@ import (
 // Session represents an agentic loop execution session.
 // It maintains in-memory state and uses event log for durability.
 type Session struct {
-	ID             string
-	ActiveAgents   []string
-	MessageHistory []*proto.Content
-	CheckpointIDs  []string // Ordered list of checkpoint UUIDs
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID string
 
-	mu          sync.RWMutex
-	eventLog    eventlog.EventLog
-	currentStep int
-	state       proto.State
+	mu             sync.RWMutex
+	eventLog       eventlog.EventLog
+	currentStep    int
+	state          proto.State
+	activeAgents   []string
+	messageHistory []*proto.Content
+	checkpointIDs  []string // Ordered list of checkpoint UUIDs
+
+	createdAt time.Time
+	updatedAt time.Time
 }
 
 // EventLogFactory is a function that creates EventLog instances for sessions.
@@ -66,11 +67,11 @@ func (sm *SessionManager) NewSession(sessionID string) (*Session, error) {
 		ID:             sessionID,
 		state:          proto.State_STATE_UNSPECIFIED,
 		currentStep:    0,
-		ActiveAgents:   []string{},
-		MessageHistory: []*proto.Content{},
-		CheckpointIDs:  []string{},
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		activeAgents:   []string{},
+		messageHistory: []*proto.Content{},
+		checkpointIDs:  []string{},
+		createdAt:      now,
+		updatedAt:      now,
 		eventLog:       el,
 	}
 
@@ -111,11 +112,11 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(sessionID string, checkpoint
 		ID:             sessionID,
 		state:          proto.State_STATE_UNSPECIFIED,
 		currentStep:    0,
-		ActiveAgents:   []string{},
-		MessageHistory: []*proto.Content{},
-		CheckpointIDs:  []string{},
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		activeAgents:   []string{},
+		messageHistory: []*proto.Content{},
+		checkpointIDs:  []string{},
+		createdAt:      time.Now(),
+		updatedAt:      time.Now(),
 	}
 
 	targetReached := false
@@ -136,11 +137,11 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(sessionID string, checkpoint
 				Mimetype: getStringFromData(entry.Data, "mimetype"),
 				Data:     getStringFromData(entry.Data, "data"),
 			}
-			session.MessageHistory = append(session.MessageHistory, content)
+			session.messageHistory = append(session.messageHistory, content)
 
 			// Track checkpoint ID if present
 			if entry.CheckpointID != "" {
-				session.CheckpointIDs = append(session.CheckpointIDs, entry.CheckpointID)
+				session.checkpointIDs = append(session.checkpointIDs, entry.CheckpointID)
 
 				// Check if this is the target checkpoint
 				if checkpointID != "" && entry.CheckpointID == checkpointID {
@@ -150,7 +151,7 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(sessionID string, checkpoint
 			}
 		}
 
-		session.UpdatedAt = entry.Timestamp
+		session.updatedAt = entry.Timestamp
 	}
 
 	// Validate checkpoint ID if provided
@@ -225,7 +226,7 @@ func (s *Session) WriteContentIn(ctx context.Context, content *proto.Content) (s
 
 	if checkpointID != "" {
 		// TODO(jbd): Optimize the lookup.
-		for _, existingID := range s.CheckpointIDs {
+		for _, existingID := range s.checkpointIDs {
 			if existingID == checkpointID {
 				return "", fmt.Errorf("checkpoint %s already exists", checkpointID)
 			}
@@ -236,11 +237,11 @@ func (s *Session) WriteContentIn(ctx context.Context, content *proto.Content) (s
 		return "", err
 	}
 
-	s.MessageHistory = append(s.MessageHistory, content)
+	s.messageHistory = append(s.messageHistory, content)
 	if checkpointID != "" {
-		s.CheckpointIDs = append(s.CheckpointIDs, checkpointID)
+		s.checkpointIDs = append(s.checkpointIDs, checkpointID)
 	}
-	s.UpdatedAt = time.Now()
+	s.updatedAt = time.Now()
 	return checkpointID, nil
 }
 
@@ -256,9 +257,9 @@ func (s *Session) WriteContentOut(ctx context.Context, content *proto.Content) (
 		return "", err
 	}
 
-	s.MessageHistory = append(s.MessageHistory, content)
-	s.CheckpointIDs = append(s.CheckpointIDs, checkpointID)
-	s.UpdatedAt = time.Now()
+	s.messageHistory = append(s.messageHistory, content)
+	s.checkpointIDs = append(s.checkpointIDs, checkpointID)
+	s.updatedAt = time.Now()
 	return checkpointID, nil
 }
 
@@ -268,7 +269,7 @@ func (s *Session) SetState(state proto.State) {
 	defer s.mu.Unlock()
 
 	s.state = state
-	s.UpdatedAt = time.Now()
+	s.updatedAt = time.Now()
 }
 
 func (s *Session) State() proto.State {
@@ -284,7 +285,7 @@ func (s *Session) AdvanceStep() {
 	defer s.mu.Unlock()
 
 	s.currentStep++
-	s.UpdatedAt = time.Now()
+	s.updatedAt = time.Now()
 }
 
 func (s *Session) CurrentStep() int {
@@ -292,6 +293,41 @@ func (s *Session) CurrentStep() int {
 	defer s.mu.RUnlock()
 
 	return s.currentStep
+}
+
+func (s *Session) ActiveAgents() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.activeAgents
+}
+
+func (s *Session) MessageHistory() []*proto.Content {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.messageHistory
+}
+
+func (s *Session) CheckpointIDs() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.checkpointIDs
+}
+
+func (s *Session) CreatedAt() time.Time {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.createdAt
+}
+
+func (s *Session) UpdatedAt() time.Time {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.updatedAt
 }
 
 // Helper function to extract string from map[string]any

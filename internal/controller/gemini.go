@@ -229,8 +229,9 @@ func sessionToHistory(session *Session, contextWindow int) []*genai.Content {
 	var history []*genai.Content
 
 	// Get recent messages within context window
-	startIdx := max(0, len(session.MessageHistory)-contextWindow)
-	messages := session.MessageHistory[startIdx:]
+	mHistory := session.MessageHistory()
+	startIdx := max(0, len(mHistory)-contextWindow)
+	messages := mHistory[startIdx:]
 
 	// Convert each message to Gemini format
 	for _, msg := range messages {
