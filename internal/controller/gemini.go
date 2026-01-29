@@ -21,7 +21,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/gar/proto"
 	"google.golang.org/genai"
 )
 
@@ -111,16 +110,6 @@ Guidelines:
 				{
 					Name:        noActionAgentID,
 					Description: "Call this when no further action is needed and the task is complete",
-					Parameters: &genai.Schema{
-						Type: genai.TypeObject,
-						Properties: map[string]*genai.Schema{
-							"reason": {
-								Type:        genai.TypeString,
-								Description: "Reason why no action is needed",
-							},
-						},
-						Required: []string{"reason"},
-					},
 				},
 			},
 		})
@@ -142,7 +131,7 @@ Guidelines:
 
 		// Parse function calls from response
 		if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-			return nil, fmt.Errorf("no response from Gemini")
+			return nil, fmt.Errorf("no tool selection in response from Gemini")
 		}
 
 		// Look for function calls in the response
@@ -157,21 +146,9 @@ Guidelines:
 
 				agentID := fc.Name
 				// Get the input from function call args
-				inputText := ""
-				if input, ok := fc.Args["input"].(string); ok {
-					inputText = input
-				}
-				input := []*proto.Content{
-					{
-						Role:     "user",
-						Type:     "text",
-						Mimetype: "text/plain",
-						Data:     inputText,
-					},
-				}
 				return &Task{
 					AgentID:   agentID,
-					Inputs:    input,
+					Inputs:    session.History(),
 					Goal:      &Goal{Description: "Process user request using model selected agent"},
 					StepIndex: 0,
 				}, nil
@@ -195,16 +172,6 @@ func agentsToTools(registry *Registry, agentIDs []string) ([]*genai.Tool, error)
 		funcDecl := &genai.FunctionDeclaration{
 			Name:        id, // Use agent ID as function name
 			Description: fmt.Sprintf("%s - %s", info.Name, info.Description),
-			Parameters: &genai.Schema{
-				Type: genai.TypeObject,
-				Properties: map[string]*genai.Schema{
-					"input": {
-						Type:        genai.TypeString,
-						Description: "Input text to send to the agent",
-					},
-				},
-				Required: []string{"input"},
-			},
 		}
 
 		// Add metadata as additional context in the description if available
