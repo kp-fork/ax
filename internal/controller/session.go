@@ -94,14 +94,14 @@ func (sm *SessionManager) NewSession(sessionID string) (*Session, error) {
 }
 
 // LoadSession loads an existing session from event log.
-func (sm *SessionManager) LoadSession(sessionID string) (*Session, error) {
-	return sm.LoadSessionFromCheckpoint(sessionID, "")
+func (sm *SessionManager) LoadSession(ctx context.Context, sessionID string) (*Session, error) {
+	return sm.LoadSessionFromCheckpoint(ctx, sessionID, "")
 }
 
 // LoadSessionFromCheckpoint loads an existing session from event log up to a specific checkpoint.
 // If checkpointID is empty, loads to the latest state.
 // If checkpointID is provided, loads up to and including that checkpoint UUID.
-func (sm *SessionManager) LoadSessionFromCheckpoint(sessionID string, checkpointID string) (*Session, error) {
+func (sm *SessionManager) LoadSessionFromCheckpoint(ctx context.Context, sessionID string, checkpointID string) (*Session, error) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -116,7 +116,7 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(sessionID string, checkpoint
 	defer replayLog.Close()
 
 	// TODO(jbd): Propagate the context properly.
-	entries, err := replayLog.RetrieveEntries(context.Background())
+	entries, err := replayLog.RetrieveEntries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get event log entries: %w", err)
 	}

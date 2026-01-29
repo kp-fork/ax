@@ -130,7 +130,7 @@ func (d *Controller) TriggerForkedSession(ctx context.Context, sessionID string,
 
 // LoadSession loads a session from event log.
 func (d *Controller) LoadSession(ctx context.Context, sessionID string) (*Session, error) {
-	return d.sessionManager.LoadSession(sessionID)
+	return d.sessionManager.LoadSession(ctx, sessionID)
 }
 
 // CloseSession closes a session.
