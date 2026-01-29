@@ -112,8 +112,7 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(ctx context.Context, session
 	}
 	defer replayLog.Close()
 
-	// TODO(jbd): Propagate the context properly.
-	entries, err := replayLog.RetrieveEntries(ctx)
+	entries, state, err := replayLog.RetrieveEntries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get event log entries: %w", err)
 	}
@@ -121,7 +120,7 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(ctx context.Context, session
 	// Reconstruct session state from event log
 	session := &Session{
 		ID:             sessionID,
-		state:          proto.State_STATE_UNSPECIFIED,
+		state:          state,
 		currentStep:    0,
 		activeAgents:   []string{},
 		messageHistory: []*proto.Content{},
@@ -275,12 +274,17 @@ func (s *Session) WriteContentOut(ctx context.Context, content *proto.Content) (
 }
 
 // SetState updates the session state.
-func (s *Session) SetState(state proto.State) {
+func (s *Session) SetState(ctx context.Context, state proto.State) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if err := s.eventLog.AppendState(ctx, state); err != nil {
+		return fmt.Errorf("failed to append state: %w", err)
+	}
+
 	s.state = state
 	s.updatedAt = time.Now()
+	return nil
 }
 
 func (s *Session) State() proto.State {

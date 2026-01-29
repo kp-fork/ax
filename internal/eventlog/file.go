@@ -153,9 +153,9 @@ func (e *FileEventLog) AppendContent(ctx context.Context, direction EventType, c
 	return e.Append(direction, checkpointID, data)
 }
 
-func (e *FileEventLog) AppendState(ctx context.Context, s proto.State) error {
+func (e *FileEventLog) AppendState(ctx context.Context, state proto.State) error {
 	data := map[string]any{
-		"state": s,
+		"state": state,
 	}
 	return e.Append(EventTypeState, "", data)
 }
@@ -187,24 +187,26 @@ func (e *FileEventLog) SessionID() string {
 
 // RetrieveEntries reads and returns all entries from the event log file.
 // Returns entries in order.
-func (e *FileEventLog) RetrieveEntries(ctx context.Context) ([]Entry, error) {
+func (e *FileEventLog) RetrieveEntries(ctx context.Context) ([]Entry, proto.State, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
+	var state proto.State
+
 	// Flush any pending writes first
 	if err := e.writer.Flush(); err != nil {
-		return nil, fmt.Errorf("failed to flush before reading: %w", err)
+		return nil, 0, fmt.Errorf("failed to flush before reading: %w", err)
 	}
 
 	// Check if file exists
 	if _, err := os.Stat(e.filePath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("event log file does not exist")
+		return nil, 0, fmt.Errorf("event log file does not exist")
 	}
 
 	// Open file for reading
 	readFile, err := os.Open(e.filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open event log file for reading: %w", err)
+		return nil, 0, fmt.Errorf("failed to open event log file for reading: %w", err)
 	}
 	defer readFile.Close()
 
@@ -219,21 +221,26 @@ func (e *FileEventLog) RetrieveEntries(ctx context.Context) ([]Entry, error) {
 
 		var entry Entry
 		if err := json.Unmarshal(line, &entry); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal entry at line %d: %w", lineNum, err)
+			return nil, 0, fmt.Errorf("failed to unmarshal entry at line %d: %w", lineNum, err)
 		}
 
 		// Validate sequence number
 		if entry.Sequence != expectedSequence {
-			return nil, fmt.Errorf("sequence number mismatch at line %d: expected %d, got %d", lineNum, expectedSequence, entry.Sequence)
+			return nil, 0, fmt.Errorf("sequence number mismatch at line %d: expected %d, got %d", lineNum, expectedSequence, entry.Sequence)
 		}
-		expectedSequence++
 
+		expectedSequence++
+		if entry.Type == EventTypeState {
+			if s, ok := entry.Data["state"].(proto.State); ok {
+				state = s
+			}
+		}
 		entries = append(entries, entry)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading event log file: %w", err)
+		return nil, 0, fmt.Errorf("error reading event log file: %w", err)
 	}
 
-	return entries, nil
+	return entries, state, nil
 }

@@ -114,7 +114,10 @@ func (e *LoopExecutor) Execute(ctx context.Context, sessionID string, inputs []*
 		return fmt.Errorf("session is not in a runnable state")
 	}
 
-	session.SetState(proto.State_STATE_RUNNING)
+	if err := session.SetState(ctx, proto.State_STATE_RUNNING); err != nil {
+		return fmt.Errorf("failed to set session state: %w", err)
+	}
+
 	// Write input content to session
 	for _, content := range inputs {
 		if _, err := session.WriteContentIn(ctx, content); err != nil {
@@ -133,7 +136,6 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 		// Check context cancellation
 		select {
 		case <-ctx.Done():
-			session.SetState(proto.State_STATE_FAILED)
 			return ctx.Err()
 		default:
 		}
@@ -141,7 +143,6 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 		// Phase 1: Plan - Determine next agent and action
 		task, err := e.planFunc(ctx, session)
 		if err != nil {
-			session.SetState(proto.State_STATE_FAILED)
 			return fmt.Errorf("planning failed: %w", err)
 		}
 
@@ -153,21 +154,18 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 		// Get the agent from registry
 		ag, err := e.registry.Get(task.AgentID)
 		if err != nil {
-			session.SetState(proto.State_STATE_FAILED)
 			return fmt.Errorf("failed to get agent: %w", err)
 		}
 
 		// Phase 2: Execute - Send content to agent and receive response
 		output, err := e.executeTask(ctx, session, ag, task)
 		if err != nil {
-			session.SetState(proto.State_STATE_FAILED)
 			return fmt.Errorf("execution failed: %w", err)
 		}
 
 		// Phase 3: Evaluate - Check if goal achieved
 		goalAchieved, err := e.evaluateFunc(ctx, session, task, output)
 		if err != nil {
-			session.SetState(proto.State_STATE_FAILED)
 			return fmt.Errorf("evaluation failed: %w", err)
 		}
 

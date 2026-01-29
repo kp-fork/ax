@@ -37,8 +37,8 @@ const (
 type Entry struct {
 	SessionID    string         `json:"session_id"`
 	CheckpointID string         `json:"checkpoint_id,omitempty"` // UUID for checkpoint tracking
+	Sequence     int64          `json:"seq"`                     // Monotonic sequence number
 	Timestamp    time.Time      `json:"timestamp"`
-	Sequence     int64          `json:"seq"` // Monotonic sequence number
 	Type         EventType      `json:"type"`
 	Data         map[string]any `json:"data"`
 }
@@ -53,7 +53,7 @@ type EventLog interface {
 	AppendState(ctx context.Context, s proto.State) error
 
 	// RetrieveEntries returns all entries from the event log in order.
-	RetrieveEntries(ctx context.Context) ([]Entry, error)
+	RetrieveEntries(ctx context.Context) ([]Entry, proto.State, error)
 
 	// Close closes the event log and releases any resources.
 	Close() error
