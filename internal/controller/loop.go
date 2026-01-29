@@ -131,10 +131,12 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 		// Phase 1: Plan - Determine next agent and action
 		task, err := e.planFunc(ctx, session)
 		if err != nil {
+			if err := session.SetState(ctx, proto.State_STATE_FAILED); err != nil {
+				return fmt.Errorf("failed to set session state: %w", err)
+			}
 			return fmt.Errorf("planning failed: %w", err)
 		}
 
-		// If no task, we're done
 		if task == nil {
 			return nil
 		}
@@ -142,6 +144,9 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 		// Phase 2: Execute - Send content to agent and receive response
 		outputs, err := e.executeTask(ctx, session, task)
 		if err != nil {
+			if err := session.SetState(ctx, proto.State_STATE_FAILED); err != nil {
+				return fmt.Errorf("failed to set session state: %w", err)
+			}
 			return fmt.Errorf("execution failed: %w", err)
 		}
 
@@ -154,6 +159,9 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 		// Phase 3: Evaluate - Check if goal achieved
 		goalAchieved, err := e.evaluateFunc(ctx, session, task, outputs)
 		if err != nil {
+			if err := session.SetState(ctx, proto.State_STATE_FAILED); err != nil {
+				return fmt.Errorf("failed to set session state: %w", err)
+			}
 			return fmt.Errorf("evaluation failed: %w", err)
 		}
 
@@ -183,7 +191,6 @@ func (e *LoopExecutor) executeTask(ctx context.Context, session *Session, task *
 	// Define output handler to collect responses
 	outputHandler := func(content *proto.Content) error {
 		outputs = append(outputs, content)
-
 		return nil
 	}
 
