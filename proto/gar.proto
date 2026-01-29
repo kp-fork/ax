@@ -82,12 +82,10 @@ message GetSessionRequest {
 // SessionInfo contains session details
 message SessionInfo {
   State state = 1;
-  int32 current_step = 2;
-  repeated string active_agents = 3;
+  repeated string active_agents = 2;
+  int32 checkpoint_count = 3;
   google.protobuf.Timestamp created_at = 4;  // Session creation time
   google.protobuf.Timestamp updated_at = 5;  // Last update time
-  int32 message_count = 6;
-  int32 checkpoint_count = 7;
 }
 
 // GetSessionResponse contains session information

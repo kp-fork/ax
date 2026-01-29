@@ -303,12 +303,12 @@ func (s *Session) AdvanceStep() {
 	s.updatedAt = time.Now()
 }
 
-func (s *Session) CurrentStep() int {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// func (s *Session) CurrentStep() int {
+// 	s.mu.RLock()
+// 	defer s.mu.RUnlock()
 
-	return s.currentStep
-}
+// 	return s.currentStep
+// }
 
 func (s *Session) ActiveAgents() []string {
 	s.mu.RLock()
