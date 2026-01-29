@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/gar/agent"
@@ -29,6 +30,9 @@ import (
 // Controller is the main controller that coordinates all components.
 // It acts as a single-writer system for managing agentic loops.
 type Controller struct {
+	inFlightSessionsMu sync.Mutex
+	inFlightSessions   map[string]struct{}
+
 	sessionManager *SessionManager
 	registry       *Registry
 	loopExecutor   *LoopExecutor
@@ -74,9 +78,10 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 	}
 
 	return &Controller{
-		sessionManager: sessionManager,
-		registry:       registry,
-		loopExecutor:   loopExecutor,
+		inFlightSessions: make(map[string]struct{}),
+		sessionManager:   sessionManager,
+		registry:         registry,
+		loopExecutor:     loopExecutor,
 	}, nil
 }
 
@@ -89,6 +94,19 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, input
 		return fmt.Errorf("session_id is required")
 	}
 
+	d.inFlightSessionsMu.Lock()
+	_, ok := d.inFlightSessions[sessionID]
+	d.inFlightSessionsMu.Unlock()
+
+	if ok {
+		return fmt.Errorf("session is already in flight")
+	}
+	defer func() {
+		d.inFlightSessionsMu.Lock()
+		delete(d.inFlightSessions, sessionID)
+		d.inFlightSessionsMu.Unlock()
+	}()
+
 	// Check if session already exists
 	sess, err := d.sessionManager.LoadSession(ctx, sessionID)
 	if err == nil && sess == nil {
@@ -100,9 +118,6 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, input
 		}
 	}
 
-	if sess.State() == proto.State_STATE_RUNNING {
-		return fmt.Errorf("session is already running")
-	}
 	if sess.State() == proto.State_STATE_FAILED {
 		return fmt.Errorf("session has failed and cannot continue")
 	}
