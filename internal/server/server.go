@@ -92,11 +92,7 @@ func (s *Server) GetSession(ctx context.Context, req *proto.GetSessionRequest) (
 	// Load session if not already loaded
 	session, err := s.controller.LoadSession(ctx, req.SessionId)
 	if err != nil {
-		// Try loading from event log
-		session, err = s.controller.LoadSession(ctx, req.SessionId)
-		if err != nil {
-			return nil, fmt.Errorf("session not found: %w", err)
-		}
+		return nil, fmt.Errorf("error loading session: %w", err)
 	}
 
 	return &proto.GetSessionResponse{
