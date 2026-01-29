@@ -244,7 +244,7 @@ func sessionToHistory(session *Session, contextWindow int) []*genai.Content {
 	var history []*genai.Content
 
 	// Get recent messages within context window
-	mHistory := session.MessageHistory()
+	mHistory := session.History()
 	startIdx := max(0, len(mHistory)-contextWindow)
 	messages := mHistory[startIdx:]
 

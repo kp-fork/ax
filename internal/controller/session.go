@@ -301,7 +301,7 @@ func (s *Session) ActiveAgents() []string {
 	return s.activeAgents
 }
 
-func (s *Session) MessageHistory() []*proto.Content {
+func (s *Session) History() []*proto.Content {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
