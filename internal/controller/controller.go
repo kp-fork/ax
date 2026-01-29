@@ -85,7 +85,6 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 // If the session already exists, it will be resumed with optional new inputs.
 // If checkpointID is provided, resumes from that specific checkpoint instead of the latest.
 func (d *Controller) TriggerSession(ctx context.Context, sessionID string, inputs []*proto.Content, handler agent.OutputHandler) error {
-	// Generate UUID if no session ID provided
 	if sessionID == "" {
 		return fmt.Errorf("session_id is required")
 	}
@@ -145,16 +144,6 @@ func (d *Controller) CloseSession(ctx context.Context, sessionID string) error {
 // Registry returns the agent registry.
 func (d *Controller) Registry() *Registry {
 	return d.registry
-}
-
-// SessionManager returns the session manager.
-func (d *Controller) SessionManager() *SessionManager {
-	return d.sessionManager
-}
-
-// LoopExecutor returns the loop executor.
-func (d *Controller) LoopExecutor() *LoopExecutor {
-	return d.loopExecutor
 }
 
 // Close gracefully shuts down the controller.
