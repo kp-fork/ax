@@ -90,12 +90,8 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, input
 		return fmt.Errorf("session_id is required")
 	}
 
-	// TODO(jbd): Don't allow a running session to accept
-	// new triggers. Also mark, a session as COMPLETED
-	// if it's no longer running.
-
 	// Check if session already exists
-	sess, err := d.sessionManager.GetSession(sessionID)
+	sess, err := d.sessionManager.LoadSession(ctx, sessionID)
 	if err == nil && sess == nil {
 		// Session doesn't exist - create new session
 		// Checkpoint ID is ignored for new sessions
@@ -103,6 +99,13 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, input
 		if err != nil {
 			return fmt.Errorf("failed to create session: %w", err)
 		}
+	}
+
+	if sess.State() == proto.State_STATE_RUNNING {
+		return fmt.Errorf("session is already running")
+	}
+	if sess.State() == proto.State_STATE_FAILED {
+		return fmt.Errorf("session has failed and cannot continue")
 	}
 
 	for _, content := range inputs {

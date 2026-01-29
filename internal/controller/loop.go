@@ -97,20 +97,12 @@ func NewLoopExecutor(ctx context.Context, config LoopConfig) (*LoopExecutor, err
 	}, nil
 }
 
-func (e *LoopExecutor) stateRunnable(sesion *Session) bool {
-	return sesion.State() == proto.State_STATE_RUNNING || sesion.State() == proto.State_STATE_UNSPECIFIED
-}
-
 // Execute starts a new agentic loop execution for the given session.
 func (e *LoopExecutor) Execute(ctx context.Context, sessionID string, inputs []*proto.Content) error {
 	// Get or create session
 	session, err := e.sessionManager.GetSession(sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
-	}
-
-	if !e.stateRunnable(session) {
-		return fmt.Errorf("session is not in a runnable state")
 	}
 
 	if err := session.SetState(ctx, proto.State_STATE_RUNNING); err != nil {
