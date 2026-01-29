@@ -294,22 +294,6 @@ func (s *Session) State() proto.State {
 	return s.state
 }
 
-// AdvanceStep increments the current step.
-func (s *Session) AdvanceStep() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.currentStep++
-	s.updatedAt = time.Now()
-}
-
-// func (s *Session) CurrentStep() int {
-// 	s.mu.RLock()
-// 	defer s.mu.RUnlock()
-
-// 	return s.currentStep
-// }
-
 func (s *Session) ActiveAgents() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

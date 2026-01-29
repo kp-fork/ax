@@ -163,7 +163,6 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 		}
 
 		// Phase 4: Advance step counters
-		session.AdvanceStep()
 		steps++
 
 		// If goal achieved, complete the session
