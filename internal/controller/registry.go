@@ -102,7 +102,7 @@ func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, exists := r.agents[cfg.ID]; exists {
+	if _, ok := r.agents[cfg.ID]; ok {
 		return fmt.Errorf("agent %s already registered", cfg.ID)
 	}
 
@@ -135,8 +135,8 @@ func (r *Registry) Unregister(id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	agent, exists := r.agents[id]
-	if !exists {
+	agent, ok := r.agents[id]
+	if !ok {
 		return fmt.Errorf("agent %s not found", id)
 	}
 
