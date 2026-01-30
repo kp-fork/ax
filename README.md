@@ -231,7 +231,7 @@ Event logs use JSON Lines format (one JSON object per line). Each entry includes
 ```json
 {"session_id": "session123", "timestamp": "2026-01-02T10:30:00Z", "seq": 0, "type": "CONTENT_IN", "checkpoint_id": "550e8400-e29b-41d4-a716-446655440000", "data": {...}}
 {"session_id": "session123", "timestamp": "2026-01-02T10:30:01Z", "seq": 1, "type": "CONTENT_OUT", "checkpoint_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8", "data": {...}}
-{"session_id": "session123", "timestamp": "2026-01-02T10:30:02Z", "seq": 2, "type": "LIFECYCLE", "data": {...}}
+{"session_id": "session123", "timestamp": "2026-01-02T10:30:02Z", "seq": 2, "type": "STATE", "data": {...}}
 ```
 
 **Event Types:**
