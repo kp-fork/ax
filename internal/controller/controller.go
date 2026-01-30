@@ -42,7 +42,6 @@ type Controller struct {
 type Config struct {
 	EventLogFactory eventlog.EventLogFactory
 	PlanFunc        PlanFunc
-	EvaluateFunc    EvaluateFunc
 
 	// TODO(jbd): Add CompactionFunc.
 
@@ -71,7 +70,6 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 		SessionManager: sessionManager,
 		MaxSteps:       config.MaxSteps,
 		PlanFunc:       config.PlanFunc,
-		EvaluateFunc:   config.EvaluateFunc,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create loop executor: %w", err)
@@ -117,8 +115,23 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, input
 			return fmt.Errorf("failed to create session: %w", err)
 		}
 	}
-	if err := d.loopExecutor.Execute(ctx, sess, inputs); err != nil {
-		return fmt.Errorf("execution failed: %w", err)
+
+	if sess.State() == proto.State_STATE_FAILED {
+		return fmt.Errorf("session has failed and cannot continue")
+	}
+
+	// Write input content to session
+	for _, content := range inputs {
+		if _, err := sess.WriteContentIn(ctx, content); err != nil {
+			return fmt.Errorf("failed to write input content: %w", err)
+		}
+	}
+
+	if err := d.loopExecutor.Execute(ctx, sess, handler); err != nil {
+		if err := sess.SetState(ctx, proto.State_STATE_FAILED); err != nil {
+			return fmt.Errorf("failed to set session state: %w", err)
+		}
+		return fmt.Errorf("loop execution failed: %w", err)
 	}
 	return nil
 }

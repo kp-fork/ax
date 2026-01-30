@@ -18,20 +18,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/gar/agent"
 	"github.com/google/gar/proto"
 )
 
-// Goal represents the objective of an agent task.
-type Goal struct {
-	Description string
-}
-
 // Task represents a task to be executed by an agent.
 type Task struct {
-	AgentID   string
-	Inputs    []*proto.Content
-	Goal      *Goal
-	StepIndex int
+	AgentID string
+	Inputs  []*proto.Content
 }
 
 // LoopExecutor orchestrates the agentic loop workflow.
@@ -41,16 +35,11 @@ type LoopExecutor struct {
 	sessionManager *SessionManager
 	maxSteps       int
 	planFunc       PlanFunc
-	evaluateFunc   EvaluateFunc
 }
 
 // PlanFunc determines the next agent task to execute.
 // It receives the current session state and returns the next task.
-type PlanFunc func(ctx context.Context, session *Session) (*Task, error)
-
-// EvaluateFunc evaluates the agent's response to determine if the goal is achieved.
-// Returns true if the goal is met and the loop should terminate.
-type EvaluateFunc func(ctx context.Context, session *Session, task *Task, output []*proto.Content) (bool, error)
+type PlanFunc func(ctx context.Context, inputs []*proto.Content) (*Task, error)
 
 // LoopConfig configures the loop executor.
 type LoopConfig struct {
@@ -58,7 +47,6 @@ type LoopConfig struct {
 	SessionManager *SessionManager
 	MaxSteps       int
 	PlanFunc       PlanFunc
-	EvaluateFunc   EvaluateFunc
 }
 
 // NewLoopExecutor creates a new loop executor.
@@ -83,41 +71,22 @@ func NewLoopExecutor(ctx context.Context, config LoopConfig) (*LoopExecutor, err
 		config.PlanFunc = geminiPlanFunc
 	}
 
-	// Provide default evaluate function if not specified
-	if config.EvaluateFunc == nil {
-		config.EvaluateFunc = defaultEvaluateFunc
-	}
-
 	return &LoopExecutor{
 		registry:       config.Registry,
 		sessionManager: config.SessionManager,
 		maxSteps:       config.MaxSteps,
 		planFunc:       config.PlanFunc,
-		evaluateFunc:   config.EvaluateFunc,
 	}, nil
 }
 
 // Execute starts a new agentic loop execution for the given session.
-func (e *LoopExecutor) Execute(ctx context.Context, session *Session, inputs []*proto.Content) error {
-	if session.State() == proto.State_STATE_FAILED {
-		return fmt.Errorf("session has failed and cannot continue")
-	}
-	if err := session.SetState(ctx, proto.State_STATE_RUNNING); err != nil {
-		return fmt.Errorf("failed to set session state: %w", err)
-	}
-
-	// Write input content to session
-	for _, content := range inputs {
-		if _, err := session.WriteContentIn(ctx, content); err != nil {
-			return fmt.Errorf("failed to write input content: %w", err)
-		}
-	}
-	return e.runLoop(ctx, session)
+func (e *LoopExecutor) Execute(ctx context.Context, session *Session, handler agent.OutputHandler) error {
+	return e.runLoop(ctx, session, handler)
 }
 
 // runLoop executes the main agentic loop.
 // It runs up to maxSteps iterations per trigger/resume invocation.
-func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
+func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, handler agent.OutputHandler) error {
 	steps := 0
 
 	for steps < e.maxSteps {
@@ -128,50 +97,31 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 		default:
 		}
 
-		// Phase 1: Plan - Determine next agent and action
-		task, err := e.planFunc(ctx, session)
+		task, err := e.planFunc(ctx, session.History())
 		if err != nil {
-			if err := session.SetState(ctx, proto.State_STATE_FAILED); err != nil {
-				return fmt.Errorf("failed to set session state: %w", err)
-			}
 			return fmt.Errorf("planning failed: %w", err)
 		}
 
 		if task == nil {
+			// No more tasks to execute; loop is complete.
 			return nil
 		}
 
-		// Phase 2: Execute - Send content to agent and receive response
-		outputs, err := e.executeTask(ctx, session, task)
+		outputs, err := e.executeTask(ctx, session.ID, task)
 		if err != nil {
-			if err := session.SetState(ctx, proto.State_STATE_FAILED); err != nil {
-				return fmt.Errorf("failed to set session state: %w", err)
-			}
-			return fmt.Errorf("execution failed: %w", err)
+			return fmt.Errorf("task execution failed: %w", err)
 		}
-
 		for _, output := range outputs {
 			if _, err := session.WriteContentOut(ctx, output); err != nil {
-				return fmt.Errorf("failed to write task inputs: %w", err)
+				return fmt.Errorf("failed to write output content: %w", err)
 			}
-		}
-
-		// Phase 3: Evaluate - Check if goal achieved
-		goalAchieved, err := e.evaluateFunc(ctx, session, task, outputs)
-		if err != nil {
-			if err := session.SetState(ctx, proto.State_STATE_FAILED); err != nil {
-				return fmt.Errorf("failed to set session state: %w", err)
+			if err := handler(output); err != nil {
+				return fmt.Errorf("output handler error: %w", err)
 			}
-			return fmt.Errorf("evaluation failed: %w", err)
 		}
 
 		// Phase 4: Advance step counters
 		steps++
-
-		// If goal achieved, complete the session
-		if goalAchieved {
-			return nil
-		}
 	}
 
 	// Can be resumed later with another trigger
@@ -179,7 +129,7 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session) error {
 }
 
 // executeTask sends input to an agent and collects output.
-func (e *LoopExecutor) executeTask(ctx context.Context, session *Session, task *Task) ([]*proto.Content, error) {
+func (e *LoopExecutor) executeTask(ctx context.Context, sessionID string, task *Task) ([]*proto.Content, error) {
 	// Get the agent from registry
 	ag, err := e.registry.Get(task.AgentID)
 	if err != nil {
@@ -195,16 +145,9 @@ func (e *LoopExecutor) executeTask(ctx context.Context, session *Session, task *
 	}
 
 	// Process inputs with the agent
-	if err := ag.Process(ctx, session.ID, task.Inputs, outputHandler); err != nil {
+	if err := ag.Process(ctx, sessionID, task.Inputs, outputHandler); err != nil {
 		return nil, fmt.Errorf("agent process failed: %w", err)
 	}
 
 	return outputs, nil
-}
-
-// defaultEvaluateFunc is a simple default evaluation function.
-// It considers the goal achieved after processing one step.
-func defaultEvaluateFunc(ctx context.Context, session *Session, task *Task, output []*proto.Content) (bool, error) {
-	// Simple evaluation: goal achieved if we got any output
-	return len(output) > 0, nil
 }
