@@ -153,11 +153,6 @@ func (d *Controller) LoadSession(ctx context.Context, sessionID string) (*Sessio
 	return d.sessionManager.LoadSession(ctx, sessionID)
 }
 
-// CloseSession closes a session.
-func (d *Controller) CloseSession(ctx context.Context, sessionID string) error {
-	return d.sessionManager.CloseSession(sessionID)
-}
-
 // Registry returns the agent registry.
 func (d *Controller) Registry() *Registry {
 	return d.registry
