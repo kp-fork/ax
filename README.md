@@ -17,19 +17,12 @@ Built-in consistency and resumability features:
 
 ```
 ┌────────────────────────┐
-│      [Controller]      │
-│  - Session Manager     │
-│  - Event Log           │
-│  - Loop Executor       │
-│  - Agent Registry      │
-└──────┬──────────┬──────┘
-       │          │
-  (in-process) (gRPC stream)
-       │          │
-   ┌───────┐  ┌───────┐
-   │ Local │  │Remote │
-   │ Agent │  │ Agent │
-   └───────┘  └───────┘
+│      [Controller]      │                 ┌──────────────┐
+│  - Session Manager     │--(in process)---| local  agent |
+│  - Event Log           │                 └──────────────┘
+│  - Loop Executor       │                 ┌──────────────┐
+│  - Agent Registry      │--(gRPC stream)--| remote agent |
+└────────────────────────┘                 └──────────────┘
 ```
 
 ## Installation
@@ -89,11 +82,11 @@ gar register \
 
 # Trigger a session - gar will trigger the remote agent via Process RPC
 gar trigger \
-    --session-id session123 \
+    --session session123 \
     --input "Hello remote agent"
 
 # Inspect session details
-gar inspect --session-id session123
+gar inspect --session session123
 ```
 
 ## Usage
@@ -107,7 +100,7 @@ The `gar` command provides several subcommands:
 ```bash
 gar trigger \
     --input <text> \
-    [--session-id <id>] \
+    [--session <id>] \
     [--checkpoint <uuid>] \
     [--server <address>]
 ```
@@ -116,7 +109,7 @@ Triggers a new agentic loop session or automatically resumes an existing one. If
 
 Options:
 - `--input`: Input message to send to agents (required)
-- `--session-id`: Unique session identifier (optional, generates UUID if not provided, or resumes if exists)
+- `--session`: Unique session identifier (optional, generates UUID if not provided, or resumes if exists)
 - `--checkpoint`: Resume from specific checkpoint (empty for latest)
 - `--server`: gRPC controller server address (default: "localhost:8494")
 
@@ -127,10 +120,10 @@ Options:
 gar trigger --input "Hello agent"
 
 # Resume an existing session with new input
-gar trigger --session-id abc123 --input "Continue processing"
+gar trigger --session abc123 --input "Continue processing"
 
 # Resume from a specific checkpoint (useful for undoing mistakes or exploring alternatives)
-gar trigger --session-id abc123 \
+gar trigger --session abc123 \
     --checkpoint "550e8400-e29b-41d4-a716-446655440000" \
     --input "Try a different approach"
 ```
@@ -138,11 +131,11 @@ gar trigger --session-id abc123 \
 #### Inspect a Session
 
 ```bash
-gar inspect --session-id <id> [--server <address>]
+gar inspect --session <id> [--server <address>]
 ```
 
 Options:
-- `--session-id`: Session identifier to inspect (required)
+- `--session`: Session identifier to inspect (required)
 - `--server`: gRPC controller server address (default: "localhost:8494")
 
 #### Register a Remote Agent
@@ -209,16 +202,16 @@ gar serve --config my-config.yaml
 
 ### Checkpoints
 
-Checkpoints provide a mechanism to save and resume session state at specific points. Every content event (both `CONTENT_IN` and `CONTENT_OUT`) automatically creates a checkpoint with a unique UUID.
+Checkpoints provide a mechanism to save and resume session state at specific points. Every content event (`CONTENT`) can create a checkpoint with a unique UUID.
 
 **Usage Examples:**
 
 ```bash
 # Inspect a session to see available checkpoints
-gar inspect --session-id session123
+gar inspect --session session123
 
 # Resume from a specific checkpoint
-gar trigger --session-id session123 \
+gar trigger --session session123 \
   --checkpoint "550e8400-e29b-41d4-a716-446655440000" \
   --input "Try different approach"
 ```
@@ -229,15 +222,14 @@ gar trigger --session-id session123 \
 Event logs use JSON Lines format (one JSON object per line). Each entry includes the session ID, a monotonic sequence number, and checkpoint ID (for content events) for traceability:
 
 ```json
-{"session_id": "session123", "timestamp": "2026-01-02T10:30:00Z", "seq": 0, "type": "CONTENT_IN", "checkpoint_id": "550e8400-e29b-41d4-a716-446655440000", "data": {...}}
-{"session_id": "session123", "timestamp": "2026-01-02T10:30:01Z", "seq": 1, "type": "CONTENT_OUT", "checkpoint_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8", "data": {...}}
-{"session_id": "session123", "timestamp": "2026-01-02T10:30:02Z", "seq": 2, "type": "STATE", "data": {...}}
+{"type": "CONTENT", "timestamp": "2026-01-02T10:30:00Z", "seq": 0, "checkpoint_id": "550e8400-e29b-41d4-a716-446655440000", "data": {...}}
+{"type": "CONTENT", "timestamp": "2026-01-02T10:30:01Z", "seq": 1,"checkpoint_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8", "data": {...}}
+{"type": "SESSION_FAILED", "timestamp": "2026-01-02T10:30:02Z", "seq": 2, "data": {...}}
 ```
 
 **Event Types:**
-- `CONTENT_IN`: Incoming content from user or external source (includes `checkpoint_id`)
-- `CONTENT_OUT`: Outgoing content from agents (includes `checkpoint_id`)
-- `STATE`: Session state changes, e.g. running, completed, failed.
+- `CONTENT`: Incoming or outgoing content from user or agent (optionally includes `checkpoint_id`).
+- `SESSION_FAILED`: Session state has failed and session is not resumable.
 
 ## Building Custom Agents
 
@@ -388,7 +380,7 @@ gar register \
 
 # Trigger a session
 gar trigger \
-  --session-id session123 \
+  --session session123 \
   --input "Hello, I heard that there is an agent that can help with processing this text!"
 ```
 

@@ -112,7 +112,7 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(ctx context.Context, session
 	}
 	defer replayLog.Close()
 
-	entries, state, err := replayLog.RetrieveEntries(ctx)
+	entries, state, err := replayLog.Load(ctx, checkpointID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get event log entries: %w", err)
 	}
@@ -129,18 +129,10 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(ctx context.Context, session
 		updatedAt:      time.Now(),
 	}
 
-	targetReached := false
-	checkpointFound := false
-
 	// Replay entries to rebuild state
 	for _, entry := range entries {
-		// If we've reached the target checkpoint, stop processing
-		if targetReached {
-			break
-		}
-
 		switch entry.Type {
-		case eventlog.EventTypeContentIn, eventlog.EventTypeContentOut:
+		case eventlog.EventTypeContent:
 			content := &proto.Content{
 				Role:     getStringFromData(entry.Data, "role"),
 				Type:     getStringFromData(entry.Data, "type"),
@@ -152,21 +144,10 @@ func (sm *SessionManager) LoadSessionFromCheckpoint(ctx context.Context, session
 			// Track checkpoint ID if present
 			if entry.CheckpointID != "" {
 				session.checkpointIDs = append(session.checkpointIDs, entry.CheckpointID)
-
-				// Check if this is the target checkpoint
-				if checkpointID != "" && entry.CheckpointID == checkpointID {
-					targetReached = true
-					checkpointFound = true
-				}
 			}
 		}
 
 		session.updatedAt = entry.Timestamp
-	}
-
-	// Validate checkpoint ID if provided
-	if checkpointID != "" && !checkpointFound {
-		return nil, fmt.Errorf("checkpoint ID %s not found in session", checkpointID)
 	}
 
 	// Reopen event log for appending using the factory
@@ -227,7 +208,7 @@ func (sm *SessionManager) CloseAll() {
 
 // WriteContentIn appends an incoming content message to the session.
 // Creates a checkpoint only if checkpoint_id is provided in the content.
-func (s *Session) WriteContentIn(ctx context.Context, content *proto.Content) (string, error) {
+func (s *Session) WriteContentIn(ctx context.Context, agentID string, content *proto.Content) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -243,7 +224,7 @@ func (s *Session) WriteContentIn(ctx context.Context, content *proto.Content) (s
 		}
 	}
 
-	if err := s.eventLog.AppendContent(ctx, eventlog.EventTypeContentIn, checkpointID, content); err != nil {
+	if err := s.eventLog.AppendContent(ctx, checkpointID, agentID, content); err != nil {
 		return "", err
 	}
 
@@ -256,14 +237,14 @@ func (s *Session) WriteContentIn(ctx context.Context, content *proto.Content) (s
 }
 
 // WriteContentOut appends an outgoing content message to the session with a new checkpoint.
-func (s *Session) WriteContentOut(ctx context.Context, content *proto.Content) (string, error) {
+func (s *Session) WriteContentOut(ctx context.Context, agentID string, content *proto.Content) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	// Generate a new checkpoint UUID
 	checkpointID := uuid.New().String()
 
-	if err := s.eventLog.AppendContent(ctx, eventlog.EventTypeContentOut, checkpointID, content); err != nil {
+	if err := s.eventLog.AppendContent(ctx, checkpointID, agentID, content); err != nil {
 		return "", err
 	}
 

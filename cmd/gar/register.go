@@ -51,7 +51,7 @@ func init() {
 
 func runRegister(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
-	conn, err := connect(inspectServerAddr)
+	conn, err := connect(registerServerAddr)
 	if err != nil {
 		return err
 	}

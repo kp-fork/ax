@@ -44,7 +44,10 @@ Use --checkpoint to resume from a specific checkpoint.`,
 }
 
 func init() {
-	triggerCmd.Flags().StringVar(&triggerSessionID, "session-id", "", "Session ID (optional, generates UUID if not provided)")
+	// TODO(jbd): Enable a -headless option that can run
+	// the controller without a gar server.
+
+	triggerCmd.Flags().StringVar(&triggerSessionID, "session", "", "Session ID (optional, generates UUID if not provided)")
 	triggerCmd.Flags().StringVar(&triggerInput, "input", "", "Input message to send (required)")
 	triggerCmd.Flags().StringVar(&triggerCheckpoint, "checkpoint", "", "Resume from specific checkpoint UUID (empty for latest)")
 	triggerCmd.Flags().StringVar(&triggerServerAddr, "server", "localhost:8494", "gRPC controller server address (default: localhost:8494)")
@@ -85,7 +88,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 		cancel()
 	}()
 
-	conn, err := connect(inspectServerAddr)
+	conn, err := connect(triggerServerAddr)
 	if err != nil {
 		return err
 	}

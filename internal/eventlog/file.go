@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -103,18 +104,18 @@ func NewFileConfig(config FileConfig) (EventLog, error) {
 	return NewFileEventLog(config)
 }
 
-// Append writes an entry to the event log.
+// append writes an entry to the event log.
 // Entries are written in JSON Lines format with atomic appends.
-func (e *FileEventLog) Append(entryType EventType, checkpointID string, data map[string]any) error {
+func (e *FileEventLog) append(checkpointID string, agentID string, entryType EventType, data map[string]any) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	entry := Entry{
-		SessionID:    e.sessionID,
 		Timestamp:    time.Now(),
 		Sequence:     e.sequence,
 		Type:         entryType,
 		CheckpointID: checkpointID,
+		AgentID:      agentID,
 		Data:         data,
 	}
 
@@ -143,21 +144,22 @@ func (e *FileEventLog) Append(entryType EventType, checkpointID string, data map
 }
 
 // AppendContent writes a content message to the event log with a checkpoint UUID.
-func (e *FileEventLog) AppendContent(ctx context.Context, direction EventType, checkpointID string, content *proto.Content) error {
+func (e *FileEventLog) AppendContent(ctx context.Context, checkpointID string, agentID string, content *proto.Content) error {
 	data := map[string]any{
 		"role":     content.Role,
 		"type":     content.Type,
 		"mimetype": content.Mimetype,
 		"data":     content.Data,
 	}
-	return e.Append(direction, checkpointID, data)
+	return e.append(checkpointID, agentID, EventTypeContent, data)
 }
 
 func (e *FileEventLog) AppendState(ctx context.Context, state proto.State) error {
-	data := map[string]any{
-		"state": state,
+	switch state {
+	case proto.State_STATE_FAILED:
+		return e.append("", "", EventTypeSessionFailed, nil)
 	}
-	return e.Append(EventTypeState, "", data)
+	return errors.New("only COMPLETED and FAILED states are supported")
 }
 
 // Close closes the event log file.
@@ -185,9 +187,10 @@ func (e *FileEventLog) SessionID() string {
 	return e.sessionID
 }
 
-// RetrieveEntries reads and returns all entries from the event log file.
+// Load reads and returns all entries from the event log file.
+// If checkpointID is provided, returns entries up to and including that checkpoint.
 // Returns entries in order.
-func (e *FileEventLog) RetrieveEntries(ctx context.Context) ([]Entry, proto.State, error) {
+func (e *FileEventLog) Load(ctx context.Context, checkpointID string) ([]Entry, proto.State, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -215,6 +218,8 @@ func (e *FileEventLog) RetrieveEntries(ctx context.Context) ([]Entry, proto.Stat
 
 	lineNum := 0
 	var expectedSequence int64 = 0
+	checkpointFound := false
+
 	for scanner.Scan() {
 		lineNum++
 		line := scanner.Bytes()
@@ -230,16 +235,22 @@ func (e *FileEventLog) RetrieveEntries(ctx context.Context) ([]Entry, proto.Stat
 		}
 
 		expectedSequence++
-		if entry.Type == EventTypeState {
-			if s, ok := entry.Data["state"].(proto.State); ok {
-				state = s
-			}
-		}
 		entries = append(entries, entry)
+
+		// Check if this entry matches the target checkpoint
+		if checkpointID != "" && entry.CheckpointID == checkpointID {
+			checkpointFound = true
+			break
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return nil, 0, fmt.Errorf("error reading event log file: %w", err)
+	}
+
+	// Validate checkpoint was found if specified
+	if checkpointID != "" && !checkpointFound {
+		return nil, 0, fmt.Errorf("checkpoint ID %s not found in event log", checkpointID)
 	}
 
 	return entries, state, nil

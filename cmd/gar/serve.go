@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -58,7 +59,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	fmt.Printf("Starting GAR server at %s...\n", cfg.Server.Address)
 	c, err := newControllerFromConfig(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("error creating controller: %w", err)
@@ -74,11 +74,11 @@ func runServe(cmd *cobra.Command, args []string) error {
 
 	go func() {
 		<-sigChan
-		fmt.Println("\nReceived interrupt, shutting down...")
+		log.Println("\nReceived interrupt, shutting down...")
 		os.Exit(0)
 	}()
 
-	// Start serving
+	log.Printf("Starting GAR server at %s...\n", cfg.Server.Address)
 	if err := srv.Serve(cfg.Server.Address); err != nil {
 		return fmt.Errorf("error serving: %w", err)
 	}
@@ -115,6 +115,11 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 		if err := c.Registry().RegisterRemote(agentCfg); err != nil {
 			return nil, fmt.Errorf("failed to register remote agent %s: %w", agentCfg.ID, err)
 		}
+	}
+
+	agents := c.Registry().List()
+	if len(agents) == 0 {
+		log.Println("WARNING: No agents at startup.")
 	}
 
 	return c, nil

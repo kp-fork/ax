@@ -130,15 +130,12 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, input
 
 	// Write input content to session
 	for _, content := range inputs {
-		if _, err := sess.WriteContentIn(ctx, content); err != nil {
+		if _, err := sess.WriteContentIn(ctx, "", content); err != nil {
 			return fmt.Errorf("failed to write input content: %w", err)
 		}
 	}
 
 	if err := d.loopExecutor.Execute(ctx, sess, handler); err != nil {
-		if err := sess.SetState(ctx, proto.State_STATE_FAILED); err != nil {
-			return fmt.Errorf("failed to set session state: %w", err)
-		}
 		return fmt.Errorf("loop execution failed: %w", err)
 	}
 	return nil

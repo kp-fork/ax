@@ -36,9 +36,9 @@ var inspectCmd = &cobra.Command{
 }
 
 func init() {
-	inspectCmd.Flags().StringVar(&inspectSessionID, "session-id", "", "Session ID (required)")
+	inspectCmd.Flags().StringVar(&inspectSessionID, "session", "", "Session ID (required)")
 	inspectCmd.Flags().StringVar(&inspectServerAddr, "server", "localhost:8494", "gRPC controller server address (default: localhost:8494)")
-	inspectCmd.MarkFlagRequired("session-id")
+	inspectCmd.MarkFlagRequired("session")
 }
 
 func runInspect(cmd *cobra.Command, args []string) error {
@@ -67,7 +67,7 @@ func runInspect(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  State: %s\n", session.State)
 	fmt.Printf("  Created At: %s\n", session.CreatedAt.AsTime().Format(time.RFC3339))
 	fmt.Printf("  Updated At: %s\n", session.UpdatedAt.AsTime().Format(time.RFC3339))
-	fmt.Printf("  Checkpoints: %d\n", session.CheckpointCount)
+	fmt.Printf("  Checkpoints: %v\n", session.CheckpointIds)
 	fmt.Printf("  Active Agents: %v\n", session.ActiveAgents)
 
 	return nil

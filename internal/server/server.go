@@ -91,11 +91,11 @@ func (s *Server) GetSession(ctx context.Context, req *proto.GetSessionRequest) (
 
 	return &proto.GetSessionResponse{
 		Session: &proto.SessionInfo{
-			State:           session.State(),
-			ActiveAgents:    session.ActiveAgents(),
-			CreatedAt:       timestamppb.New(session.CreatedAt()),
-			UpdatedAt:       timestamppb.New(session.UpdatedAt()),
-			CheckpointCount: int32(len(session.CheckpointIDs())),
+			State:         session.State(),
+			ActiveAgents:  session.ActiveAgents(),
+			CreatedAt:     timestamppb.New(session.CreatedAt()),
+			UpdatedAt:     timestamppb.New(session.UpdatedAt()),
+			CheckpointIds: session.CheckpointIDs(),
 		},
 	}, nil
 }

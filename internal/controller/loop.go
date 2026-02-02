@@ -20,6 +20,7 @@ import (
 
 	"github.com/google/gar/agent"
 	"github.com/google/gar/proto"
+	"golang.org/x/sync/errgroup"
 )
 
 // Task represents a task to be executed by an agent.
@@ -39,7 +40,7 @@ type LoopExecutor struct {
 
 // PlanFunc determines the next agent task to execute.
 // It receives the current session state and returns the next task.
-type PlanFunc func(ctx context.Context, inputs []*proto.Content) (*Task, error)
+type PlanFunc func(ctx context.Context, inputs []*proto.Content) ([]*Task, error)
 
 // LoopConfig configures the loop executor.
 type LoopConfig struct {
@@ -97,26 +98,23 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, handler ag
 		default:
 		}
 
-		task, err := e.planFunc(ctx, session.History())
+		tasks, err := e.planFunc(ctx, session.History())
 		if err != nil {
 			return fmt.Errorf("planning failed: %w", err)
 		}
 
-		if task == nil {
+		if len(tasks) == 0 {
 			// No more tasks to execute; loop is complete.
 			return nil
 		}
 
-		taskOutputHandler := func(content *proto.Content) error {
-			if _, err := session.WriteContentOut(ctx, content); err != nil {
-				return fmt.Errorf("failed to write output content: %w", err)
-			}
-			if err := handler(content); err != nil {
-				return fmt.Errorf("output handler error: %w", err)
-			}
-			return nil
+		g, ctx := errgroup.WithContext(ctx)
+		for _, task := range tasks {
+			g.Go(func() error {
+				return e.runTask(ctx, session, task, handler)
+			})
 		}
-		if err := e.executeTask(ctx, session.ID(), task, taskOutputHandler); err != nil {
+		if err := g.Wait(); err != nil {
 			return err
 		}
 
@@ -125,6 +123,20 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, handler ag
 
 	// Can be resumed later with another trigger
 	return fmt.Errorf("max steps per trigger (%d) reached", e.maxSteps)
+}
+
+func (e *LoopExecutor) runTask(ctx context.Context, session *Session, task *Task, handler agent.OutputHandler) error {
+	// TODO(jbd): Log task start and task end to allow resuming dangling tasks.
+	taskOutputHandler := func(content *proto.Content) error {
+		if _, err := session.WriteContentOut(ctx, task.AgentID, content); err != nil {
+			return fmt.Errorf("failed to write output content: %w", err)
+		}
+		if err := handler(content); err != nil {
+			return fmt.Errorf("output handler error: %w", err)
+		}
+		return nil
+	}
+	return e.executeTask(ctx, session.ID(), task, taskOutputHandler)
 }
 
 // executeTask sends input to an agent and collects output.

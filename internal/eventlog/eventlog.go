@@ -27,19 +27,19 @@ import (
 type EventType string
 
 const (
-	EventTypeState      EventType = "STATE"
-	EventTypeContentIn  EventType = "CONTENT_IN"
-	EventTypeContentOut EventType = "CONTENT_OUT"
+	EventTypeContent       EventType = "CONTENT"
+	EventTypeSessionFailed EventType = "SESSION_FAILED" // cannot resume
 	// TODO(jbd): Add EventTypeCompaction.
+	// TODO(jbd): Events for agent call lifecycle.
 )
 
 // Entry represents a single entry in the event log.
 type Entry struct {
-	SessionID    string         `json:"session_id"`
+	Type         EventType      `json:"type"`
 	CheckpointID string         `json:"checkpoint_id,omitempty"` // UUID for checkpoint tracking
+	AgentID      string         `json:"agent_id,omitempty"`      // Associated agent ID, could be empty
 	Sequence     int64          `json:"seq"`                     // Monotonic sequence number
 	Timestamp    time.Time      `json:"timestamp"`
-	Type         EventType      `json:"type"`
 	Data         map[string]any `json:"data"`
 }
 
@@ -47,13 +47,14 @@ type Entry struct {
 // It provides methods for appending events, reading entries, and managing the log lifecycle.
 type EventLog interface {
 	// AppendContent appends a content message to the event log with a checkpoint UUID.
-	AppendContent(ctx context.Context, t EventType, checkpointID string, content *proto.Content) error
+	AppendContent(ctx context.Context, checkpointID string, agentID string, content *proto.Content) error
 
 	// AppendState appends a state to the event log.
 	AppendState(ctx context.Context, s proto.State) error
 
-	// RetrieveEntries returns all entries from the event log in order.
-	RetrieveEntries(ctx context.Context) ([]Entry, proto.State, error)
+	// Load returns all entries from the event log in order.
+	// If checkpointID is provided, returns entries up to and including that checkpoint.
+	Load(ctx context.Context, checkpointID string) ([]Entry, proto.State, error)
 
 	// Close closes the event log and releases any resources.
 	Close() error

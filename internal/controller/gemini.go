@@ -81,7 +81,7 @@ Guidelines:
 	}
 
 	// Return the plan function
-	return func(ctx context.Context, inputs []*proto.Content) (*Task, error) {
+	return func(ctx context.Context, inputs []*proto.Content) ([]*Task, error) {
 		// Create a context with timeout
 		ctx, cancel := context.WithTimeout(ctx, config.Timeout)
 		defer cancel()
@@ -122,10 +122,10 @@ Guidelines:
 			}
 
 			if fc := part.FunctionCall; fc != nil {
-				return &Task{
+				return []*Task{{
 					AgentID: fc.Name,
 					Inputs:  inputs,
-				}, nil
+				}}, nil
 			}
 		}
 		return nil, nil

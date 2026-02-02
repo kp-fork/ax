@@ -22,11 +22,11 @@ option go_package = "github.com/google/gar/proto";
 
 // Content represents a message with role, type, mimetype, and data fields
 message Content {
-  string role = 1;      // The role of the content (e.g., "user", "assistant", "system")
-  string type = 2;      // The type of content (e.g., "text", "image")
-  string mimetype = 3;  // MIME type of the data (e.g., "text/plain", "image/png")
-  string data = 4;      // The actual content data
-  string checkpoint_id = 5;  // Optional: Checkpoint ID for this content
+  string checkpoint_id = 1; // Optional: Checkpoint ID for this content
+  string role = 2;          // The role of the content (e.g., "user", "assistant", "system")
+  string type = 3;          // The type of content (e.g., "text", "image")
+  string mimetype = 4;      // MIME type of the data (e.g., "text/plain", "image/png")
+  string data = 5;          // The actual content data
 
   // TODO: Replace Content with Interactions Content.
 }
@@ -83,7 +83,7 @@ message GetSessionRequest {
 message SessionInfo {
   State state = 1;
   repeated string active_agents = 2;
-  int32 checkpoint_count = 3;
+  repeated string checkpoint_ids = 3;
   google.protobuf.Timestamp created_at = 4;  // Session creation time
   google.protobuf.Timestamp updated_at = 5;  // Last update time
 }
