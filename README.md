@@ -395,6 +395,7 @@ gar trigger \
 
 ## Future Enhancements
 
+- [ ] Replace Content with Interactions Content
 - [ ] Observability and trajectory collection
 - [ ] TLS support for remote agents
 - [ ] gar deploy from container
