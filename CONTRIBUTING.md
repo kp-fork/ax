@@ -54,3 +54,40 @@ make test
 ```bash
 make run-local
 ```
+
+### Creating a pull request
+
+First, clone the repo:
+
+```
+git clone git@github.com:google-gemini/gar.git
+```
+
+If you already have cloned the repo locally, make sure that
+your main branch is up to date:
+
+```
+git checkout main
+git pull -q -r origin main
+```
+
+Check a new feature branch:
+
+```
+git checkout -b my-feature
+```
+
+Make edits to files, and test them locally. Add the changes (e.g. git add .) to stage.
+Commit the changes once you staged the changes:
+
+```
+git commit -m "Describe he changes made"
+```
+
+Push the branch to the origin and open a pull request:
+
+```
+git push origin my-feature
+```
+
+Visit https://github.com/google-gemini/gar to open a pull request.
