@@ -178,8 +178,9 @@ eventlog:
 # Maximum steps per trigger
 max_steps: 50
 
-# Health check interval for agents
-health_check_interval: 30s
+health_check:
+  # Health check interval for agents
+  interval: 30s
 
 # Remote agents to register on startup
 remote_agents:

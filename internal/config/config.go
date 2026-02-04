@@ -26,12 +26,12 @@ import (
 
 // Config represents the main configuration for GAR server.
 type Config struct {
-	Server              ServerConfig        `yaml:"server"`
-	EventLog            EventLogConfig      `yaml:"eventlog"`
-	MaxSteps            int                 `yaml:"max_steps"`             // Maximum steps per trigger
-	HealthCheckInterval time.Duration       `yaml:"health_check_interval"` // Health check interval for agents
-	Planner             PlannerConfig       `yaml:"planner,omitempty"`
-	RemoteAgents        []RemoteAgentConfig `yaml:"remote_agents,omitempty"` // List of remote agents to register
+	Server       ServerConfig        `yaml:"server"`
+	EventLog     EventLogConfig      `yaml:"eventlog"`
+	MaxSteps     int                 `yaml:"max_steps"` // Maximum steps per trigger
+	HealthCheck  HealthCheckConfig   `yaml:"health_check"`
+	Planner      PlannerConfig       `yaml:"planner,omitempty"`
+	RemoteAgents []RemoteAgentConfig `yaml:"remote_agents,omitempty"` // List of remote agents to register
 }
 
 // PlannerConfig configures the planner.
@@ -49,10 +49,8 @@ type EventLogConfig struct {
 	Dir string `yaml:"dir"` // Directory for event log files
 }
 
-// ControllerConfig configures the controller behavior.
-type ControllerConfig struct {
-	MaxSteps            int           `yaml:"max_steps"`             // Maximum steps per trigger
-	HealthCheckInterval time.Duration `yaml:"health_check_interval"` // Health check interval for agents
+type HealthCheckConfig struct {
+	Interval time.Duration `yaml:"interval"` // Interval between health checks
 }
 
 // GeminiPlannerConfig configures the Gemini-based planner.
@@ -118,8 +116,9 @@ func (c *Config) setDefaults() {
 	if c.MaxSteps == 0 {
 		c.MaxSteps = 100
 	}
-	if c.HealthCheckInterval == 0 {
-		c.HealthCheckInterval = 30 * time.Second
+
+	if c.HealthCheck.Interval == 0 {
+		c.HealthCheck.Interval = 30 * time.Second
 	}
 }
 
@@ -134,8 +133,8 @@ func (c *Config) Validate() error {
 	if c.MaxSteps <= 0 {
 		return fmt.Errorf("max_steps must be positive")
 	}
-	if c.HealthCheckInterval <= 0 {
-		return fmt.Errorf("health_check_interval must be positive")
+	if c.HealthCheck.Interval <= 0 {
+		return fmt.Errorf("health_check.interval must be positive")
 	}
 	return nil
 }

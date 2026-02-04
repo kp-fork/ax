@@ -25,8 +25,9 @@ eventlog:
 # Maximum number of steps per trigger
 max_steps: 50
 
-# Health check interval for agents (e.g., "30s", "1m")
-health_check_interval: 30s
+health_check:
+  # Health check interval for agents (e.g., "30s", "1m")
+  interval: 30s
 
 # Planner configuration (optional)
 # planner:
