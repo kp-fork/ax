@@ -203,7 +203,7 @@ gar serve --config my-config.yaml
 
 ### Checkpoints
 
-Checkpoints provide a mechanism to save and resume session state at specific points. Every content event (`CONTENT`) can create a checkpoint with a unique UUID.
+Checkpoints provide a mechanism to save and resume session state at specific points. Every content event can create a checkpoint with a unique UUID.
 
 **Usage Examples:**
 
