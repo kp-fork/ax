@@ -71,10 +71,12 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 	// Create input content
 	inputs := []*proto.Content{
 		{
-			Role:     "user",
-			Type:     "text",
-			Mimetype: "text/plain",
-			Data:     triggerInput,
+			Role: "user",
+			Content: &proto.Content_Text{
+				Text: &proto.TextContent{
+					Text: triggerInput,
+				},
+			},
 		},
 	}
 
@@ -122,9 +124,7 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 		}
 
 		if resp.Outputs != nil {
-			for _, output := range resp.Outputs {
-				fmt.Printf("[%s] %s\n", resp.State, output.Data)
-			}
+			printResponse(resp.State, resp.Outputs)
 		}
 	}
 	return nil
@@ -149,12 +149,10 @@ func runHeadless(ctx context.Context, sessionID string, inputs []*proto.Content)
 	defer c.Close()
 
 	// TODO(lhuan): Allow a default local agent to be registered in headless mode.
-	
+
 	// Create output handler to print streaming results to stdout
 	outputHandler := agent.OutputHandler(func(resp *proto.ProcessResponse) error {
-		for _, content := range resp.Contents {
-			fmt.Printf("[RUNNING] %s\n", content.Data)
-		}
+		printResponse(proto.State_STATE_RUNNING, resp.Contents)
 		return nil
 	})
 
@@ -169,4 +167,15 @@ func runHeadless(ctx context.Context, sessionID string, inputs []*proto.Content)
 
 	fmt.Println("[COMPLETED]")
 	return nil
+}
+
+func printResponse(state proto.State, outputs []*proto.Content) {
+	for _, content := range outputs {
+		switch c := content.Content.(type) {
+		case *proto.Content_Text:
+			fmt.Printf("[%s] %s\n", state, c.Text.Text)
+		default:
+			fmt.Printf("[%s] Unknown content type: %T\n", state, c)
+		}
+	}
 }

@@ -170,16 +170,20 @@ func protoToContents(inputs []*proto.Content) []*genai.Content {
 		if role != "user" {
 			role = "model"
 		}
-		contents = append(contents, &genai.Content{
-			Role: role,
-			Parts: []*genai.Part{
-				{
-					Text: msg.Data,
-					// TODO(jbd): Handle other content types (e.g., images, files)
-				},
-			},
-		})
-	}
 
+		switch m := msg.Content.(type) {
+		case *proto.Content_Text:
+			contents = append(contents, &genai.Content{
+				Role: role,
+				Parts: []*genai.Part{
+					{
+						Text: m.Text.Text,
+					},
+				},
+			})
+			// TODO(jbd): Handle other content types (e.g., images, files)
+
+		}
+	}
 	return contents
 }

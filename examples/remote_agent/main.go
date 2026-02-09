@@ -50,10 +50,12 @@ func (s *server) Process(stream proto.AgentService_ProcessServer) error {
 		var contents []*proto.Content
 		for _, input := range incoming.Contents {
 			contents = append(contents, &proto.Content{
-				Role:     "assistant",
-				Type:     input.Type,
-				Mimetype: input.Mimetype,
-				Data:     strings.ToUpper(input.Data),
+				Role: "assistant",
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: strings.ToUpper(input.GetText().Text),
+					},
+				},
 			})
 		}
 		if err := stream.Send(&proto.ProcessResponse{

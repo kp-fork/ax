@@ -72,10 +72,12 @@ func main() {
 
 	inputs := []*proto.Content{
 		{
-			Role:     "user",
-			Type:     "text",
-			Mimetype: "text/plain",
-			Data:     input,
+			Role: "user",
+			Content: &proto.Content_Text{
+				Text: &proto.TextContent{
+					Text: input,
+				},
+			},
 		},
 	}
 
@@ -88,7 +90,7 @@ func main() {
 
 	handler := agent.OutputHandler(func(outgoing *proto.ProcessResponse) error {
 		for _, c := range outgoing.Contents {
-			fmt.Printf("Output received: %s\n", c.Data)
+			fmt.Printf("Output received: %s\n", c.GetText().Text)
 		}
 		return nil
 	})
@@ -99,7 +101,6 @@ func main() {
 	}
 }
 
-// createEchoAgent creates a simple echo agent that repeats input with a prefix.
 func createEchoAgent() (*agent.LocalAgent, error) {
 	processFunc := func(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler agent.OutputHandler) error {
 		// Process each input and call handler with response
@@ -107,10 +108,12 @@ func createEchoAgent() (*agent.LocalAgent, error) {
 			if err := handler(&proto.ProcessResponse{
 				Contents: []*proto.Content{
 					{
-						Role:     "assistant",
-						Type:     content.Type,
-						Mimetype: content.Mimetype,
-						Data:     strings.ToUpper(content.Data),
+						Role: "assistant",
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{
+								Text: strings.ToUpper(content.GetText().Text),
+							},
+						},
 					},
 				},
 			}); err != nil {
