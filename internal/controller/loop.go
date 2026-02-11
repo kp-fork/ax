@@ -35,19 +35,15 @@ type LoopExecutor struct {
 	registry       *Registry
 	sessionManager *SessionManager
 	maxSteps       int
-	planFunc       PlanFunc
+	planner        agent.Agent
 }
-
-// PlanFunc determines the next agent task to execute.
-// It receives the current session state and returns the next task.
-type PlanFunc func(ctx context.Context, inputs []*proto.Content) ([]*Task, error)
 
 // LoopConfig configures the loop executor.
 type LoopConfig struct {
 	Registry       *Registry
 	SessionManager *SessionManager
 	MaxSteps       int
-	PlanFunc       PlanFunc
+	Planner        agent.Agent
 }
 
 // NewLoopExecutor creates a new loop executor.
@@ -62,15 +58,15 @@ func NewLoopExecutor(ctx context.Context, config LoopConfig) (*LoopExecutor, err
 		config.MaxSteps = 10 // Default max steps per trigger
 	}
 	// Plan function is required
-	if config.PlanFunc == nil {
-		return nil, fmt.Errorf("plan function is required")
+	if config.Planner == nil {
+		return nil, fmt.Errorf("planner is required")
 	}
 
 	return &LoopExecutor{
 		registry:       config.Registry,
 		sessionManager: config.SessionManager,
 		maxSteps:       config.MaxSteps,
-		planFunc:       config.PlanFunc,
+		planner:        config.Planner,
 	}, nil
 }
 
@@ -104,20 +100,21 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, incoming *
 		default:
 		}
 
-		tasks, err := e.planFunc(ctx, session.History())
+		history := session.History()
+		handoffs, err := e.plan(ctx, session.ID(), history)
 		if err != nil {
 			return fmt.Errorf("planning failed: %w", err)
 		}
 
-		if len(tasks) == 0 {
-			// No more tasks to execute; loop is complete.
+		if len(handoffs) == 0 {
+			// No more agent handoffs to execute; loop is complete.
 			return nil
 		}
 
 		g, ctx := errgroup.WithContext(ctx)
-		for _, task := range tasks {
+		for _, agentID := range handoffs {
 			g.Go(func() error {
-				return e.runTask(ctx, session, task, handler)
+				return e.runHandoff(ctx, session, history, agentID, handler)
 			})
 		}
 		if err := g.Wait(); err != nil {
@@ -131,16 +128,30 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, incoming *
 	return fmt.Errorf("max steps per trigger (%d) reached", e.maxSteps)
 }
 
-func (e *LoopExecutor) runTask(ctx context.Context, session *Session, task *Task, handler agent.OutputHandler) error {
+func (e *LoopExecutor) plan(ctx context.Context, sessionID string, history []*proto.Content) ([]string, error) {
+	var handoffs []string
+	handler := func(outgoing *proto.ProcessResponse) error {
+		handoffs = append(handoffs, outgoing.AgentHandoff)
+		return nil
+	}
+	if err := e.planner.Process(ctx, sessionID, &proto.ProcessRequest{
+		Contents: history,
+	}, handler); err != nil {
+		return nil, fmt.Errorf("planner failed to process: %w", err)
+	}
+	return handoffs, nil
+}
+
+func (e *LoopExecutor) runHandoff(ctx context.Context, session *Session, inputs []*proto.Content, agentID string, handler agent.OutputHandler) error {
 	// TODO(jbd): Log task start and task end to allow resuming dangling tasks.
 	taskOutputHandler := func(outgoing *proto.ProcessResponse) error {
-		if err := session.WriteContent(ctx, task.AgentID, outgoing.CheckpointId, outgoing.Contents); err != nil {
+		if err := session.WriteContent(ctx, agentID, outgoing.CheckpointId, outgoing.Contents); err != nil {
 			return fmt.Errorf("failed to write output content: %w", err)
 		}
 		return handler(outgoing)
 	}
 
-	ag, err := e.registry.Get(task.AgentID)
+	ag, err := e.registry.Get(agentID)
 	if err != nil {
 		return fmt.Errorf("failed to get agent: %w", err)
 	}
@@ -148,7 +159,7 @@ func (e *LoopExecutor) runTask(ctx context.Context, session *Session, task *Task
 	// TODO(lhuan): Handle scenario where agent is marked healthy (optimistic) but fails to respond (e.g. still starting up).
 	// Return "agent internal error, try again later" to the user.
 	if err := ag.Process(ctx, session.ID(), &proto.ProcessRequest{
-		Contents: task.Inputs,
+		Contents: inputs,
 	}, taskOutputHandler); err != nil {
 		return fmt.Errorf("agent process failed: %w", err)
 	}

@@ -32,19 +32,19 @@ import (
 type Controller struct {
 	inFlightSessionsMu sync.Mutex
 	inFlightSessions   map[string]struct{}
-	sessionManager *SessionManager
-	registry       *Registry
-	loopExecutor   *LoopExecutor
+	sessionManager     *SessionManager
+	registry           *Registry
+	loopExecutor       *LoopExecutor
 }
 
 // PlannerFactory is a function that creates a PlanFunc given a Registry.
-type PlannerFactory func(ctx context.Context, r *Registry) (PlanFunc, error)
+type PlannerFactory func(ctx context.Context, r *Registry) (agent.Agent, error)
 
 // Config configures the controller.
 type Config struct {
 	EventLogFactory eventlog.EventLogFactory
 	PlannerFactory  PlannerFactory
-	// TODO(jbd): Add CompactionFunc.
+	// TODO(jbd): Add CompacterFactory.
 	HealthCheck config.HealthCheckConfig
 	MaxSteps    int
 }
@@ -76,11 +76,12 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 	// Determine plan function
 	// If no planner factory is provided, use the default Gemini planner.
 	if config.PlannerFactory == nil {
-		config.PlannerFactory = func(ctx context.Context, r *Registry) (PlanFunc, error) {
-			return NewGeminiPlanFunc(ctx, r, GeminiPlannerConfig{})
+		config.PlannerFactory = func(ctx context.Context, r *Registry) (agent.Agent, error) {
+			return NewGeminiPlanner(ctx, r, GeminiPlannerConfig{})
 		}
 	}
-	planFunc, err := config.PlannerFactory(ctx, registry)
+
+	planner, err := config.PlannerFactory(ctx, registry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create planner from factory: %w", err)
 	}
@@ -90,7 +91,7 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 		Registry:       registry,
 		SessionManager: sessionManager,
 		MaxSteps:       config.MaxSteps,
-		PlanFunc:       planFunc,
+		Planner:        planner,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create loop executor: %w", err)

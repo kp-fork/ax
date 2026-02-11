@@ -20,6 +20,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/gar/agent"
 	"github.com/google/gar/proto"
 	"google.golang.org/genai"
 )
@@ -33,11 +34,7 @@ type GeminiPlannerConfig struct {
 	SystemPrompt string        // Custom system prompt (optional)
 }
 
-// NewGeminiPlanFunc creates a planning function that uses Gemini for intelligent agent selection.
-// It converts available agents into function declarations and lets Gemini decide which agent
-// to invoke based on the session context and agent capabilities.
-func NewGeminiPlanFunc(ctx context.Context, registry *Registry, config GeminiPlannerConfig) (PlanFunc, error) {
-	// Set defaults
+func NewGeminiPlanner(ctx context.Context, registry *Registry, config GeminiPlannerConfig) (agent.Agent, error) {
 	if config.Timeout == 0 {
 		config.Timeout = 60 * time.Second
 	}
@@ -80,56 +77,17 @@ Guidelines:
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
-	// Return the plan function
-	return func(ctx context.Context, inputs []*proto.Content) ([]*Task, error) {
-		// Create a context with timeout
-		ctx, cancel := context.WithTimeout(ctx, config.Timeout)
-		defer cancel()
-
-		// Convert agents to Gemini function declarations
-		tools, err := agentsToTools(registry)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert agents to tools: %w", err)
-		}
-
-		// Convert session to conversation history
-		contents := protoToContents(inputs)
-		resp, err := client.Models.GenerateContent(ctx, config.Model, contents, &genai.GenerateContentConfig{
-			Tools:             tools,
-			SystemInstruction: genai.Text(config.SystemPrompt)[0],
-			MaxOutputTokens:   config.MaxTokens,
-			CandidateCount:    1,
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate in planner: %w", err)
-		}
-		if len(resp.Candidates) == 0 {
-			return nil, fmt.Errorf("no candidates from Gemini in planner")
-		}
-		candidate := resp.Candidates[0]
-		if candidate.Content == nil || candidate.Content.Parts == nil {
-			if candidate.FinishReason == genai.FinishReasonStop {
-				return nil, nil // No more tasks
-			}
-			return nil, fmt.Errorf("no content in candidates from Gemini")
-		}
-
-		// Look for function calls in the response
-		for _, part := range candidate.Content.Parts {
-			if part == nil {
-				continue
-			}
-
-			if fc := part.FunctionCall; fc != nil {
-				return []*Task{{
-					AgentID: fc.Name,
-					Inputs:  inputs,
-				}}, nil
-			}
-		}
-		return nil, nil
+	return &geminiPlannerAgent{
+		client:   client,
+		registry: registry,
+		config:   config,
 	}, nil
+}
+
+type geminiPlannerAgent struct {
+	client   *genai.Client
+	registry *Registry
+	config   GeminiPlannerConfig
 }
 
 // agentsToTools converts registry agents to Gemini function declarations.
@@ -158,6 +116,64 @@ func agentsToTools(registry *Registry) ([]*genai.Tool, error) {
 		})
 	}
 	return tools, nil
+}
+
+func (p *geminiPlannerAgent) Process(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler agent.OutputHandler) error {
+	// Convert agents to Gemini function declarations
+	tools, err := agentsToTools(p.registry)
+	if err != nil {
+		return fmt.Errorf("failed to convert agents to tools: %w", err)
+	}
+
+	// Convert session to conversation history
+	contents := protoToContents(incoming.Contents)
+	resp, err := p.client.Models.GenerateContent(ctx, p.config.Model, contents, &genai.GenerateContentConfig{
+		Tools:             tools,
+		SystemInstruction: genai.Text(p.config.SystemPrompt)[0],
+		MaxOutputTokens:   p.config.MaxTokens,
+		CandidateCount:    1,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to generate in planner: %w", err)
+	}
+	if len(resp.Candidates) == 0 {
+		return fmt.Errorf("no candidates from Gemini in planner")
+	}
+	candidate := resp.Candidates[0]
+	if candidate.Content == nil || candidate.Content.Parts == nil {
+		if candidate.FinishReason == genai.FinishReasonStop {
+			return nil // No more tasks
+		}
+		return fmt.Errorf("no content in candidates from Gemini")
+	}
+
+	// Look for function calls in the response
+	for _, part := range candidate.Content.Parts {
+		if part == nil {
+			continue
+		}
+
+		if fc := part.FunctionCall; fc != nil {
+			if err := handler(&proto.ProcessResponse{
+				AgentHandoff: fc.Name,
+			}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// HealthCheck checks if the agent is healthy and responsive.
+// Returns an error if the agent is unhealthy or unreachable.
+func (p *geminiPlannerAgent) HealthCheck(ctx context.Context) error {
+	return nil // always healthy
+}
+
+// Close gracefully shuts down the agent and releases resources.
+func (p *geminiPlannerAgent) Close() error {
+	return nil
 }
 
 // protoToContents converts session message history to Gemini conversation format.

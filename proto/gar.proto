@@ -22,14 +22,13 @@ option go_package = "github.com/google/gar/proto";
 
 message ProcessRequest {
   string checkpoint_id = 1;
-
   repeated Content contents = 2;
 }
 
 message ProcessResponse {
   string checkpoint_id = 1;
-
   repeated Content contents = 2;
+  string agent_handoff = 3;
 }
 
 message TextContent {
