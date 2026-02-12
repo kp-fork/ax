@@ -242,7 +242,6 @@ gar trigger --session session123 \
   --input "Try different approach"
 ```
 
-
 ### Event Log Format
 
 Event logs use the `Event` message available in the protobuf.
@@ -251,86 +250,13 @@ Event logs use the `Event` message available in the protobuf.
 
 ### Local Agent
 
-```go
-import (
-    "context"
-    "github.com/google/gar/agent"
-    "github.com/google/gar/proto"
-)
-
-// Define your process function using callback handler
-processFunc := func(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler agent.OutputHandler) error {
-    for _, content := range incoming.Contents {
-        output := &proto.Content{
-            Role:     "assistant",
-            Type:     "text",
-            Mimetype: "text/plain",
-            Data:     "Your response: " + content.Data,
-        }
-        if err := handler(&proto.ProcessResponse{Contents: []*proto.Content{output}}); err != nil {
-            return err
-        }
-    }
-    return nil
-}
-
-// Define health check function (optional)
-healthCheckFunc := func(ctx context.Context) error {
-    // Return nil if healthy, error otherwise
-    return nil
-}
-
-// Create the agent
-myAgent, err := agent.NewLocalAgent(agent.LocalAgentConfig{
-    ProcessFunc:     processFunc,
-    HealthCheckFunc: healthCheckFunc,     // optional
-})
-```
+See `examples/local_agent/main.go` for a complete implementation.
 
 ### Remote Agent
 
 Remote agents run as gRPC servers implementing the `AgentService` interface defined in `proto/gar.proto`. The gar controller triggers remote agents by calling their `Process` RPC with bidirectional streaming.
 
-```go
-type server struct {
-    proto.UnimplementedAgentServiceServer
-}
-
-// Process handles bidirectional streaming - gar controller calls this RPC
-func (s *server) Process(stream proto.AgentService_ProcessServer) error {
-    for {
-        // Receive input content from gar controller
-        content, err := stream.Recv()
-        if err == io.EOF {
-            return nil
-        }
-        if err != nil {
-            return err
-        }
-
-        // Process the content
-        output := &proto.Content{
-            Role:     "assistant",
-            Type:     "text",
-            Mimetype: "text/plain",
-            Data:     "Processed: " + content.Data,
-        }
-
-        // Send response back to gar controller
-        if err := stream.Send(&proto.ProcessResponse{Contents: []*proto.Content{output}}); err != nil {
-            return err
-        }
-    }
-}
-
-func (s *server) HealthCheck(ctx context.Context, req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
-    // Return health status for gar controller health monitoring
-    return &proto.HealthCheckResponse{
-        Healthy: true,
-        Message: "Agent is healthy",
-    }, nil
-}
-```
+See `examples/remote_agent/main.go` for a complete implementation.
 
 **Workflow:**
 1. Remote agent starts as gRPC server on a port (e.g., :50051)
@@ -353,33 +279,7 @@ pip install grpcio grpcio-tools
 python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. proto/gar.proto
 ```
 
-Then implement your agent using the framework:
-
-```python
-from gar import Agent
-import proto.gar_pb2 as pb2
-
-def process(session_id, inputs):
-    """Process incoming content list and yield responses"""
-    for content in inputs:
-        yield pb2.Content(
-            role="assistant",
-            type="text",
-            mimetype="text/plain",
-            data=f"Python processed: {content.data.upper()}"
-        )
-
-def health_check():
-    """Health check function that always returns healthy"""
-    return True, "OK", {}
-
-# Create and start the agent
-agent = Agent(
-    process_func=process,
-    health_check_func=health_check
-)
-agent.serve(port=50051)
-```
+See `examples/python_agent/agent.py` for a complete implementation.
 
 **Register and use:**
 ```bash
