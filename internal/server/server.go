@@ -90,13 +90,13 @@ func (s *Server) TriggerFromCheckpoint(ctx context.Context, sourceSessionID, che
 		})
 	})
 
-    // Fork session
-    if err := s.controller.ForkSession(ctx, sourceSessionID, checkpointID, newSessionID); err != nil {
-        return fmt.Errorf("failed to prepare session from checkpoint: %w", err)
-    }
+	// Fork session
+	if err := s.controller.ForkSession(ctx, sourceSessionID, checkpointID, newSessionID); err != nil {
+		return fmt.Errorf("failed to prepare session from checkpoint: %w", err)
+	}
 
-    // Trigger new session
-    return s.controller.TriggerSession(ctx, newSessionID, incoming, outputHandler)
+	// Trigger new session
+	return s.controller.TriggerSession(ctx, newSessionID, incoming, outputHandler)
 }
 
 func (s *Server) ForkSession(ctx context.Context, req *proto.ForkSessionRequest) (*proto.ForkSessionResponse, error) {
@@ -106,27 +106,6 @@ func (s *Server) ForkSession(ctx context.Context, req *proto.ForkSessionRequest)
 
 	return &proto.ForkSessionResponse{
 		NewSessionId: req.DestSessionId,
-	}, nil
-}
-
-// GetSession retrieves session details.
-func (s *Server) GetSession(ctx context.Context, req *proto.GetSessionRequest) (*proto.GetSessionResponse, error) {
-	if req.SessionId == "" {
-		return nil, fmt.Errorf("session_id is required")
-	}
-
-	session, err := s.controller.LoadSession(ctx, req.SessionId)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO(jbd): Populate CreatedAt and UpdatedAt from event log.
-	return &proto.GetSessionResponse{
-		Session: &proto.SessionInfo{
-			State:         session.State(),
-			CheckpointIds: session.CheckpointIDs(),
-			ActiveAgents:  session.WaitingAgents(),
-		},
 	}, nil
 }
 
