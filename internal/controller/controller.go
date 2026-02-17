@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -38,21 +39,31 @@ type Controller struct {
 }
 
 // PlannerBuilder is a function that creates a PlanFunc given a Registry.
-type PlannerBuilder func(ctx context.Context, r *Registry) (agent.Agent, error)
+type PlannerBuilder func(ctx context.Context, r *Registry, h ApprovalHandler) (agent.Agent, error)
+
+// ApprovalHandler is the handler function triggered if an explicit
+// user approval is required to continue the controller. For example, it's triggered
+// before executing commands.
+type ApprovalHandler func(question string) bool
 
 // Config configures the controller.
 type Config struct {
 	EventLogBuilder eventlog.EventLogBuilder
 	PlannerBuilder  PlannerBuilder
 	// TODO(jbd): Add CompacterBuilder.
-	HealthCheck config.HealthCheckConfig
-	MaxSteps    int
+	HealthCheck     config.HealthCheckConfig
+	ApprovalHandler ApprovalHandler
+	MaxSteps        int
 }
 
 // New creates a new controller instance.
 func New(ctx context.Context, config Config) (*Controller, error) {
 	if config.MaxSteps == 0 {
 		config.MaxSteps = 5
+	}
+
+	if config.ApprovalHandler == nil {
+		return nil, errors.New("approval handler is required")
 	}
 
 	if config.EventLogBuilder == nil {
@@ -76,12 +87,12 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 	// Determine plan function
 	// If no planner builder is provided, use the default Gemini planner.
 	if config.PlannerBuilder == nil {
-		config.PlannerBuilder = func(ctx context.Context, r *Registry) (agent.Agent, error) {
-			return NewGeminiPlanner(ctx, r, GeminiPlannerConfig{})
+		config.PlannerBuilder = func(ctx context.Context, r *Registry, h ApprovalHandler) (agent.Agent, error) {
+			return NewGeminiPlanner(ctx, r, h, GeminiPlannerConfig{})
 		}
 	}
 
-	planner, err := config.PlannerBuilder(ctx, registry)
+	planner, err := config.PlannerBuilder(ctx, registry, config.ApprovalHandler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create planner from builder: %w", err)
 	}
@@ -132,7 +143,10 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, incom
 
 	// Check if session already exists
 	sess, err := d.sessionManager.LoadSession(ctx, sessionID)
-	if err == nil && sess == nil {
+	if err != nil {
+		return fmt.Errorf("failed to load session: %w", err)
+	}
+	if sess == nil {
 		// Session doesn't exist - create new session
 		// Checkpoint ID is ignored for new sessions
 		sess, err = d.sessionManager.NewSession(sessionID)

@@ -25,6 +25,12 @@ Built-in consistency and resumability features:
 └────────────────────────┘                 └──────────────┘
 ```
 
+As agents move from simple interactions to "autonomous workers," most developers
+will need what GAR provides: a way to manage state, ensure reliability, and audit
+the process through a structured event log. It is a "runtime" in the same way 
+Kubernetes is a runtime for containers. GAR provides the plumbing so developers
+can focus on the logic.
+
 ## Installation
 
 Install the gar CLI directly from the repository:
@@ -45,18 +51,32 @@ You should see the gar CLI usage information.
 
 ## Quick Start
 
-### 1. Run Local Agent Example
+### 1. Run headless
+
+The CLI provides an easy way to trigger a session by using the
+agents and built-in tools already linked into the GAR binary.
 
 ```bash
-# Run the local agent example by linking the local agent with controller.
-go run examples/local_agent/main.go
+# Using default gar.yaml
+gar gar trigger --headless --input "Can you list me this directory?"
+
+# Using a custom configuration
+gar gar trigger --headless --input "Can you list me this directory?" --config my-config.yaml
+
+```
+
+You can continue a session any time:
+
+```bash
+gar trigger --headless --session session123 --input "Show me the contents of README.md"
 ```
 
 ### 2. Run Remote Agent with GAR Server
 
+Most developers want to register their custom remote agents.
+
 This example demonstrates how the GAR server triggers remote agents through the `AgentService.Process` RPC. You can run this in two ways:
 
-#### [Option A] Client-Server Mode
 This is the standard way to run GAR, separating the controller from the trigger client.
 
 **Terminal 1** - Start the remote agent server:
@@ -83,28 +103,8 @@ gar register \
 # Trigger a session - gar will coordinate the remote agent via Process RPC
 gar trigger \
     --session session123 \
-    --input "Hello remote agent"
+    --input "Hello, can you uppercase what I just said?"
 ```
-
-#### [Option B] Headless Mode (Simplified)
-Run everything in a single command. The trigger starts its own internal controller.
-
-**Terminal 1** - Start the remote agent server:
-```bash
-go run examples/remote_agent/main.go
-```
-(Same as Option A, the agent must be running to receive requests)
-
-**Terminal 2** - Trigger directly:
-```bash
-# Using default gar.yaml
-gar trigger --headless --input "Hello from headless mode"
-
-# Using a custom configuration
-gar trigger --headless --input "Hello" --config my-config.yaml
-
-```
-The `trigger` command starts its own internal controller, reads the specified configuration file (default: `gar.yaml`) to discover agents, and executes the session locally.
 
 ## Usage
 
@@ -118,7 +118,9 @@ The `gar` command provides several subcommands:
 gar trigger \
     --input <text> \
     [--session <id>] \
-    [--server <address>]
+    [--server <address>] \
+    [--headless] \
+    [--config <file>]
 ```
 
 Triggers a new agentic loop session or automatically resumes an existing one. If the session ID already exists, the session will be resumed from its last state with the new input.

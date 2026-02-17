@@ -18,12 +18,17 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/google/gar/agent"
 	"github.com/google/gar/proto"
 	"google.golang.org/genai"
 )
+
+const fsToolName = "filesystem"
 
 // GeminiPlannerConfig configures the Gemini-based planner.
 type GeminiPlannerConfig struct {
@@ -34,7 +39,7 @@ type GeminiPlannerConfig struct {
 	SystemPrompt string        // Custom system prompt (optional)
 }
 
-func NewGeminiPlanner(ctx context.Context, registry *Registry, config GeminiPlannerConfig) (agent.Agent, error) {
+func NewGeminiPlanner(ctx context.Context, registry *Registry, h ApprovalHandler, config GeminiPlannerConfig) (agent.Agent, error) {
 	if config.Timeout == 0 {
 		config.Timeout = 60 * time.Second
 	}
@@ -53,21 +58,22 @@ func NewGeminiPlanner(ctx context.Context, registry *Registry, config GeminiPlan
 
 	// Default system prompt
 	if config.SystemPrompt == "" {
-		config.SystemPrompt = `You are an intelligent agent orchestrator. Your role is to analyze the conversation history and user requests, then select the most appropriate agent to handle the task.
+		config.SystemPrompt = `You are an intelligent orchestrator. Your role is to analyze the conversation history and user requests, then select the most appropriate agent to handle the task.
 
-Available agents have been provided to you as function tools. Each agent has:
+Available tools have been provided to you as function tools. Each agent has:
 - A unique ID
 - A description of its capabilities
 
 Your job is to:
 1. Analyze the current conversation context and understand what needs to be done
-2. Select the best agent for the task by calling the appropriate function
+2. Select the best tool for the task by calling the appropriate function
 3. If enough work is done, stop to indicate completion
 
 Guidelines:
-- Choose agents based on their capabilities and the user's needs
-- If no suitable agent exists, stop.
-- Keep the conversation context in mind when selecting agents`
+- Choose tools based on their capabilities and the user's needs
+- If no suitable tool exists, stop.
+- Keep the conversation context in mind when selecting tools
+- It's valid not to choose a tool`
 	}
 
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
@@ -79,6 +85,7 @@ Guidelines:
 
 	return &geminiPlannerAgent{
 		client:   client,
+		fsTool:   newFilesystemTool(h),
 		registry: registry,
 		config:   config,
 	}, nil
@@ -86,16 +93,14 @@ Guidelines:
 
 type geminiPlannerAgent struct {
 	client   *genai.Client
+	fsTool   *filesystemTool
 	registry *Registry
 	config   GeminiPlannerConfig
 }
 
 // agentsToTools converts registry agents to Gemini function declarations.
-func agentsToTools(registry *Registry) ([]*genai.Tool, error) {
+func agentsToTools(fsTool *filesystemTool, registry *Registry) ([]*genai.Tool, error) {
 	healthyAgents := registry.ListHealthy()
-	if len(healthyAgents) == 0 {
-		return nil, fmt.Errorf("no healthy agents available")
-	}
 
 	var tools []*genai.Tool
 	// TODO(lhuan): Check if agentsToTools returns an error or empty list and return a friendly "no agent available, try later" error.
@@ -115,12 +120,13 @@ func agentsToTools(registry *Registry) ([]*genai.Tool, error) {
 			FunctionDeclarations: []*genai.FunctionDeclaration{funcDecl},
 		})
 	}
+	tools = append(tools, fsTool.funcDecl())
 	return tools, nil
 }
 
 func (p *geminiPlannerAgent) Process(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler agent.OutputHandler) error {
 	// Convert agents to Gemini function declarations
-	tools, err := agentsToTools(p.registry)
+	tools, err := agentsToTools(p.fsTool, p.registry)
 	if err != nil {
 		return fmt.Errorf("failed to convert agents to tools: %w", err)
 	}
@@ -128,7 +134,12 @@ func (p *geminiPlannerAgent) Process(ctx context.Context, sessionID string, inco
 	// Convert session to conversation history
 	contents := protoToContents(incoming.Contents)
 	resp, err := p.client.Models.GenerateContent(ctx, p.config.Model, contents, &genai.GenerateContentConfig{
-		Tools:             tools,
+		Tools: tools,
+		ToolConfig: &genai.ToolConfig{
+			FunctionCallingConfig: &genai.FunctionCallingConfig{
+				Mode: genai.FunctionCallingConfigModeAuto,
+			},
+		},
 		SystemInstruction: genai.Text(p.config.SystemPrompt)[0],
 		MaxOutputTokens:   p.config.MaxTokens,
 		CandidateCount:    1,
@@ -154,11 +165,37 @@ func (p *geminiPlannerAgent) Process(ctx context.Context, sessionID string, inco
 			continue
 		}
 
-		if fc := part.FunctionCall; fc != nil {
+		if part.Text != "" {
+			// Text response
 			if err := handler(&proto.ProcessResponse{
-				AgentHandoff: fc.Name,
+				Contents: []*proto.Content{{
+					Content: &proto.Content_Text{
+						Text: &proto.TextContent{Text: part.Text},
+					},
+				}},
 			}); err != nil {
 				return err
+			}
+		}
+
+		if fc := part.FunctionCall; fc != nil {
+			switch fc.Name {
+			case fsToolName:
+				output, err := p.fsTool.executeShellCommand(fc.Args)
+				if err != nil {
+					return err
+				}
+				return handler(&proto.ProcessResponse{
+					Contents: []*proto.Content{{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{Text: output},
+						},
+					}},
+				})
+			default:
+				return handler(&proto.ProcessResponse{
+					AgentHandoff: fc.Name,
+				})
 			}
 		}
 	}
@@ -198,8 +235,79 @@ func protoToContents(inputs []*proto.Content) []*genai.Content {
 				},
 			})
 			// TODO(jbd): Handle other content types (e.g., images, files)
-
 		}
 	}
 	return contents
+}
+
+func newFilesystemTool(h ApprovalHandler) *filesystemTool {
+	return &filesystemTool{
+		approval: h,
+	}
+}
+
+// filesystemTool is the built-in tool that allows
+// planner to operate file system operations.
+type filesystemTool struct {
+	approval ApprovalHandler
+}
+
+func (f *filesystemTool) funcDecl() *genai.Tool {
+	osInfo := fmt.Sprintf("User's Operating System: %s (%s)", runtime.GOOS, runtime.GOARCH)
+	description := fmt.Sprintf("Execute a shell command for file system operations. %s. Generate commands appropriate for this OS. Supports listing directories, reading files, writing files, and other file operations. Returns the command output or error. Never produce code, only use existing command line programs available in the system.", osInfo)
+
+	return &genai.Tool{
+		FunctionDeclarations: []*genai.FunctionDeclaration{
+			{
+				Name:        fsToolName,
+				Description: description,
+				Parameters: &genai.Schema{
+					Type: genai.TypeObject,
+					Properties: map[string]*genai.Schema{
+						"command": {
+							Type:        genai.TypeString,
+							Description: "The shell command to execute (e.g., 'ls -la' for Unix/macOS, 'dir' for Windows, 'cat file.txt', etc.)",
+						},
+					},
+					Required: []string{"command"},
+				},
+			},
+		},
+	}
+}
+
+func (f *filesystemTool) executeShellCommand(args map[string]any) (string, error) {
+	command, ok := args["command"].(string)
+	if !ok {
+		return "", fmt.Errorf("command parameter missing or invalid")
+	}
+
+	// Request approval if callback is set
+	if f.approval != nil {
+		approved := f.approval(fmt.Sprintf("Can I execute %q?", command))
+		if !approved {
+			return fmt.Sprintf("Command execution of %q is rejected by user.", command), nil
+		}
+	}
+
+	// Execute the command.
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/C", command)
+	} else {
+		cmd = exec.Command("sh", "-c", command)
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// Return both the error and any output that was produced
+		return fmt.Sprintf("Error: %v\nOutput: %s", err, output), nil
+	}
+
+	result := strings.TrimSpace(string(output))
+	if result == "" {
+		return "Command executed successfully (no output)", nil
+	}
+
+	return result, nil
 }

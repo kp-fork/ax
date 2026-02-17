@@ -31,7 +31,8 @@ import (
 )
 
 var (
-	serveConfigFile string
+	serveConfigFile    string
+	serveSkipApprovals bool
 )
 
 var serveCmd = &cobra.Command{
@@ -44,10 +45,15 @@ Loads configuration from a YAML file (default: gar.yaml).`,
 
 func init() {
 	serveCmd.Flags().StringVar(&serveConfigFile, "config", "gar.yaml", "Path to YAML configuration file")
+	serveCmd.Flags().BoolVar(&serveSkipApprovals, "dangerously-skip-approvals", false, "Skips all approvals")
 }
 
 func runServe(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
+
+	if !serveSkipApprovals {
+		return fmt.Errorf("serve cannot ask for user approval yet; dangerously skip approvals")
+	}
 
 	// Load configuration from YAML file
 	cfg, err := config.LoadFromFile(serveConfigFile)
@@ -60,7 +66,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	c, err := newControllerFromConfig(ctx, cfg)
+	c, err := newControllerFromConfig(ctx, func(string) bool { return true }, cfg)
 	if err != nil {
 		return fmt.Errorf("error creating controller: %w", err)
 	}
@@ -87,7 +93,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controller.Controller, error) {
+func newControllerFromConfig(ctx context.Context, approval controller.ApprovalHandler, cfg *config.Config) (*controller.Controller, error) {
 	// Create event log builder
 	eventLogBuilder := func(sessionID string) (eventlog.EventLog, error) {
 		return eventlog.NewFileEventLog(eventlog.FileConfig{
@@ -97,12 +103,12 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 	}
 
 	// Create planner builder
-	plannerBuilder := func(ctx context.Context, r *controller.Registry) (agent.Agent, error) {
+	plannerBuilder := func(ctx context.Context, r *controller.Registry, h controller.ApprovalHandler) (agent.Agent, error) {
 		// The builder defines which planner to use.
 		// Currently, it uses the Gemini planner.
 		// Gemini config can be customized via environment variables (GEMINI_API_KEY, GAR_GEMINI_MODEL)
 		// TODO(lhuan): allow other planners based on cfg.PlannerType
-		return controller.NewGeminiPlanner(ctx, r, controller.GeminiPlannerConfig{
+		return controller.NewGeminiPlanner(ctx, r, h, controller.GeminiPlannerConfig{
 			Model:        cfg.Planner.Gemini.Model,
 			MaxTokens:    cfg.Planner.Gemini.MaxTokens,
 			Timeout:      cfg.Planner.Gemini.Timeout,
@@ -112,6 +118,7 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 
 	// Build controller config
 	controllerConfig := controller.Config{
+		ApprovalHandler: approval,
 		EventLogBuilder: eventLogBuilder,
 		PlannerBuilder:  plannerBuilder,
 		MaxSteps:        cfg.MaxSteps,
@@ -130,11 +137,5 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 			return nil, fmt.Errorf("failed to register remote agent %s: %w", agentCfg.ID, err)
 		}
 	}
-
-	agents := c.Registry().List()
-	if len(agents) == 0 {
-		log.Println("WARNING: No agents at startup.")
-	}
-
 	return c, nil
 }

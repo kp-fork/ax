@@ -20,14 +20,9 @@ import (
 
 	"github.com/google/gar/agent"
 	"github.com/google/gar/proto"
-	"golang.org/x/sync/errgroup"
 )
 
-// Task represents a task to be executed by an agent.
-type Task struct {
-	AgentID string
-	Inputs  []*proto.Content
-}
+const plannerAgentID = "__planner"
 
 // LoopExecutor orchestrates the agentic loop workflow.
 // It implements the plan-execute-evaluate-checkpoint cycle.
@@ -55,7 +50,7 @@ func NewLoopExecutor(ctx context.Context, config LoopConfig) (*LoopExecutor, err
 		return nil, fmt.Errorf("session manager cannot be nil")
 	}
 	if config.MaxSteps == 0 {
-		config.MaxSteps = 10 // Default max steps per trigger
+		return nil, fmt.Errorf("max_steps cannot be zero")
 	}
 	// Plan function is required
 	if config.Planner == nil {
@@ -92,6 +87,7 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, incoming *
 		return fmt.Errorf("failed to write input content: %w", err)
 	}
 
+	var nextAgentID = plannerAgentID // Start from planner.
 	for steps < e.maxSteps {
 		// Check context cancellation
 		select {
@@ -101,26 +97,17 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, incoming *
 		}
 
 		history := session.History()
-		handoffs, err := e.plan(ctx, session.ID(), history)
+		handoff, err := e.runAgent(ctx, session, nextAgentID, history, handler)
 		if err != nil {
-			return fmt.Errorf("planning failed: %w", err)
+			return err
 		}
 
-		if len(handoffs) == 0 {
+		if handoff == "" {
 			// No more agent handoffs to execute; loop is complete.
 			return nil
 		}
 
-		g, ctx := errgroup.WithContext(ctx)
-		for _, agentID := range handoffs {
-			g.Go(func() error {
-				return e.runHandoff(ctx, session, history, agentID, handler)
-			})
-		}
-		if err := g.Wait(); err != nil {
-			return err
-		}
-
+		nextAgentID = handoff
 		steps++
 	}
 
@@ -128,40 +115,48 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, incoming *
 	return fmt.Errorf("max steps per trigger (%d) reached", e.maxSteps)
 }
 
-func (e *LoopExecutor) plan(ctx context.Context, sessionID string, history []*proto.Content) ([]string, error) {
-	var handoffs []string
-	handler := func(outgoing *proto.ProcessResponse) error {
-		handoffs = append(handoffs, outgoing.AgentHandoff)
-		return nil
-	}
-	if err := e.planner.Process(ctx, sessionID, &proto.ProcessRequest{
-		Contents: history,
-	}, handler); err != nil {
-		return nil, fmt.Errorf("planner failed to process: %w", err)
-	}
-	return handoffs, nil
-}
-
-func (e *LoopExecutor) runHandoff(ctx context.Context, session *Session, inputs []*proto.Content, agentID string, handler agent.OutputHandler) error {
-	// TODO(jbd): Log task start and task end to allow resuming dangling tasks.
-	taskOutputHandler := func(outgoing *proto.ProcessResponse) error {
-		if err := session.WriteContent(ctx, agentID, outgoing.CheckpointId, outgoing.Contents); err != nil {
-			return fmt.Errorf("failed to write output content: %w", err)
+func (e *LoopExecutor) runAgent(ctx context.Context, session *Session, agentID string, inputs []*proto.Content, handler agent.OutputHandler) (handoff string, err error) {
+	var buffer []*proto.Content
+	runHandler := func(outgoing *proto.ProcessResponse) error {
+		if outgoing.AgentHandoff != "" {
+			// Only support one handoff a time.
+			handoff = outgoing.AgentHandoff
+			if err := session.WriteAgentHandoff(ctx, agentID, handoff); err != nil {
+				return fmt.Errorf("failed to write handoff: %w", err)
+			}
+			return nil
+		}
+		buffer = append(buffer, outgoing.Contents...)
+		if outgoing.CheckpointId != "" {
+			// Buffer until checkpoint or to the end.
+			if err := session.WriteContent(ctx, agentID, outgoing.CheckpointId, buffer); err != nil {
+				return fmt.Errorf("failed to write output content: %w", err)
+			}
+			buffer = []*proto.Content{}
 		}
 		return handler(outgoing)
 	}
 
-	ag, err := e.registry.Get(agentID)
-	if err != nil {
-		return fmt.Errorf("failed to get agent: %w", err)
+	var a agent.Agent
+	if agentID == plannerAgentID {
+		a = e.planner
+	} else {
+		a, err = e.registry.Get(agentID)
+		if err != nil {
+			return "", fmt.Errorf("failed to get agent: %w", err)
+		}
 	}
 
-	// TODO(lhuan): Handle scenario where agent is marked healthy (optimistic) but fails to respond (e.g. still starting up).
-	// Return "agent internal error, try again later" to the user.
-	if err := ag.Process(ctx, session.ID(), &proto.ProcessRequest{
+	if err := a.Process(ctx, session.ID(), &proto.ProcessRequest{
 		Contents: inputs,
-	}, taskOutputHandler); err != nil {
-		return fmt.Errorf("agent process failed: %w", err)
+	}, runHandler); err != nil {
+		return "", fmt.Errorf("agent process failed: %w", err)
 	}
-	return nil
+
+	if len(buffer) > 0 {
+		if err := session.WriteContent(ctx, agentID, "", buffer); err != nil {
+			return "", fmt.Errorf("failed to write output buffer: %w", err)
+		}
+	}
+	return handoff, nil
 }

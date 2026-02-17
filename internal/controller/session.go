@@ -315,6 +315,24 @@ func (sm *SessionManager) CloseAll() {
 	}
 }
 
+func (s *Session) WriteAgentHandoff(ctx context.Context, source, target string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.eventLog.AppendEvent(ctx, &proto.Event{
+		SessionId:           s.id,
+		SenderId:            source,
+		Timestamp:           timestamppb.Now(),
+		ControllerTimestamp: timestamppb.Now(),
+		Kind: &proto.Event_HandoffEvent{
+			HandoffEvent: &proto.HandoffEvent{
+				SourceAgentId: source,
+				TargetAgentId: target,
+			},
+		},
+	})
+}
+
 // WriteContent appends an incoming content message to the session.
 // Creates a checkpoint only if checkpoint_id is provided in the content.
 func (s *Session) WriteContent(ctx context.Context, sender string, checkpointID string, contents []*proto.Content) error {
@@ -405,18 +423,4 @@ func (s *Session) History() []*proto.Content {
 	defer s.mu.RUnlock()
 
 	return s.messageHistory
-}
-
-func (s *Session) CheckpointIDs() []string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	// TODO(jbd): Not ordered, but is still useful
-	// for introspection capabilities.
-
-	var checkpointIDs []string
-	for checkpointID := range s.checkpointIDs {
-		checkpointIDs = append(checkpointIDs, checkpointID)
-	}
-	return checkpointIDs
 }

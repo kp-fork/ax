@@ -122,6 +122,8 @@ func (e *FileEventLog) LoadEvents(ctx context.Context, checkpointID string) ([]*
 
 	var events []*proto.Event
 	scanner := bufio.NewScanner(f)
+	var buf = make([]byte, 1024*1024) // initial 1MB
+	scanner.Buffer(buf, 8*1024*1024)  // max 8MB
 	checkpointFound := false
 
 	for scanner.Scan() {

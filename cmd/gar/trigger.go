@@ -23,7 +23,9 @@ import (
 	"syscall"
 
 	"github.com/google/gar/agent"
+	"github.com/google/gar/cmd/gar/internal"
 	"github.com/google/gar/internal/config"
+	"github.com/google/gar/internal/controller"
 	"github.com/google/gar/proto"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -56,25 +58,16 @@ func init() {
 
 // TODO(jbd): Add multimodal input flags, e.g. --input-image.
 
+var (
+	triggerController *controller.Controller
+)
+
 func runTrigger(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Generate UUID if no session ID provided
 	if triggerSessionID == "" {
 		triggerSessionID = uuid.New().String()
-		fmt.Printf("Generated session ID: %s\n", triggerSessionID)
-	}
-
-	// Create input content
-	inputs := []*proto.Content{
-		{
-			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: triggerInput,
-				},
-			},
-		},
 	}
 
 	// Setup signal handling for graceful shutdown
@@ -90,10 +83,85 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 		cancel()
 	}()
 
-	if triggerHeadless {
-		return runHeadless(ctx, triggerSessionID, inputs)
+	return triggerLoop(ctx, triggerSessionID, triggerInput)
+}
+
+func triggerLoop(ctx context.Context, sessionID string, input string) error {
+	d := internal.NewDisplay(sessionID)
+	d.DisplayHeader()
+
+	for {
+		d.DisplayInput(input)
+
+		inputs := []*proto.Content{
+			{
+				Role: "user",
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: input,
+					},
+				},
+			},
+		}
+		if triggerHeadless {
+			if err := runTriggerHeadless(ctx, d, triggerSessionID, inputs); err != nil {
+				return err
+			}
+		} else {
+			if err := runTriggerServer(ctx, d, triggerSessionID, inputs); err != nil {
+				return err
+			}
+		}
+
+		var err error
+		input, err = d.PromptForInput()
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func runTriggerHeadless(ctx context.Context, d *internal.Display, sessionID string, inputs []*proto.Content) error {
+	if triggerController == nil {
+		cfg, err := config.LoadFromFile(triggerConfigFile)
+		if err != nil {
+			return fmt.Errorf("error loading config file '%s': %w", triggerConfigFile, err)
+		}
+
+		approval := func(question string) bool {
+			ok, err := d.PromptForApproval(question)
+			if err != nil {
+				return false
+			}
+			return ok
+		}
+
+		c, err := newControllerFromConfig(ctx, approval, cfg)
+		if err != nil {
+			return fmt.Errorf("error creating controller: %w", err)
+		}
+		triggerController = c
 	}
 
+	var checkpoint string
+	outputHandler := agent.OutputHandler(func(resp *proto.ProcessResponse) error {
+		displayContents(d, resp.Contents)
+		if resp.CheckpointId != "" {
+			checkpoint = resp.CheckpointId
+		}
+		return nil
+	})
+	if err := triggerController.TriggerSession(ctx, sessionID, &proto.ProcessRequest{
+		Contents: inputs,
+	}, outputHandler); err != nil {
+		return fmt.Errorf("error triggering session in headless mode: %w", err)
+	}
+
+	d.FinishOutput(checkpoint)
+	return nil
+}
+
+func runTriggerServer(ctx context.Context, d *internal.Display, sessionID string, inputs []*proto.Content) error {
 	conn, err := connect(triggerServerAddr)
 	if err != nil {
 		return err
@@ -101,16 +169,15 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 	defer conn.Close()
 
 	client := proto.NewGARServiceClient(conn)
-
 	stream, err := client.TriggerSession(ctx, &proto.TriggerSessionRequest{
-		SessionId:    triggerSessionID,
-		Inputs:       inputs,
+		SessionId: sessionID,
+		Inputs:    inputs,
 	})
 	if err != nil {
 		return fmt.Errorf("error triggering session: %w", err)
 	}
 
-	// Receive and print all responses
+	var checkpoint string
 	for {
 		resp, err := stream.Recv()
 		if err == io.EOF {
@@ -119,62 +186,24 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("error receiving response: %w", err)
 		}
-
-		if resp.CheckpointId != "" {
-			fmt.Printf("Checkpoint ID: %s\n", resp.CheckpointId)
-		}
-
 		if resp.Outputs != nil {
-			printResponse(resp.State, resp.Outputs)
+			displayContents(d, resp.Outputs)
+		}
+		if resp.CheckpointId != "" {
+			checkpoint = resp.CheckpointId
 		}
 	}
+	d.FinishOutput(checkpoint)
 	return nil
 }
 
-func runHeadless(ctx context.Context, sessionID string, inputs []*proto.Content) error {
-	// Load configuration from YAML file
-	cfg, err := config.LoadFromFile(triggerConfigFile)
-	if err != nil {
-		return fmt.Errorf("error loading config file '%s': %w", triggerConfigFile, err)
-	}
-
-	// Validate configuration
-	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("invalid configuration: %w", err)
-	}
-
-	c, err := newControllerFromConfig(ctx, cfg)
-	if err != nil {
-		return fmt.Errorf("error creating controller: %w", err)
-	}
-	defer c.Close()
-	// TODO(lhuan): Allow a default local agent to be registered in headless mode.
-
-	// Create output handler to print streaming results to stdout
-	outputHandler := agent.OutputHandler(func(resp *proto.ProcessResponse) error {
-		printResponse(proto.State_STATE_RUNNING, resp.Contents)
-		return nil
-	})
-
-	req := &proto.ProcessRequest{
-		Contents: inputs,
-	}
-
-	if err := c.TriggerSession(ctx, sessionID, req, outputHandler); err != nil {
-		return fmt.Errorf("error triggering session in headless mode: %w", err)
-	}
-
-	fmt.Println("[COMPLETED]")
-	return nil
-}
-
-func printResponse(state proto.State, outputs []*proto.Content) {
-	for _, content := range outputs {
-		switch c := content.Content.(type) {
+func displayContents(d *internal.Display, contents []*proto.Content) {
+	for _, output := range contents {
+		switch o := output.Content.(type) {
 		case *proto.Content_Text:
-			fmt.Printf("[%s] %s\n", state, c.Text.Text)
+			d.DisplayOutput(o.Text.Text)
 		default:
-			fmt.Printf("[%s] Unknown content type: %T\n", state, c)
+			d.DisplayOutput(fmt.Sprintf("unknown output type: %v", o))
 		}
 	}
 }
