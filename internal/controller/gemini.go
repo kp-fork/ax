@@ -304,7 +304,7 @@ func (f *filesystemTool) executeShellCommand(args map[string]any) (string, error
 		return fmt.Sprintf("Error: %v\nOutput: %s", err, output), nil
 	}
 
-	result := strings.TrimSpace(string(output))
+	result := strings.TrimSpace(string(output)) + "\n\n"
 	if result == "" {
 		return "Command executed successfully (no output)", nil
 	}
