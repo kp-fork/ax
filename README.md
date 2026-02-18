@@ -150,29 +150,29 @@ Fork an existing session from a specific checkpoint (or the latest state) into a
 
 ```bash
 gar fork \
-    --src_session <id> \
-    [--src_checkpoint <id>] \
-    [--dest_session <id>] \
+    --src-session <id> \
+    [--src-checkpoint <id>] \
+    [--dest-session <id>] \
     [--server <address>]
 ```
 
 Options:
-- `--src_session`: Source Session ID to fork from (required)
-- `--src_checkpoint`: Checkpoint ID to fork from (optional, defaults to latest)
-- `--dest_session`: Destination Session ID (optional, generates UUID if not provided)
+- `--src-session`: Source Session ID to fork from (required)
+- `--src-checkpoint`: Checkpoint ID to fork from (optional, defaults to latest)
+- `--dest-session`: Destination Session ID (optional, generates UUID if not provided)
 - `--server`: gRPC controller server address (default: "localhost:8494")
 
 **Example:**
 
 ```bash
 # Fork from the latest state
-gar fork --src_session abc123
+gar fork --src-session abc123
 
 # Fork from a specific checkpoint
-gar fork --src_session abc123 --src_checkpoint "550e..."
+gar fork --src-session abc123 --src-checkpoint "550e..."
 
 # Fork from a specific checkpoint to a new session with a specific new session id
-gar fork --src_session abc123 --src_checkpoint "550e..." --dest_session new-session-id 
+gar fork --src-session abc123 --src-checkpoint "550e..." --dest-session new-session-id 
 ```
 
 #### Register a Remote Agent
@@ -246,9 +246,9 @@ Checkpoints provide a mechanism to save and resume session state at specific poi
 
 ```bash
 # Fork from a checkpoint to a new session
-gar fork --src_session session123 \
-  --src_checkpoint "550e8400-e29b-41d4-a716-446655440000" \
-  --dest_session session456
+gar fork --src-session session123 \
+  --src-checkpoint "550e8400-e29b-41d4-a716-446655440000" \
+  --dest-session session456
 
 # Resume from the forked session
 gar trigger --session session456 \

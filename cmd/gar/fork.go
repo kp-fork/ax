@@ -34,7 +34,7 @@ var forkCmd = &cobra.Command{
 	Use:   "fork",
 	Short: "Fork a session from a specific checkpoint",
 	Long: `Fork an existing agentic session from a specific checkpoint.
-If --dest_session is not provided, a new UUID will be generated.`,
+If --dest-session is not provided, a new UUID will be generated.`,
 	RunE: runFork,
 }
 
