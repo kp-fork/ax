@@ -154,11 +154,12 @@ func (d *Controller) TriggerSession(ctx context.Context, sessionID string, incom
 		d.inFlightSessionsMu.Unlock()
 	}()
 
-	// Check if session already exists
+	// Always load session from storage to ensure latest state
 	sess, err := d.sessionManager.LoadSession(ctx, sessionID)
 	if err != nil {
-		return fmt.Errorf("failed to load session: %w", err)
+		return fmt.Errorf("failed to load session from storage: %w", err)
 	}
+
 	if sess == nil {
 		// Session doesn't exist - create new session
 		// Checkpoint ID is ignored for new sessions

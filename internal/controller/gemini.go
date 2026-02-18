@@ -190,6 +190,7 @@ func (p *geminiPlannerAgent) Process(ctx context.Context, sessionID string, inco
 							Text: &proto.TextContent{Text: output},
 						},
 					}},
+					AgentHandoff: plannerAgentID, // Explicitly return to planner in same response
 				})
 			default:
 				return handler(&proto.ProcessResponse{

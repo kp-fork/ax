@@ -117,22 +117,38 @@ func (e *LoopExecutor) runLoop(ctx context.Context, session *Session, incoming *
 
 func (e *LoopExecutor) runAgent(ctx context.Context, session *Session, agentID string, inputs []*proto.Content, handler agent.OutputHandler) (handoff string, err error) {
 	var buffer []*proto.Content
+
+	// Helper to flush buffer to session
+	flushBuffer := func(checkpointID string) error {
+		if len(buffer) == 0 {
+			return nil
+		}
+		if err := session.WriteContent(ctx, agentID, checkpointID, buffer); err != nil {
+			return fmt.Errorf("failed to write content: %w", err)
+		}
+		buffer = []*proto.Content{} // Clear buffer after successful write
+		return nil
+	}
+
 	runHandler := func(outgoing *proto.ProcessResponse) error {
+		buffer = append(buffer, outgoing.Contents...)
+
+		if outgoing.CheckpointId != "" {
+			if err := flushBuffer(outgoing.CheckpointId); err != nil {
+				return err
+			}
+		}
+
 		if outgoing.AgentHandoff != "" {
-			// Only support one handoff a time.
+			// Write any pending content before handoff
+			if err := flushBuffer(""); err != nil {
+				return err
+			}
+
 			handoff = outgoing.AgentHandoff
 			if err := session.WriteAgentHandoff(ctx, agentID, handoff); err != nil {
 				return fmt.Errorf("failed to write handoff: %w", err)
 			}
-			return nil
-		}
-		buffer = append(buffer, outgoing.Contents...)
-		if outgoing.CheckpointId != "" {
-			// Buffer until checkpoint or to the end.
-			if err := session.WriteContent(ctx, agentID, outgoing.CheckpointId, buffer); err != nil {
-				return fmt.Errorf("failed to write output content: %w", err)
-			}
-			buffer = []*proto.Content{}
 		}
 		return handler(outgoing)
 	}
@@ -153,10 +169,9 @@ func (e *LoopExecutor) runAgent(ctx context.Context, session *Session, agentID s
 		return "", fmt.Errorf("agent process failed: %w", err)
 	}
 
-	if len(buffer) > 0 {
-		if err := session.WriteContent(ctx, agentID, "", buffer); err != nil {
-			return "", fmt.Errorf("failed to write output buffer: %w", err)
-		}
+	// Final flush of any remaining buffer content
+	if err := flushBuffer(""); err != nil {
+		return "", err
 	}
 	return handoff, nil
 }
