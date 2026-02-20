@@ -57,10 +57,11 @@ health_check:
 # Remote agents configuration (optional)
 # List of remote agents to register on startup.
 # Remote agents run as separate gRPC servers.
-# remote_agents:
-#   - id: "python-agent"
-#     name: "Python Agent"
-#     description: "Python-based agent for text processing"
+# agents:
+#   - type: "remote"
+#     id: "text-processing-agent"
+#     name: "Text Processing Agent"
+#     description: "An agent for text processing"
 #     address: "localhost:50051"
 #     metadata:
-#       version: "1.0"
+#      version: "1.0"

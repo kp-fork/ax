@@ -131,11 +131,17 @@ func newControllerFromConfig(ctx context.Context, approval controller.ApprovalHa
 		return nil, err
 	}
 
-	// Register remote agents from config
-	for _, agentCfg := range cfg.RemoteAgents {
-		if err := c.Registry().RegisterRemote(agentCfg); err != nil {
-			return nil, fmt.Errorf("failed to register remote agent %s: %w", agentCfg.ID, err)
+	for _, agentCfg := range cfg.Agents {
+		switch agentCfg.Type {
+		case "remote":
+			cfg := agentCfg.RemoteAgentConfig
+			if err := c.Registry().RegisterRemote(cfg); err != nil {
+				return nil, fmt.Errorf("failed to register remote agent %s: %w", cfg.ID, err)
+			}
+		default:
+			return nil, fmt.Errorf("unknown agent type: %s", agentCfg.Type)
 		}
 	}
+
 	return c, nil
 }

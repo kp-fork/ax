@@ -26,12 +26,17 @@ import (
 
 // Config represents the main configuration for GAR server.
 type Config struct {
-	Server       ServerConfig        `yaml:"server"`
-	EventLog     EventLogConfig      `yaml:"eventlog"`
-	MaxSteps     int                 `yaml:"max_steps"` // Maximum steps per trigger
-	HealthCheck  HealthCheckConfig   `yaml:"health_check"`
-	Planner      PlannerConfig       `yaml:"planner,omitempty"`
-	RemoteAgents []RemoteAgentConfig `yaml:"remote_agents,omitempty"` // List of remote agents to register
+	Server      ServerConfig      `yaml:"server"`
+	EventLog    EventLogConfig    `yaml:"eventlog"`
+	MaxSteps    int               `yaml:"max_steps"` // Maximum steps per trigger
+	HealthCheck HealthCheckConfig `yaml:"health_check"`
+	Planner     PlannerConfig     `yaml:"planner,omitempty"`
+	Agents      []Agent           `yaml:"agents,omitempty"` // List of local agents to register
+}
+
+type Agent struct {
+	Type              string `yaml:"type"` // remote and more in the future...
+	RemoteAgentConfig `yaml:",inline"`
 }
 
 // HealthCheckConfig defines the configuration for agent health checks.

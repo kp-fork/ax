@@ -221,8 +221,9 @@ health_check:
   interval: 30s
 
 # Remote agents to register on startup
-remote_agents:
-  - id: "text-processing-agent"
+agents:
+  - type: "remote"
+    id: "text-processing-agent"
     name: "Text Processing Agent"
     description: "An agent for text processing"
     address: "localhost:50051"
