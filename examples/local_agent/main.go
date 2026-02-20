@@ -75,6 +75,7 @@ func main() {
 
 	inputs := []*proto.Content{
 		{
+			Role: "user",
 			Content: &proto.Content_Text{
 				Text: &proto.TextContent{
 					Text: input,
