@@ -98,7 +98,7 @@ func TestSessionManager_ForkSession_Success(t *testing.T) {
 	// Setup source session with events
 	sourceEL, _ := factory(sourceID)
 	sourceEvents := []*proto.Event{
-		{SessionId: sourceID, CheckpointId: checkpointID, Kind: &proto.Event_ContentEvent{ContentEvent: &proto.ContentEvent{Role: "user", Contents: []*proto.Content{{}}}}},
+		{SessionId: sourceID, CheckpointId: checkpointID, Kind: &proto.Event_ContentEvent{ContentEvent: &proto.ContentEvent{Contents: []*proto.Content{{Role: "user"}}}}},
 		{SessionId: sourceID, Kind: &proto.Event_SessionStateEvent{SessionStateEvent: &proto.SessionStateEvent{State: proto.State_STATE_COMPLETED}}},
 	}
 	for _, e := range sourceEvents {
