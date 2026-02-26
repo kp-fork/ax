@@ -24,7 +24,6 @@ import (
 	"github.com/google/gar/agent"
 	"github.com/google/gar/internal/config"
 	"github.com/google/gar/internal/eventlog"
-	"github.com/google/gar/internal/localagent/browser"
 	"github.com/google/gar/proto"
 )
 
@@ -73,9 +72,6 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry: %w", err)
 	}
-	if err := registerDefaultLocalAgents(registry); err != nil {
-		return nil, fmt.Errorf("failed to register default local agents: %w", err)
-	}
 
 	// Determine plan function
 	// If no planner builder is provided, use the default Gemini planner.
@@ -107,15 +103,6 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 		registry:         registry,
 		loopExecutor:     loopExecutor,
 	}, nil
-}
-
-func registerDefaultLocalAgents(r *Registry) error {
-	return r.RegisterLocal(config.LocalAgentConfig{
-		ID:          "browser",
-		Name:        "Browser Agent",
-		Description: "An agent that can fetch a URL. The agent returns the content of the page as markdown. Only use this agent if user specifically provides a URL to fetch.",
-		Agent:       browser.NewAgent(),
-	})
 }
 
 // TriggerSession triggers a new agentic loop session or resumes an existing one.

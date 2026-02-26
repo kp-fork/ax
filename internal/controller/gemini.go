@@ -329,7 +329,7 @@ func (p *geminiPlannerAgent) Process(ctx context.Context, sessionID string, inco
 				if err != nil {
 					return fmt.Errorf("failed to convert function response to structpb: %w", err)
 				}
-				
+
 				return handler(&proto.ProcessResponse{
 					Contents: []*proto.Content{{
 						Role: "assistant", // Note: The history uses assistant for now
