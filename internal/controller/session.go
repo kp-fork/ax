@@ -260,13 +260,6 @@ func (s *Session) reconstructState(events []*proto.Event) error {
 			s.state = x.SessionStateEvent.State
 		case *proto.Event_HandoffEvent:
 			// TODO: Visit this section when resuming the waiting agents.
-		case *proto.Event_ContentEvent:
-			if len(x.ContentEvent.Contents) > 0 {
-				s.steps = append(s.steps, &Step{
-					AgentID:  e.SenderId,
-					Contents: x.ContentEvent.Contents,
-				})
-			}
 		default:
 			return fmt.Errorf("unknown event kind: %v", e.Kind)
 		}
@@ -359,9 +352,11 @@ func (s *Session) WriteContent(ctx context.Context, sender string, checkpointID 
 		SenderId:            sender,
 		Timestamp:           timestamppb.Now(),
 		ControllerTimestamp: timestamppb.Now(),
-		Kind: &proto.Event_ContentEvent{
-			ContentEvent: &proto.ContentEvent{
-				Contents: contents,
+		Kind: &proto.Event_AgentCallEvent{
+			AgentCallEvent: &proto.AgentCallEvent{
+				Sender:       sender,
+				AwaitingMore: false,
+				Contents:     contents,
 			},
 		},
 	}); err != nil {

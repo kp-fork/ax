@@ -133,12 +133,6 @@ message HandoffEvent {
   repeated Content contents = 5;
 }
 
-// Content changes such as user inputs are recorded
-// as content events.
-message ContentEvent {
-  repeated Content contents = 1;
-}
-
 // Event is the entry in the event log. Events are used
 // to record the actions taken place in the GAR controller.
 // GAR controller can replay the events for resumability.
@@ -153,10 +147,9 @@ message Event {
   google.protobuf.Timestamp controller_timestamp = 6;
 
   oneof kind {
-    SessionStateEvent session_state_event = 7;
+    SessionStateEvent session_state_event = 7; // TODO: remove
     AgentCallEvent agent_call_event = 8;
     HandoffEvent handoff_event = 9;
-    ContentEvent content_event = 10;
   }
 }
 
