@@ -35,7 +35,6 @@ type Config struct {
 }
 
 type Agent struct {
-	Type               string              `yaml:"type,omitempty"` // local, remote, sandbox
 	RemoteAgentConfig  *RemoteAgentConfig  `yaml:"remote,omitempty"`
 	SandboxAgentConfig *SandboxAgentConfig `yaml:"sandbox,omitempty"`
 }
@@ -89,15 +88,15 @@ type RemoteAgentConfig struct {
 
 // SandboxAgentConfig configures a Kubernetes Sandbox agent to register on startup.
 type SandboxAgentConfig struct {
-	ID                 string            `yaml:"id"`                      // Unique agent identifier
-	Name               string            `yaml:"name"`                    // Human-readable name
-	Description        string            `yaml:"description"`             // Description of agent capabilities
-	SandboxTemplateRef string            `yaml:"sandbox_template_ref"`    // Name of the SandboxTemplate CR to use
+	ID                 string `yaml:"id"`                   // Unique agent identifier
+	Name               string `yaml:"name"`                 // Human-readable name
+	Description        string `yaml:"description"`          // Description of agent capabilities
+	SandboxTemplateRef string `yaml:"sandbox_template_ref"` // Name of the SandboxTemplate CR to use
 	// TODO: implement shutdown_time for automatic sandbox shutdown
-	ContainerPort      int               `yaml:"container_port,omitempty"`// Optional container port, defaults to 8494
-	WarmPoolSize       int               `yaml:"warm_pool_size,omitempty"`// Optional warm pool size for sandbox agents
-	UseRouter          bool              `yaml:"use_router,omitempty"`    // Override port-forwarding to use Sandbox Router
-	Metadata           map[string]string `yaml:"metadata,omitempty"`      // Optional metadata
+	ContainerPort int               `yaml:"container_port,omitempty"` // Optional container port, defaults to 8494
+	WarmPoolSize  int               `yaml:"warm_pool_size,omitempty"` // Optional warm pool size for sandbox agents
+	UseRouter     bool              `yaml:"use_router,omitempty"`     // Override port-forwarding to use Sandbox Router
+	Metadata      map[string]string `yaml:"metadata,omitempty"`       // Optional metadata
 }
 
 type LocalAgentConfig struct {

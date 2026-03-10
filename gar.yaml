@@ -58,28 +58,17 @@ planner:
     skills_dir: "./examples/skills"
 
 # Remote agents configuration (optional)
-# List of remote agents to register on startup.
-# Remote agents run as separate gRPC servers.
-# agents:
-#   - type: "remote"
-#     id: "text-processing-agent"
-#     name: "Text Processing Agent"
-#     description: "An agent for text processing"
-#     address: "localhost:50051"
-#     metadata:
-#      version: "1.0"
+# List of remote or sandbox agents to register on startup.
 
 agents:
-  - type: "remote"
-    remote:
+  - remote:
       id: "remote-text-processor"
       name: "Remote Text Processor"
       description: "Converts text to lowercase."
       address: "localhost:50051"
       metadata:
        version: "1.0"
-  - type: "sandbox"
-    sandbox:
+  - sandbox:
       id: "uppercase"
       name: "Upper Case Agent"
       description: "Converts text to uppercase."
