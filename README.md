@@ -226,16 +226,14 @@ health_check:
 
 # Agents to register on startup
 agents:
-  - type: "remote"
-    remote:
+  - remote:
       id: "text-processing-agent"
       name: "Text Processing Agent"
       description: "An agent for text processing"
       address: "localhost:50051"
       metadata:
         version: "1.0"
-  - type: "sandbox"
-    sandbox:
+  - sandbox:
       id: "uppercase-sandbox-agent"
       name: "Sandbox Uppercase Agent"
       description: "A secure, ephemeral cloud container for executing uppercase transformations"
@@ -343,8 +341,7 @@ To use a Sandbox Agent, specify it in your `gar.yaml` configuration using the `s
 
 ```yaml
 agents:
-  - type: "sandbox"
-    sandbox:
+  - sandbox:
       id: "my-sandbox-agent"
       name: "Sandbox Worker"
       description: "An ephemeral sandbox processor"
@@ -379,7 +376,6 @@ Ensure your `gar.yaml` references this sandbox agent:
 ```yaml
 agents:
   - id: "uppercase-agent"
-    type: "sandbox"
     sandbox:
       sandbox_template_ref: "uppercase-agent-template"
       container_port: 8494
