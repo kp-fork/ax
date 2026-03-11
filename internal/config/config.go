@@ -35,9 +35,8 @@ type Config struct {
 }
 
 type Agent struct {
-	Type                         string              `yaml:"type"`
-	RemoteAgentConfig            *RemoteAgentConfig  `yaml:",inline"`
-	KubernetesSandboxAgentConfig *SandboxAgentConfig `yaml:",inline"`
+	RemoteAgentConfig  *RemoteAgentConfig  `yaml:"remote,omitempty"`
+	SandboxAgentConfig *SandboxAgentConfig `yaml:"sandbox,omitempty"`
 }
 
 // HealthCheckConfig defines the configuration for agent health checks.

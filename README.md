@@ -226,18 +226,19 @@ health_check:
 
 # Agents to register on startup
 agents:
-  - type: "remote"
-    id: "text-processing-agent"
-    name: "Text Processing Agent"
-    description: "An agent for text processing"
-    address: "localhost:50051"
-    metadata:
-      version: "1.0"
-  - type: "k8s_sandbox"
-    id: "uppercase-sandbox-agent"
-    name: "Uppercase Agent"
-    description: "A secure, ephemeral cloud container for executing uppercase transformations"
-    sandbox_template_ref: "uppercase-agent-template"
+  - remote:
+      id: "text-processing-agent"
+      name: "Text Processing Agent"
+      description: "An agent for text processing"
+      address: "localhost:50051"
+      metadata:
+        version: "1.0"
+  - sandbox:
+      id: "uppercase-sandbox-agent"
+      name: "Sandbox Uppercase Agent"
+      description: "A secure, ephemeral cloud container for executing uppercase transformations"
+      sandbox_template_ref: "uppercase-agent-template"
+
 ```
 
 Example:
@@ -340,12 +341,12 @@ To use a Sandbox Agent, specify it in your `gar.yaml` configuration using the `s
 
 ```yaml
 agents:
-  - type: "k8s_sandbox"
-    id: "my-sandbox-agent"
-    name: "Sandbox Worker"
-    description: "An ephemeral sandbox processor"
-    sandbox_template_ref: "your-gke-sandbox-template-name"
-    container_port: 8494
+  - sandbox:
+      id: "my-sandbox-agent"
+      name: "Sandbox Worker"
+      description: "An ephemeral sandbox processor"
+      sandbox_template_ref: "your-gke-sandbox-template-name"
+      container_port: 8494
 ```
 
 #### End-to-End Example (Uppercase Agent)
@@ -374,10 +375,10 @@ kubectl apply -f examples/sandbox_agent/sandbox-template.yaml
 Ensure your `gar.yaml` references this sandbox agent:
 ```yaml
 agents:
-  - type: "k8s_sandbox"
-    id: "uppercase-agent"
-    sandbox_template_ref: "uppercase-agent-template"
-    container_port: 8494
+  - id: "uppercase-agent"
+    sandbox:
+      sandbox_template_ref: "uppercase-agent-template"
+      container_port: 8494
 ```
 
 **4. Run the GAR Server**

@@ -30,7 +30,7 @@ type AgentType string
 const (
 	AgentTypeLocal   AgentType = "local"
 	AgentTypeRemote  AgentType = "remote"
-	AgentTypeKubernetesSandbox AgentType = "k8s_sandbox"
+	AgentTypeSandbox AgentType = "sandbox"
 )
 
 // AgentInfo contains metadata about a registered agent.
@@ -149,7 +149,7 @@ func (r *Registry) RegisterSandbox(ctx context.Context, cfg config.SandboxAgentC
 		return fmt.Errorf("agent %s already registered", cfg.ID)
 	}
 
-	sandboxAgent, err := agent.NewSandboxAgent(ctx, agent.KubernetesSandboxAgentConfig{
+	sandboxAgent, err := agent.NewSandboxAgent(ctx, agent.SandboxAgentConfig{
 		ID:                 cfg.ID,
 		SandboxTemplateRef: cfg.SandboxTemplateRef,
 		WarmPoolSize:       cfg.WarmPoolSize,
@@ -165,7 +165,7 @@ func (r *Registry) RegisterSandbox(ctx context.Context, cfg config.SandboxAgentC
 		ID:              cfg.ID,
 		Name:            cfg.Name,
 		Description:     cfg.Description,
-		Type:            AgentTypeKubernetesSandbox,
+		Type:            AgentTypeSandbox,
 		Healthy:         true,
 		LastHealthCheck: time.Time{},
 		Metadata:        cfg.Metadata,

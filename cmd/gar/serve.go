@@ -126,18 +126,16 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 	}
 
 	for _, agentCfg := range cfg.Agents {
-		typ := controller.AgentType(agentCfg.Type)
-		switch typ {
-		case controller.AgentTypeKubernetesSandbox:
-			if err := c.Registry().RegisterSandbox(ctx, *agentCfg.KubernetesSandboxAgentConfig); err != nil {
-				return nil, fmt.Errorf("failed to register k8s_sandbox agent %s: %w", agentCfg.KubernetesSandboxAgentConfig.ID, err)
+		if agentCfg.SandboxAgentConfig != nil {
+			if err := c.Registry().RegisterSandbox(ctx, *agentCfg.SandboxAgentConfig); err != nil {
+				return nil, fmt.Errorf("failed to register sandbox agent %s: %w", agentCfg.SandboxAgentConfig.ID, err)
 			}
-		case controller.AgentTypeRemote:
+		} else if agentCfg.RemoteAgentConfig != nil {
 			if err := c.Registry().RegisterRemote(*agentCfg.RemoteAgentConfig); err != nil {
 				return nil, fmt.Errorf("failed to register remote agent %s: %w", agentCfg.RemoteAgentConfig.ID, err)
 			}
-		default:
-			return nil, fmt.Errorf("invalid agent configuration: unsupported agent type %q", typ)
+		} else {
+			return nil, fmt.Errorf("invalid agent configuration: must specify 'sandbox' or 'remote'")
 		}
 	}
 
