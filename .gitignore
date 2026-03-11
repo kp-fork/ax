@@ -8,3 +8,5 @@ gar-bin
 google-cloud-cli-darwin-arm.tar.gz
 google-cloud-sdk/
 test-sandbox-config.yaml
+sandbox-router
+examples/sandbox_agent/cloudbuild.yaml

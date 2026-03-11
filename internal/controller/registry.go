@@ -152,7 +152,6 @@ func (r *Registry) RegisterSandbox(ctx context.Context, cfg config.SandboxAgentC
 	sandboxAgent, err := agent.NewSandboxAgent(ctx, agent.SandboxAgentConfig{
 		ID:                 cfg.ID,
 		SandboxTemplateRef: cfg.SandboxTemplateRef,
-		WarmPoolSize:       cfg.WarmPoolSize,
 		ContainerPort:      cfg.ContainerPort,
 		UseRouter:          cfg.UseRouter,
 	})

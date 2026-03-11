@@ -43,11 +43,6 @@ var (
 		Version:  "v1alpha1",
 		Resource: "sandboxclaims",
 	}
-	SandboxWarmPoolGVR = schema.GroupVersionResource{
-		Group:    "extensions.agents.x-k8s.io",
-		Version:  "v1alpha1",
-		Resource: "sandboxwarmpools",
-	}
 )
 
 // Client represents a high-level client for managing Sandbox resources in Kubernetes.
@@ -80,33 +75,6 @@ func NewClient(namespace string) (*Client, error) {
 	}, nil
 }
 
-// CreateWarmPool creates a pre-warmed pool of sandbox environments.
-func (c *Client) CreateWarmPool(ctx context.Context, poolName, templateRef string, size int) error {
-	pool := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "extensions.agents.x-k8s.io/v1alpha1",
-			"kind":       "SandboxWarmPool",
-			"metadata": map[string]interface{}{
-				"name":      poolName,
-				"namespace": c.namespace,
-			},
-			"spec": map[string]interface{}{
-				"replicas": int64(size),
-				"sandboxTemplateRef": map[string]interface{}{
-					"name": templateRef,
-				},
-			},
-		},
-	}
-
-	_, err := c.dynClient.Resource(SandboxWarmPoolGVR).Namespace(c.namespace).Create(ctx, pool, metav1.CreateOptions{})
-	return err
-}
-
-// DeleteWarmPool removes a warm pool.
-func (c *Client) DeleteWarmPool(ctx context.Context, poolName string) error {
-	return c.dynClient.Resource(SandboxWarmPoolGVR).Namespace(c.namespace).Delete(ctx, poolName, metav1.DeleteOptions{})
-}
 
 // CreateClaim provisions an ephemeral sandbox execution environment.
 func (c *Client) CreateClaim(ctx context.Context, claimName, templateRef string) error {

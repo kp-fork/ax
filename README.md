@@ -306,7 +306,7 @@ See `examples/remote_agent/main.go` for a complete implementation.
 
 See `examples/remote_agent/main.go` for a complete implementation.
 
-### Sandbox Agent (GKE Integration)
+### Sandbox Agent (GKE Sandbox Integration)
 
 GAR supports dynamically provisioning secure, isolated agents on Google Kubernetes Engine (GKE) via the [Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox) feature. When a component requires a Sandbox Agent, the GAR server requests a temporary remote agent container in the cluster, establishes a secure connection locally (using port-forwarding via a proxy service), and cleans up the sandbox claim automatically upon closing.
 
@@ -364,11 +364,11 @@ docker build -t gar-uppercase:latest -f examples/sandbox_agent/Dockerfile .
 **2. Publish Image to Registry**
 When deploying to a cluster, you can host the agent container image in **any standard container registry** accessible by your Kubernetes cluster (e.g., Docker Hub, Google Artifact Registry, GitHub Container Registry).
 - For local testing (Minikube/Kind), load the image directly: `minikube image load gar-uppercase:latest`
-- For production, update the `image` field in `examples/sandbox_agent/sandbox-template.yaml` to your full registry path.
+- For production, update the `image` field in `examples/sandbox_agent/sandbox-template-and-pool.yaml` to your full registry path.
 
 Once the image is available, register the SandboxTemplate:
 ```bash
-kubectl apply -f examples/sandbox_agent/sandbox-template.yaml
+kubectl apply -f examples/sandbox_agent/sandbox-template-and-pool.yaml
 ```
 
 **3. Configure gar.yaml**
