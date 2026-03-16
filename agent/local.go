@@ -17,20 +17,18 @@ package agent
 import (
 	"context"
 	"fmt"
-
-	"github.com/google/gar/proto"
 )
 
 // LocalAgent wraps a local (in-process) agent implementation.
 // It implements the Agent interface for agents running in the same process as the controller.
 type LocalAgent struct {
-	processFunc     func(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler OutputHandler) error
+	processFunc     func(ctx context.Context, t *Task, e TaskExecutor, o OutputHandler) error
 	healthCheckFunc func(ctx context.Context) error
 }
 
 // LocalAgentConfig configures a local agent.
 type LocalAgentConfig struct {
-	ProcessFunc     func(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler OutputHandler) error
+	ProcessFunc     func(ctx context.Context, t *Task, e TaskExecutor, o OutputHandler) error
 	HealthCheckFunc func(ctx context.Context) error
 }
 
@@ -52,8 +50,8 @@ func NewLocalAgent(config LocalAgentConfig) (*LocalAgent, error) {
 }
 
 // Process handles processing of input content with callback handler.
-func (a *LocalAgent) Process(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler OutputHandler) error {
-	return a.processFunc(ctx, sessionID, incoming, handler)
+func (a *LocalAgent) Process(ctx context.Context, t *Task, e TaskExecutor, o OutputHandler) error {
+	return a.processFunc(ctx, t, e, o)
 }
 
 // HealthCheck checks if the agent is healthy.

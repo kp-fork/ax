@@ -28,7 +28,6 @@ import (
 type Config struct {
 	Server      ServerConfig      `yaml:"server"`
 	EventLog    EventLogConfig    `yaml:"eventlog"`
-	MaxSteps    int               `yaml:"max_steps"` // Maximum steps per trigger
 	HealthCheck HealthCheckConfig `yaml:"health_check"`
 	Planner     PlannerConfig     `yaml:"planner,omitempty"`
 	Registry    RegistryConfig    `yaml:"registry,omitempty"`
@@ -137,10 +136,6 @@ func (c *Config) setDefaults() {
 		c.EventLog.Dir = "eventlog"
 	}
 
-	// Controller defaults
-	if c.MaxSteps == 0 {
-		c.MaxSteps = 5
-	}
 	// HealthCheck defaults
 	if c.HealthCheck.Enabled && c.HealthCheck.Interval == 0 {
 		c.HealthCheck.Interval = 30 * time.Second
@@ -155,10 +150,6 @@ func (c *Config) Validate() error {
 	if c.EventLog.Dir == "" {
 		return fmt.Errorf("eventlog.dir is required")
 	}
-	if c.MaxSteps <= 0 {
-		return fmt.Errorf("max_steps must be positive")
-	}
-
 	// Validate health check
 	if c.HealthCheck.Enabled {
 		if c.HealthCheck.Interval <= 0 {

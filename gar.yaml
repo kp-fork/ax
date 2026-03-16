@@ -22,9 +22,6 @@ eventlog:
   # Directory where event logs are stored
   dir: "eventlog"
 
-# Maximum number of steps per trigger
-max_steps: 5
-
 health_check:
   # Whether to enable active health checking
   enabled: true

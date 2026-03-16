@@ -20,12 +20,13 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 
 	"github.com/google/gar/agent"
 	"github.com/google/gar/internal/config"
 	"github.com/google/gar/internal/controller"
-	"github.com/google/gar/internal/eventlog"
+	"github.com/google/gar/internal/controller/task"
 	"github.com/google/gar/internal/server"
 	"github.com/spf13/cobra"
 )
@@ -89,11 +90,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 
 func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controller.Controller, error) {
 	// Create event log builder
-	eventLogBuilder := func(sessionID string) (eventlog.EventLog, error) {
-		return eventlog.NewFileEventLog(eventlog.FileConfig{
-			SessionID: sessionID,
-			Dir:       cfg.EventLog.Dir,
-		})
+	eventLogBuilder := func(taskID string) (task.EventLog, error) {
+		path := path.Join(cfg.EventLog.Dir, taskID+".jsonl")
+		return task.OpenFileEventLog(path)
 	}
 
 	// Create planner builder
@@ -102,12 +101,14 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 		// Currently, it uses the Gemini planner.
 		// Gemini config can be customized via environment variables (GEMINI_API_KEY, GAR_GEMINI_MODEL)
 		// TODO(lhuan): allow other planners based on cfg.PlannerType
-		return controller.NewGeminiPlanner(ctx, r, controller.GeminiPlannerConfig{
-			Model:        cfg.Planner.Gemini.Model,
-			MaxTokens:    cfg.Planner.Gemini.MaxTokens,
-			Timeout:      cfg.Planner.Gemini.Timeout,
-			SystemPrompt: cfg.Planner.Gemini.SystemPrompt,
-			SkillsDir:    cfg.Planner.Gemini.SkillsDir,
+		return controller.NewGeminiPlannerAgent(ctx, r, controller.GeminiPlannerConfig{
+			GeminiConfig: controller.GeminiConfig{
+				Model:        cfg.Planner.Gemini.Model,
+				MaxTokens:    cfg.Planner.Gemini.MaxTokens,
+				Timeout:      cfg.Planner.Gemini.Timeout,
+				SystemPrompt: cfg.Planner.Gemini.SystemPrompt,
+			},
+			SkillsDir: cfg.Planner.Gemini.SkillsDir,
 		})
 	}
 
@@ -115,7 +116,6 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 	controllerConfig := controller.Config{
 		EventLogBuilder: eventLogBuilder,
 		PlannerBuilder:  plannerBuilder,
-		MaxSteps:        cfg.MaxSteps,
 		HealthCheck:     cfg.HealthCheck,
 	}
 

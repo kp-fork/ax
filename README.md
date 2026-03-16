@@ -74,6 +74,12 @@ You can continue a session any time:
 gar trigger --session session123 --input "Show me the contents of README.md"
 ```
 
+Instead of running the default planner agent, you can run any registered agent:
+
+```bash
+gar trigger --agent coding --input "Can you list me this directory?"
+```
+
 ### 2. Run Remote Agent with GAR Server
 
 Most developers want to register their custom remote agents.
@@ -123,6 +129,7 @@ The `gar` command provides several subcommands:
 gar trigger \
     --input <text> \
     [--session <id>] \
+    [--agent <id>] \
     [--server <address>] \
     [--config <file>]
 ```
@@ -132,6 +139,7 @@ Triggers a new agentic loop session or automatically resumes an existing one. If
 Options:
 - `--input`: Input message to send to agents (required)
 - `--session`: Unique session identifier (optional, generates UUID if not provided, or resumes if exists)
+- `--agent`: Agent ID to use for the session (optional, defaults to planner)
 - `--server`: gRPC controller server address (optional. If not provided, runs with a built-in GAR server)
 - `--config`: Path to YAML configuration file (only used with a built-in GAR server, default: "gar.yaml")
 
@@ -147,6 +155,7 @@ gar trigger --session abc123 --input "Ok, now let's do something else..."
 # Trigger using server mode (connect to gar serve)
 gar trigger --server localhost:8494 --input "Hello agents!"
 
+gar trigger --agent coding --input "Hello coding agent, write me a cool Go program!"
 ```
 
 #### Fork a Session
@@ -217,14 +226,20 @@ server:
 eventlog:
   dir: "eventlog"
 
-# Maximum steps per trigger
-max_steps: 5
-
 health_check:
-  # Health check interval for agents
+  enabled: true
   interval: 30s
 
-# Agents to register on startup
+planner:
+  gemini:
+    model: "gemini-3-flash-preview"
+    temperature: 0.7
+    max_tokens: 8192
+    timeout: 60s
+    context_window: 30
+    system_prompt: "..."
+    skills_dir: "./examples/skills"
+
 registry:
   remote_agents:
     - id: "remote-text-processor"
@@ -288,6 +303,10 @@ The planner automatically discovers skills from `~/.agents/skills` by default (o
 The built-in planner is equipped with a `bash` tool that enables it to execute general-purpose shell commands. The tool automatically adapts to the user's operating system.
 
 For safety and control, any execution initiated by the bash tool requires explicit user approval via a confirmation flow before running.
+
+### Gemini Agent
+
+GAR includes a built-in Gemini agent that can be used to generate text based on a given prompt. The agent is registered as `gemini`.
 
 ## Building Custom Agents
 
@@ -380,9 +399,10 @@ Ensure your `gar.yaml` references this sandbox agent:
 ```yaml
 registry:
   k8s_sandbox_agents:
-    - id: "uppercase-agent"
+    - id: "uppercase"
       sandbox_template_ref: "uppercase-agent-template"
       container_port: 8494
+      use_router: true
 ```
 
 **4. Run the GAR Server**
@@ -393,7 +413,7 @@ gar serve --config gar.yaml
 **5. Trigger the Agent**
 In a separate terminal:
 ```bash
-gar trigger --input "use the uppercase-agent to convert 'hello world'"
+gar trigger --input "use the uppercase agent to convert 'hello world'"
 ```
 
 The system will dynamically create a `SandboxClaim`, establish a connection via `kubectl port-forward`, execute the code securely, and return the result.
