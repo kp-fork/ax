@@ -32,41 +32,41 @@ import (
 )
 
 var (
-	triggerSessionID  string
-	triggerAgentID    string
-	triggerInput      string
-	triggerServerAddr string
-	triggerConfigFile string
+	execSessionID  string
+	execAgentID    string
+	execInput      string
+	execServerAddr string
+	execConfigFile string
 )
 
-var triggerCmd = &cobra.Command{
-	Use:   "trigger",
-	Short: "Trigger a new session or resume an existing one",
-	Long: `Trigger a new agentic session or resume an existing one.
+var execCmd = &cobra.Command{
+	Use:   "exec",
+	Short: "Execute a new session or resume an existing one",
+	Long: `Execute a new agentic session or resume an existing one.
 If no session ID is provided, a new UUID will be generated.`,
-	RunE: runTrigger,
+	RunE: runExec,
 }
 
 func init() {
-	triggerCmd.Flags().StringVar(&triggerSessionID, "session", "", "Session ID (optional, generates UUID if not provided)")
-	triggerCmd.Flags().StringVar(&triggerAgentID, "agent", "", "Agent ID (optional, planner is used if not specified)")
-	triggerCmd.Flags().StringVar(&triggerInput, "input", "", "Input message to send (optional)")
-	triggerCmd.Flags().StringVar(&triggerServerAddr, "server", "", "gRPC controller server address (if specified, connects to remote server; otherwise runs with a local built-in GAR server)")
-	triggerCmd.Flags().StringVar(&triggerConfigFile, "config", "gar.yaml", "Path to YAML configuration file (only used with a local built-in GAR server)")
+	execCmd.Flags().StringVar(&execSessionID, "session", "", "Session ID (optional, generates UUID if not provided)")
+	execCmd.Flags().StringVar(&execAgentID, "agent", "", "Agent ID (optional, planner is used if not specified)")
+	execCmd.Flags().StringVar(&execInput, "input", "", "Input message to send (optional)")
+	execCmd.Flags().StringVar(&execServerAddr, "server", "", "gRPC controller server address (if specified, connects to remote server; otherwise runs with a local built-in GAR server)")
+	execCmd.Flags().StringVar(&execConfigFile, "config", "gar.yaml", "Path to YAML configuration file (only used with a local built-in GAR server)")
 }
 
 // TODO(jbd): Add multimodal input flags, e.g. --input-image.
 
 var (
-	triggerController *controller.Controller
+	execController *controller.Controller
 )
 
-func runTrigger(cmd *cobra.Command, args []string) error {
+func runExec(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Generate UUID if no session ID provided
-	if triggerSessionID == "" {
-		triggerSessionID = uuid.New().String()
+	if execSessionID == "" {
+		execSessionID = uuid.New().String()
 	}
 
 	// Setup signal handling for graceful shutdown
@@ -79,16 +79,16 @@ func runTrigger(cmd *cobra.Command, args []string) error {
 	go func() {
 		<-sigChan
 		fmt.Println("\nReceived interrupt, shutting down...")
-		if triggerController != nil {
-			triggerController.Close()
+		if execController != nil {
+			execController.Close()
 		}
 		cancel()
 	}()
 
-	return triggerLoop(ctx, triggerSessionID, triggerAgentID, triggerInput)
+	return execLoop(ctx, execSessionID, execAgentID, execInput)
 }
 
-func triggerLoop(ctx context.Context, sessionID string, agentID string, input string) error {
+func execLoop(ctx context.Context, sessionID string, agentID string, input string) error {
 	d := internal.NewDisplay(sessionID)
 	d.DisplayHeader()
 
@@ -113,7 +113,7 @@ func triggerLoop(ctx context.Context, sessionID string, agentID string, input st
 	}
 
 	for {
-		conf, outputs, err := runAutoTrigger(ctx, d, sessionID, agentID, history)
+		conf, outputs, err := runAutoExec(ctx, d, sessionID, agentID, history)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func triggerLoop(ctx context.Context, sessionID string, agentID string, input st
 				// The task is still pending, we need to only send the answer.
 				// not the full history. Because we executor will put the full
 				// history together.
-				conf, outputs, err = runAutoTrigger(ctx, d, sessionID, agentID, decision)
+				conf, outputs, err = runAutoExec(ctx, d, sessionID, agentID, decision)
 				if err != nil {
 					return err
 				}
@@ -193,26 +193,26 @@ func triggerLoop(ctx context.Context, sessionID string, agentID string, input st
 	}
 }
 
-func runAutoTrigger(ctx context.Context, d *internal.Display, sessionID string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
-	fn := runTriggerHeadless
-	if triggerServerAddr != "" {
-		fn = runTriggerServer
+func runAutoExec(ctx context.Context, d *internal.Display, sessionID string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
+	fn := runExecHeadless
+	if execServerAddr != "" {
+		fn = runExecServer
 	}
 	return fn(ctx, d, sessionID, agentID, inputs)
 }
 
-func runTriggerHeadless(ctx context.Context, d *internal.Display, sessionID string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
-	if triggerController == nil {
-		cfg, err := config.LoadFromFile(triggerConfigFile)
+func runExecHeadless(ctx context.Context, d *internal.Display, sessionID string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
+	if execController == nil {
+		cfg, err := config.LoadFromFile(execConfigFile)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error loading config file '%s': %w", triggerConfigFile, err)
+			return nil, nil, fmt.Errorf("error loading config file '%s': %w", execConfigFile, err)
 		}
 
 		c, err := newControllerFromConfig(ctx, cfg)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error creating controller: %w", err)
 		}
-		triggerController = c
+		execController = c
 	}
 
 	var checkpoint string
@@ -232,10 +232,10 @@ func runTriggerHeadless(ctx context.Context, d *internal.Display, sessionID stri
 		displayContents(d, resp.Contents)
 		return nil
 	})
-	if err := triggerController.TriggerSession(ctx, sessionID, agentID, &proto.ProcessRequest{
+	if err := execController.Exec(ctx, sessionID, agentID, &proto.ProcessRequest{
 		Contents: inputs,
 	}, outputHandler); err != nil {
-		return nil, nil, fmt.Errorf("error triggering session with local server: %w", err)
+		return nil, nil, fmt.Errorf("error executing with local server: %w", err)
 	}
 
 	if confirmation == nil {
@@ -244,21 +244,21 @@ func runTriggerHeadless(ctx context.Context, d *internal.Display, sessionID stri
 	return confirmation, outputs, nil
 }
 
-func runTriggerServer(ctx context.Context, d *internal.Display, sessionID string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
-	conn, err := connect(triggerServerAddr)
+func runExecServer(ctx context.Context, d *internal.Display, sessionID string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
+	conn, err := connect(execServerAddr)
 	if err != nil {
 		return nil, nil, err
 	}
 	defer conn.Close()
 
 	client := proto.NewGARServiceClient(conn)
-	stream, err := client.TriggerSession(ctx, &proto.TriggerSessionRequest{
+	stream, err := client.Exec(ctx, &proto.ExecRequest{
 		SessionId: sessionID,
 		AgentId:   agentID,
 		Inputs:    inputs,
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("error triggering session: %w", err)
+		return nil, nil, fmt.Errorf("error executing: %w", err)
 	}
 
 	var checkpoint string

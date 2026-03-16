@@ -55,38 +55,38 @@ You should see the gar CLI usage information.
 
 ## Quick Start
 
-### 1. Run trigger
+### 1. Run exec
 
-The CLI provides an easy way to trigger a session by using the
+The CLI provides an easy way to execute a session by using the
 agents and built-in tools already linked into the GAR binary.
 
 ```bash
 # Using default gar.yaml
-gar trigger --input "Can you list me this directory?"
+gar exec --input "Can you list me this directory?"
 
 # Using a custom configuration
-gar trigger --input "Can you list me this directory?" --config my-config.yaml
+gar exec --input "Can you list me this directory?" --config my-config.yaml
 ```
 
 You can continue a session any time:
 
 ```bash
-gar trigger --session session123 --input "Show me the contents of README.md"
+gar exec --session session123 --input "Show me the contents of README.md"
 ```
 
 Instead of running the default planner agent, you can run any registered agent:
 
 ```bash
-gar trigger --agent coding --input "Can you list me this directory?"
+gar exec --agent coding --input "Can you list me this directory?"
 ```
 
 ### 2. Run Remote Agent with GAR Server
 
 Most developers want to register their custom remote agents.
 
-This example demonstrates how the GAR server triggers remote agents through the `AgentService.Process` RPC. You can run this in two ways:
+This example demonstrates how the GAR server executes remote agents through the `AgentService.Process` RPC. You can run this in two ways:
 
-This is the standard way to run GAR, separating the controller from the trigger client.
+This is the standard way to run GAR, separating the controller from the execution client.
 
 **Terminal 1** - Start the remote agent server:
 ```bash
@@ -100,7 +100,7 @@ gar serve
 ```
 The GAR server exposes the `GARService` on port `:8494`.
 
-**Terminal 3** - Register the remote agent and trigger a session:
+**Terminal 3** - Register the remote agent and execute a session:
 ```bash
 # Register the remote agent with gar
 gar register \
@@ -110,8 +110,8 @@ gar register \
     --agent-description "Converts input text to uppercase." \
     --agent-addr localhost:50051
 
-# Trigger a session - once server address is specified, gar will coordinate the remote agent via Process RPC accordingly
-gar trigger \
+# Execute a session - once server address is specified, gar will coordinate the remote agent via Process RPC accordingly
+gar exec \
     --server localhost:8494 \
     --session session123 \
     --input "Hello, can you uppercase what I just said?"
@@ -123,10 +123,10 @@ gar trigger \
 
 The `gar` command provides several subcommands:
 
-#### Trigger a Session
+#### Execute a Session
 
 ```bash
-gar trigger \
+gar exec \
     --input <text> \
     [--session <id>] \
     [--agent <id>] \
@@ -134,7 +134,7 @@ gar trigger \
     [--config <file>]
 ```
 
-Triggers a new agentic loop session or automatically resumes an existing one. If the session ID already exists, the session will be resumed from its last state with the new input.
+Executes a new agentic loop session or automatically resumes an existing one. If the session ID already exists, the session will be resumed from its last state with the new input.
 
 Options:
 - `--input`: Input message to send to agents (required)
@@ -146,16 +146,16 @@ Options:
 **Examples:**
 
 ```bash
-# Trigger a new session
-gar trigger --input "Hello agents!"
+# Execute a new session
+gar exec --input "Hello agents!"
 
 # Resume an existing session with new input
-gar trigger --session abc123 --input "Ok, now let's do something else..."
+gar exec --session abc123 --input "Ok, now let's do something else..."
 
-# Trigger using server mode (connect to gar serve)
-gar trigger --server localhost:8494 --input "Hello agents!"
+# Execute using server mode (connect to gar serve)
+gar exec --server localhost:8494 --input "Hello agents!"
 
-gar trigger --agent coding --input "Hello coding agent, write me a cool Go program!"
+gar exec --agent coding --input "Hello coding agent, write me a cool Go program!"
 ```
 
 #### Fork a Session
@@ -282,7 +282,7 @@ gar fork --src-session session123 \
   --dest-session session456
 
 # Resume from the forked session
-gar trigger --session session456 \
+gar exec --session session456 \
   --input "Try different approach"
 ```
 
@@ -316,7 +316,7 @@ See `examples/local_agent/main.go` for a complete implementation.
 
 ### Remote Agent
 
-Remote agents run as gRPC servers implementing the `AgentService` interface defined in `proto/gar.proto`. The gar controller triggers remote agents by calling their `Process` RPC with bidirectional streaming.
+Remote agents run as gRPC servers implementing the `AgentService` interface defined in `proto/gar.proto`. The gar controller executes remote agents by calling their `Process` RPC with bidirectional streaming.
 
 See `examples/remote_agent/main.go` for a complete implementation.
 
@@ -324,7 +324,7 @@ See `examples/remote_agent/main.go` for a complete implementation.
 1. Remote agent starts as gRPC server on a port (e.g., :50051)
 2. Start gar controller: `gar serve`
 3. Register with gar: `gar register --agent-id my-agent --agent-name "My Agent" --agent-description "Agent description" --agent-addr localhost:50051`
-4. When gar triggers a session, it calls the agent's `Process` RPC
+4. When gar executes a session, it calls the agent's `Process` RPC
 5. GAR streams input content → Agent processes → Agent streams output back
 
 See `examples/remote_agent/main.go` for a complete implementation.
@@ -410,10 +410,10 @@ registry:
 gar serve --config gar.yaml
 ```
 
-**5. Trigger the Agent**
+**5. Run the Agent**
 In a separate terminal:
 ```bash
-gar trigger --input "use the uppercase agent to convert 'hello world'"
+gar exec --input "use the uppercase agent to convert 'hello world'"
 ```
 
 The system will dynamically create a `SandboxClaim`, establish a connection via `kubectl port-forward`, execute the code securely, and return the result.
@@ -459,8 +459,8 @@ gar register \
   --agent-description "An agent that processes text to lower or upper case the inputs." \
   --agent-addr localhost:50051
 
-# Trigger a session
-gar trigger \
+# Execute a session
+gar exec \
   --server localhost:8494 \
   --session session123 \
   --input "Hello, can you uppercase what I just said?"

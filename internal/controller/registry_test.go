@@ -219,7 +219,7 @@ func TestRegistry_GracefulShutdown(t *testing.T) {
 		})
 	}
 
-	// Let it run for a bit to ensure performChecks triggers
+	// Let it run for a bit to ensure performChecks runs.
 	time.Sleep(50 * time.Millisecond)
 
 	// Close should return specific errors for failed agents, but NOT panic or deadlock

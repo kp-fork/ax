@@ -72,7 +72,7 @@ func (hm *HealthMonitor) run() {
 	}
 }
 
-// performChecks triggers health checks for all agents.
+// performChecks runs health checks for all agents.
 func (hm *HealthMonitor) performChecks() {
 	// Get IDs safely
 	hm.registry.mu.RLock()
