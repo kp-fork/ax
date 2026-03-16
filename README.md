@@ -21,19 +21,22 @@ Built-in consistency and resumability features:
 ```
 ┌────────────────────────┐
 │      [Controller]      │                 ┌──────────────┐
-│  - Session Manager     │--(in process)---| local  agent |
+│  - Task Manager        │--(in process)---| local  agent |
 │  - Event Log           │                 └──────────────┘
-│  - Loop Executor       │                 ┌──────────────┐
-│  - Agent Registry      │--(gRPC stream)--| remote agent |
+│  - Registry            │                 ┌──────────────┐
+│  - Local Agents        │--(gRPC stream)--| remote agent |
 │  - Tools & Skills      │                 └──────────────┘
 └────────────────────────┘
 ```
 
 As agents move from simple interactions to "autonomous workers," most developers
 will need what AX provides: a way to manage state, ensure reliability, and audit
-the process through a structured event log. It is a "runtime" in the same way 
-Kubernetes is a runtime for containers. AX provides the plumbing so developers
-can focus on the logic.
+the process through a structured event log. It is a "runtime" for agents in the same way 
+Kubernetes is a runtime for containers. AX is compute agnostic but aims to provide
+the most comprehensive experience on Kubernetes.
+
+AX provides the plumbing so developers can focus on building agentic applications instead
+of rebuilding the same infrastructure over and over again.
 
 ## Installation
 
@@ -77,16 +80,14 @@ ax exec --id exec123 --input "Show me the contents of README.md"
 Instead of running the default planner agent, you can run any registered agent:
 
 ```bash
-ax exec --agent coding --input "Can you list me this directory?"
+ax exec --agent coding --input "Can you write me a simple HTTP server in Python?"
 ```
 
-### 2. Run Remote Agent with AX Server
+### 2. Run exec with Custom Agents
 
-Most developers want to register their custom remote agents.
-
-This example demonstrates how the AX server executes remote agents through the `AgentService.Process` RPC. You can run this in two ways:
-
-This is the standard way to run AX, separating the controller from the execution client.
+Most developers want to build their own agents. AX allows running custom agents as remote
+or sandbox agents. This example demonstrates how the AX server executes remote agents
+through the `AgentService.Process` RPC.
 
 **Terminal 1** - Start the remote agent server:
 ```bash
@@ -102,7 +103,6 @@ The server exposes the `AXService` on port `:8494`.
 
 **Terminal 3** - Register the remote agent and execute:
 ```bash
-# Register the remote agent
 ax register \
     --server localhost:8494 \
     --agent-id uppercase-agent \
@@ -110,7 +110,6 @@ ax register \
     --agent-description "Converts input text to uppercase." \
     --agent-addr localhost:50051
 
-# Execute - once server address is specified, ax will coordinate the remote agent via Process RPC accordingly
 ax exec \
     --server localhost:8494 \
     --id task123 \
@@ -134,7 +133,7 @@ ax exec \
     [--config <file>]
 ```
 
-Executes a new agentic execution or automatically resumes an existing one. If the ID already exists, the execution will be resumed from its last state with the new input.
+Executes a new agentic execution or automatically resumes an existing one. If the ID already exists, the execution will be resumed from its last state with the new input (if any).
 
 Options:
 - `--input`: Input message to send to agents (required)
@@ -155,12 +154,14 @@ ax exec --id abc123 --input "Ok, now let's do something else..."
 # Execute using server mode
 ax exec --server localhost:8494 --input "Hello agents!"
 
+# Execute using a custom agent
 ax exec --agent coding --input "Hello coding agent, write me a cool Go program!"
 ```
 
 #### Fork an Event Log
 
-Fork an existing agentic event log from a specific checkpoint (or the latest state) into a new event log.
+Fork an existing agentic event log from a specific checkpoint (or the latest state)
+into a new event log.
 
 ```bash
 ax fork \
@@ -271,7 +272,8 @@ ax serve --config my-config.yaml
 
 ### Checkpoints
 
-Checkpoints provide a mechanism to save and resume state at specific points. Every content event can create a checkpoint with a unique UUID.
+Checkpoints provide a mechanism to save and resume state at specific points.
+Every content event can create a checkpoint with a unique UUID.
 
 **Usage Examples:**
 
@@ -288,7 +290,7 @@ ax exec --id task456 \
 
 ### Event Log Format
 
-Event logs use the `Event` message available in the protobuf.
+Event logs use the `ExecutionEvent` message available in the protobuf.
 
 ## Built-in Capabilities
 
@@ -331,10 +333,7 @@ See `examples/remote_agent/main.go` for a complete implementation.
 
 ### GKE Sandbox Agents
 
-AX supports dynamically provisioning secure, isolated agents on Google Kubernetes Engine (GKE) via the [Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox) feature. When a component requires a Sandbox Agent, the AX server requests a temporary remote agent container in the cluster, establishes a secure connection locally (using port-forwarding via a proxy service), and cleans up the sandbox claim automatically upon closing.
-
-#### Architecture
-Traffic flows from Localhost -> `kubectl port-forward` -> Router Service -> Sandbox Pod. This requires no public IP and allows your local development environment to orchestrate sandboxes running on remote GKE clusters, Kind, or Minikube.
+AX supports dynamically provisioning secure, isolated agents on Google Kubernetes Engine (GKE) via the [Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox) feature. When an agent requires a Sandbox Agent, the AX server requests a temporary remote agent container in the cluster, establishes a secure connection locally (using port-forwarding via a proxy service), and cleans up the sandbox claim automatically upon closing.
 
 #### Prerequisites
 - A running Kubernetes cluster.
@@ -342,7 +341,7 @@ Traffic flows from Localhost -> `kubectl port-forward` -> Router Service -> Sand
 - `kubectl` installed and configured locally.
 
 #### Setup: Deploying the Router
-Before using Sandbox Agents remotely, you must deploy the `sandbox-router` into your cluster. This router proxies traffic securely to the isolated gVisor pods (direct port-forwarding to gVisor pods is not supported by Kubernetes due to netstack isolation).
+Before using Sandbox Agents remotely and developing locally, you must deploy the `sandbox-router` into your cluster. This router proxies traffic securely to the isolated gVisor pods (direct port-forwarding to gVisor pods is not supported by Kubernetes due to netstack isolation).
 
 1. Cross-compile the proxy binary via Make and inject it into an Alpine Pod:
 ```bash
@@ -379,12 +378,14 @@ AX provides a complete example of a Sandbox Agent in `examples/k8s_sandbox_agent
 You can test this agent end-to-end using the `ax` binary, which exercises the full `SandboxAgent` lifecycle (provisioning, port-forwarding, and remote execution).
 
 **1. Build the Agent Image**
+
 From the root of the AX repository:
 ```bash
 docker build -t ax-uppercase:latest -f examples/sandbox_agent/Dockerfile .
 ```
 
 **2. Publish Image to Registry**
+
 When deploying to a cluster, you can host the agent container image in **any standard container registry** accessible by your Kubernetes cluster (e.g., Docker Hub, Google Artifact Registry, GitHub Container Registry).
 - For production, update the `image` field in `examples/k8s_sandbox_agent/sandbox-template-and-pool.yaml` to your full registry path.
 
@@ -412,7 +413,7 @@ ax serve --config ax.yaml
 **5. Run the Agent**
 In a separate terminal:
 ```bash
-ax exec --input "use the uppercase agent to convert 'hello world'"
+ax exec --agent "uppercase" --input "hello world"
 ```
 
 The system will dynamically create a `SandboxClaim`, establish a connection via `kubectl port-forward`, execute the code securely, and return the result.
@@ -420,19 +421,22 @@ The system will dynamically create a `SandboxClaim`, establish a connection via 
 
 #### Viewing Sandbox Logs
 If you want to monitor the internal agent output or see if your gVisor sandbox received the physical gRPC requests:
+
 1. List the active sandbox Pods:
-   ```bash
-   kubectl get pods -n default
-   ```
+```bash
+kubectl get pods -n default
+```
+
 2. Fetch the logs for your specific sandbox claim:
-   ```bash
-   kubectl logs ax-claim-uppercase-<hash_id> 
-   # To tail live logs: kubectl logs -f ax-claim-uppercase-<hash_id>
-   ```
+```bash
+kubectl logs -f ax-claim-uppercase-<hash_id>
+```
 
 ### Remote Python Agent
 
-Python agents can be built using the AX agent framework. First, install dependencies and generate Python gRPC code:
+AX is language agnostic and supports remote agents written in any language that can implement the `AgentService` interface. Python is a popular choice for AI agents, and AX provides first-class support for Python agents.
+
+To build a Python agent, first set up your environment by installing dependencies and generating the gRPC artifacts from the protobuf definitions:
 
 ```bash
 # Install dependencies
