@@ -132,16 +132,16 @@ enum State {
   STATE_COMPLETED = 3;
 }
 
-// TriggerSessionRequest for triggering a new session
-message TriggerSessionRequest {
+// ExecRequest for executing.
+message ExecRequest {
   string session_id = 1;               // Unique session identifier
   string agent_id = 2;                 // Agent ID, if empty planner is used.
   repeated Content inputs = 3;         // Input content to process
 }
 
-// TriggerSessionResponse contains the result of triggering a session
-message TriggerSessionResponse {
-  string session_id = 1;          // Session ID (in case it was generated or modified by server)
+// ExecResponse contains the result of an execution.
+message ExecResponse {
+  string session_id = 1;          // Session ID
   repeated Content outputs = 2;   // Output content
   State state = 3;                // Session state
 }
@@ -186,9 +186,9 @@ message UnregisterAgentResponse {
 
 // GARService defines the gRPC service for GAR operations
 service GARService {
-  // TriggerSession triggers a new agentic loop session or resumes an existing one with streaming responses
+  // Exec executes a new agentic loop session or resumes an existing one with streaming responses
   // If the session_id already exists, it will be resumed from the last checkpoint
-  rpc TriggerSession(TriggerSessionRequest) returns (stream TriggerSessionResponse);
+  rpc Exec(ExecRequest) returns (stream ExecResponse);
 
   // ForkSession forks a session from a specific checkpoint.
   rpc ForkSession(ForkSessionRequest) returns (ForkSessionResponse);

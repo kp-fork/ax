@@ -83,10 +83,10 @@ func New(ctx context.Context, config Config) (*Controller, error) {
 	}, nil
 }
 
-// TriggerSession triggers a new agentic loop session or resumes an existing one.
+// Exec executes a new agentic loop session or resumes an existing one.
 // If sessionID is empty, a UUID will be generated.
 // If the session already exists, it will be resumed with optional new inputs.
-func (d *Controller) TriggerSession(ctx context.Context, sessionID string, agentID string, incoming *proto.ProcessRequest, handler agent.OutputHandler) error {
+func (d *Controller) Exec(ctx context.Context, sessionID string, agentID string, incoming *proto.ProcessRequest, handler agent.OutputHandler) error {
 	if sessionID == "" {
 		return fmt.Errorf("session_id is required")
 	}

@@ -45,8 +45,8 @@ func New(c *controller.Controller) *Server {
 	}
 }
 
-// TriggerSession triggers a new agentic loop session with streaming responses.
-func (s *Server) TriggerSession(req *proto.TriggerSessionRequest, stream grpc.ServerStreamingServer[proto.TriggerSessionResponse]) error {
+// Exec executes a new agentic loop session with streaming responses.
+func (s *Server) Exec(req *proto.ExecRequest, stream grpc.ServerStreamingServer[proto.ExecResponse]) error {
 	sessionID := req.SessionId
 	inputs := req.Inputs
 
@@ -55,12 +55,12 @@ func (s *Server) TriggerSession(req *proto.TriggerSessionRequest, stream grpc.Se
 	}
 	// Create output handler to stream outputs back to client
 	outputHandler := agent.OutputHandler(func(outgoing *proto.ProcessResponse) error {
-		return stream.Send(&proto.TriggerSessionResponse{
+		return stream.Send(&proto.ExecResponse{
 			SessionId: sessionID,
 			Outputs:   outgoing.Contents,
 		})
 	})
-	return s.controller.TriggerSession(
+	return s.controller.Exec(
 		stream.Context(), sessionID, req.AgentId, incoming, outputHandler)
 }
 

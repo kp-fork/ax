@@ -109,11 +109,11 @@ func main() {
 	}
 
 	for i := 0; i < 4; i++ {
-		log.Printf("\n--- Triggering step %d ---\n", i+1)
-		if err := c.TriggerSession(ctx, sessionID, "", req, handler); err != nil {
-			log.Fatalf("Error triggering session step %d: %v\n", i+1, err)
+		log.Printf("\n--- Executing step %d ---\n", i+1)
+		if err := c.Exec(ctx, sessionID, "", req, handler); err != nil {
+			log.Fatalf("Error executing session step %d: %v\n", i+1, err)
 		}
-		// Subsequent triggers just ask the planner to continue processing the existing history
+		// Subsequent execs just ask the planner to continue processing the existing history
 		req = &proto.ProcessRequest{}
 	}
 }
