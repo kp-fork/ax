@@ -1256,89 +1256,6 @@ func (*RegisterAgentResponse) Descriptor() ([]byte, []int) {
 	return file_proto_gar_proto_rawDescGZIP(), []int{18}
 }
 
-// UnregisterAgentRequest for unregistering an agent
-type UnregisterAgentRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	AgentId string `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-}
-
-func (x *UnregisterAgentRequest) Reset() {
-	*x = UnregisterAgentRequest{}
-	mi := &file_proto_gar_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UnregisterAgentRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UnregisterAgentRequest) ProtoMessage() {}
-
-func (x *UnregisterAgentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gar_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UnregisterAgentRequest.ProtoReflect.Descriptor instead.
-func (*UnregisterAgentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_gar_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *UnregisterAgentRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-// UnregisterAgentResponse contains unregistration result
-type UnregisterAgentResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *UnregisterAgentResponse) Reset() {
-	*x = UnregisterAgentResponse{}
-	mi := &file_proto_gar_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UnregisterAgentResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UnregisterAgentResponse) ProtoMessage() {}
-
-func (x *UnregisterAgentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gar_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UnregisterAgentResponse.ProtoReflect.Descriptor instead.
-func (*UnregisterAgentResponse) Descriptor() ([]byte, []int) {
-	return file_proto_gar_proto_rawDescGZIP(), []int{20}
-}
-
 var File_proto_gar_proto protoreflect.FileDescriptor
 
 var file_proto_gar_proto_rawDesc = []byte{
@@ -1484,11 +1401,6 @@ var file_proto_gar_proto_rawDesc = []byte{
 	0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
 	0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x42, 0x08, 0x0a, 0x06, 0x63, 0x6f, 0x6e,
 	0x66, 0x69, 0x67, 0x22, 0x17, 0x0a, 0x15, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x41,
-	0x67, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x0a, 0x16,
-	0x55, 0x6e, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x41, 0x67, 0x65, 0x6e, 0x74, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x5f,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x49,
-	0x64, 0x22, 0x19, 0x0a, 0x17, 0x55, 0x6e, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x41,
 	0x67, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2a, 0x58, 0x0a, 0x05,
 	0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x15, 0x0a, 0x11, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x55,
 	0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x11, 0x0a, 0x0d,
@@ -1504,7 +1416,7 @@ var file_proto_gar_proto_rawDesc = []byte{
 	0x68, 0x65, 0x63, 0x6b, 0x12, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x48, 0x65, 0x61,
 	0x6c, 0x74, 0x68, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
 	0x1a, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68, 0x43, 0x68,
-	0x65, 0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x8e, 0x02, 0x0a, 0x0a,
+	0x65, 0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xbc, 0x01, 0x0a, 0x0a,
 	0x47, 0x41, 0x52, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x31, 0x0a, 0x04, 0x45, 0x78,
 	0x65, 0x63, 0x12, 0x12, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x52,
 	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x45,
@@ -1516,15 +1428,10 @@ var file_proto_gar_proto_rawDesc = []byte{
 	0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72,
 	0x41, 0x67, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x41, 0x67, 0x65,
-	0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0f, 0x55, 0x6e,
-	0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x41, 0x67, 0x65, 0x6e, 0x74, 0x12, 0x1d, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x55, 0x6e, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72,
-	0x41, 0x67, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x55, 0x6e, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x41,
-	0x67, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x1d, 0x5a, 0x1b,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
-	0x65, 0x2f, 0x67, 0x61, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x1d, 0x5a, 0x1b, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f,
+	0x67, 0x61, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -1540,7 +1447,7 @@ func file_proto_gar_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_gar_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_gar_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_proto_gar_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_proto_gar_proto_goTypes = []any{
 	(State)(0),                      // 0: proto.State
 	(*ProcessRequest)(nil),          // 1: proto.ProcessRequest
@@ -1562,19 +1469,17 @@ var file_proto_gar_proto_goTypes = []any{
 	(*RemoteAgentConfig)(nil),       // 17: proto.RemoteAgentConfig
 	(*RegisterAgentRequest)(nil),    // 18: proto.RegisterAgentRequest
 	(*RegisterAgentResponse)(nil),   // 19: proto.RegisterAgentResponse
-	(*UnregisterAgentRequest)(nil),  // 20: proto.UnregisterAgentRequest
-	(*UnregisterAgentResponse)(nil), // 21: proto.UnregisterAgentResponse
-	nil,                             // 22: proto.RegisterAgentRequest.MetadataEntry
-	(*structpb.Struct)(nil),         // 23: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil),   // 24: google.protobuf.Timestamp
+	nil,                             // 20: proto.RegisterAgentRequest.MetadataEntry
+	(*structpb.Struct)(nil),         // 21: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil),   // 22: google.protobuf.Timestamp
 }
 var file_proto_gar_proto_depIdxs = []int32{
 	9,  // 0: proto.ProcessRequest.contents:type_name -> proto.Content
 	9,  // 1: proto.ProcessResponse.contents:type_name -> proto.Content
 	4,  // 2: proto.ConfirmationContent.approval:type_name -> proto.ApprovalDecision
 	5,  // 3: proto.ConfirmationContent.decline:type_name -> proto.DeclineDecision
-	23, // 4: proto.FunctionCallContent.args:type_name -> google.protobuf.Struct
-	23, // 5: proto.FunctionResponseContent.response:type_name -> google.protobuf.Struct
+	21, // 4: proto.FunctionCallContent.args:type_name -> google.protobuf.Struct
+	21, // 5: proto.FunctionResponseContent.response:type_name -> google.protobuf.Struct
 	3,  // 6: proto.Content.text:type_name -> proto.TextContent
 	6,  // 7: proto.Content.confirmation:type_name -> proto.ConfirmationContent
 	7,  // 8: proto.Content.function_call:type_name -> proto.FunctionCallContent
@@ -1582,26 +1487,24 @@ var file_proto_gar_proto_depIdxs = []int32{
 	9,  // 10: proto.ExecutionEvent.inputs:type_name -> proto.Content
 	9,  // 11: proto.ExecutionEvent.outputs:type_name -> proto.Content
 	0,  // 12: proto.ExecutionEvent.state:type_name -> proto.State
-	24, // 13: proto.ExecutionEvent.timestamp:type_name -> google.protobuf.Timestamp
+	22, // 13: proto.ExecutionEvent.timestamp:type_name -> google.protobuf.Timestamp
 	9,  // 14: proto.ExecRequest.inputs:type_name -> proto.Content
 	9,  // 15: proto.ExecResponse.outputs:type_name -> proto.Content
 	0,  // 16: proto.ExecResponse.state:type_name -> proto.State
-	22, // 17: proto.RegisterAgentRequest.metadata:type_name -> proto.RegisterAgentRequest.MetadataEntry
+	20, // 17: proto.RegisterAgentRequest.metadata:type_name -> proto.RegisterAgentRequest.MetadataEntry
 	17, // 18: proto.RegisterAgentRequest.remote:type_name -> proto.RemoteAgentConfig
 	1,  // 19: proto.AgentService.Process:input_type -> proto.ProcessRequest
 	11, // 20: proto.AgentService.HealthCheck:input_type -> proto.HealthCheckRequest
 	13, // 21: proto.GARService.Exec:input_type -> proto.ExecRequest
 	15, // 22: proto.GARService.Fork:input_type -> proto.ForkRequest
 	18, // 23: proto.GARService.RegisterAgent:input_type -> proto.RegisterAgentRequest
-	20, // 24: proto.GARService.UnregisterAgent:input_type -> proto.UnregisterAgentRequest
-	2,  // 25: proto.AgentService.Process:output_type -> proto.ProcessResponse
-	12, // 26: proto.AgentService.HealthCheck:output_type -> proto.HealthCheckResponse
-	14, // 27: proto.GARService.Exec:output_type -> proto.ExecResponse
-	16, // 28: proto.GARService.Fork:output_type -> proto.ForkResponse
-	19, // 29: proto.GARService.RegisterAgent:output_type -> proto.RegisterAgentResponse
-	21, // 30: proto.GARService.UnregisterAgent:output_type -> proto.UnregisterAgentResponse
-	25, // [25:31] is the sub-list for method output_type
-	19, // [19:25] is the sub-list for method input_type
+	2,  // 24: proto.AgentService.Process:output_type -> proto.ProcessResponse
+	12, // 25: proto.AgentService.HealthCheck:output_type -> proto.HealthCheckResponse
+	14, // 26: proto.GARService.Exec:output_type -> proto.ExecResponse
+	16, // 27: proto.GARService.Fork:output_type -> proto.ForkResponse
+	19, // 28: proto.GARService.RegisterAgent:output_type -> proto.RegisterAgentResponse
+	24, // [24:29] is the sub-list for method output_type
+	19, // [19:24] is the sub-list for method input_type
 	19, // [19:19] is the sub-list for extension type_name
 	19, // [19:19] is the sub-list for extension extendee
 	0,  // [0:19] is the sub-list for field type_name
@@ -1631,7 +1534,7 @@ func file_proto_gar_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_gar_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   22,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

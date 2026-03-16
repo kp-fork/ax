@@ -176,10 +176,9 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	GARService_Exec_FullMethodName            = "/proto.GARService/Exec"
-	GARService_Fork_FullMethodName            = "/proto.GARService/Fork"
-	GARService_RegisterAgent_FullMethodName   = "/proto.GARService/RegisterAgent"
-	GARService_UnregisterAgent_FullMethodName = "/proto.GARService/UnregisterAgent"
+	GARService_Exec_FullMethodName          = "/proto.GARService/Exec"
+	GARService_Fork_FullMethodName          = "/proto.GARService/Fork"
+	GARService_RegisterAgent_FullMethodName = "/proto.GARService/RegisterAgent"
 )
 
 // GARServiceClient is the client API for GARService service.
@@ -195,8 +194,6 @@ type GARServiceClient interface {
 	Fork(ctx context.Context, in *ForkRequest, opts ...grpc.CallOption) (*ForkResponse, error)
 	// RegisterAgent registers a new agent with the controller
 	RegisterAgent(ctx context.Context, in *RegisterAgentRequest, opts ...grpc.CallOption) (*RegisterAgentResponse, error)
-	// UnregisterAgent removes an agent from the controller
-	UnregisterAgent(ctx context.Context, in *UnregisterAgentRequest, opts ...grpc.CallOption) (*UnregisterAgentResponse, error)
 }
 
 type gARServiceClient struct {
@@ -246,16 +243,6 @@ func (c *gARServiceClient) RegisterAgent(ctx context.Context, in *RegisterAgentR
 	return out, nil
 }
 
-func (c *gARServiceClient) UnregisterAgent(ctx context.Context, in *UnregisterAgentRequest, opts ...grpc.CallOption) (*UnregisterAgentResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UnregisterAgentResponse)
-	err := c.cc.Invoke(ctx, GARService_UnregisterAgent_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // GARServiceServer is the server API for GARService service.
 // All implementations must embed UnimplementedGARServiceServer
 // for forward compatibility.
@@ -269,8 +256,6 @@ type GARServiceServer interface {
 	Fork(context.Context, *ForkRequest) (*ForkResponse, error)
 	// RegisterAgent registers a new agent with the controller
 	RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error)
-	// UnregisterAgent removes an agent from the controller
-	UnregisterAgent(context.Context, *UnregisterAgentRequest) (*UnregisterAgentResponse, error)
 	mustEmbedUnimplementedGARServiceServer()
 }
 
@@ -289,9 +274,6 @@ func (UnimplementedGARServiceServer) Fork(context.Context, *ForkRequest) (*ForkR
 }
 func (UnimplementedGARServiceServer) RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
-}
-func (UnimplementedGARServiceServer) UnregisterAgent(context.Context, *UnregisterAgentRequest) (*UnregisterAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnregisterAgent not implemented")
 }
 func (UnimplementedGARServiceServer) mustEmbedUnimplementedGARServiceServer() {}
 func (UnimplementedGARServiceServer) testEmbeddedByValue()                    {}
@@ -361,24 +343,6 @@ func _GARService_RegisterAgent_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GARService_UnregisterAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnregisterAgentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GARServiceServer).UnregisterAgent(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: GARService_UnregisterAgent_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GARServiceServer).UnregisterAgent(ctx, req.(*UnregisterAgentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // GARService_ServiceDesc is the grpc.ServiceDesc for GARService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -393,10 +357,6 @@ var GARService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterAgent",
 			Handler:    _GARService_RegisterAgent_Handler,
-		},
-		{
-			MethodName: "UnregisterAgent",
-			Handler:    _GARService_UnregisterAgent_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

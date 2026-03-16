@@ -109,32 +109,6 @@ func (s *Server) RegisterAgent(ctx context.Context, req *proto.RegisterAgentRequ
 	return &proto.RegisterAgentResponse{}, nil
 }
 
-// UnregisterAgent removes a remote agent from the controller.
-// Local agents cannot be unregistered via this API.
-func (s *Server) UnregisterAgent(ctx context.Context, req *proto.UnregisterAgentRequest) (*proto.UnregisterAgentResponse, error) {
-	if req.AgentId == "" {
-		return nil, fmt.Errorf("agent_id is required")
-	}
-
-	registry := s.controller.Registry()
-
-	// Check if the agent is local
-	info, err := registry.GetInfo(req.AgentId)
-	if err != nil {
-		return nil, fmt.Errorf("agent not found: %w", err)
-	}
-
-	if info.Type == controller.AgentTypeLocal {
-		return nil, fmt.Errorf("cannot unregister local agents via API")
-	}
-
-	if err := registry.Unregister(req.AgentId); err != nil {
-		return nil, fmt.Errorf("failed to unregister agent: %w", err)
-	}
-
-	return &proto.UnregisterAgentResponse{}, nil
-}
-
 // Serve starts the gRPC server on the specified address.
 func (s *Server) Serve(address string, opts ...grpc.ServerOption) error {
 	lis, err := net.Listen("tcp", address)

@@ -180,27 +180,6 @@ func (r *Registry) RegisterKubernetesSandbox(ctx context.Context, cfg config.San
 	return nil
 }
 
-// Unregister removes an agent from the registry.
-func (r *Registry) Unregister(id string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	agent, ok := r.agents[id]
-	if !ok {
-		return fmt.Errorf("agent %s not found", id)
-	}
-
-	// Close the agent
-	if err := agent.Close(); err != nil {
-		return fmt.Errorf("failed to close agent: %w", err)
-	}
-
-	delete(r.agents, id)
-	delete(r.agentInfo, id)
-
-	return nil
-}
-
 // Get retrieves an agent by ID.
 func (r *Registry) Get(id string) (agent.Agent, error) {
 	r.mu.RLock()

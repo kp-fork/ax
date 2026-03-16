@@ -174,15 +174,6 @@ message RegisterAgentRequest {
 message RegisterAgentResponse {
 }
 
-// UnregisterAgentRequest for unregistering an agent
-message UnregisterAgentRequest {
-  string agent_id = 1;
-}
-
-// UnregisterAgentResponse contains unregistration result
-message UnregisterAgentResponse {
-}
-
 // GARService defines the gRPC service for GAR operations
 service GARService {
   // Exec executes an agentic task or resumes an existing one with streaming responses
@@ -194,7 +185,4 @@ service GARService {
 
   // RegisterAgent registers a new agent with the controller
   rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
-
-  // UnregisterAgent removes an agent from the controller
-  rpc UnregisterAgent(UnregisterAgentRequest) returns (UnregisterAgentResponse);
 }
