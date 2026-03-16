@@ -50,28 +50,18 @@ func (s *Server) TriggerSession(req *proto.TriggerSessionRequest, stream grpc.Se
 	sessionID := req.SessionId
 	inputs := req.Inputs
 
-	// TODO(jbd): This state update should be sent directly from the controller.
-	if err := stream.Send(&proto.TriggerSessionResponse{
-		State:     proto.State_STATE_RUNNING,
-		SessionId: sessionID,
-	}); err != nil {
-		return err
-	}
-
 	incoming := &proto.ProcessRequest{
 		Contents: inputs,
 	}
 	// Create output handler to stream outputs back to client
 	outputHandler := agent.OutputHandler(func(outgoing *proto.ProcessResponse) error {
 		return stream.Send(&proto.TriggerSessionResponse{
-			SessionId:    sessionID,
-			CheckpointId: outgoing.CheckpointId,
-			Outputs:      outgoing.Contents,
-			State:        proto.State_STATE_RUNNING,
+			SessionId: sessionID,
+			Outputs:   outgoing.Contents,
 		})
 	})
 	return s.controller.TriggerSession(
-		stream.Context(), sessionID, incoming, outputHandler)
+		stream.Context(), sessionID, req.AgentId, incoming, outputHandler)
 }
 
 func (s *Server) ForkSession(ctx context.Context, req *proto.ForkSessionRequest) (*proto.ForkSessionResponse, error) {

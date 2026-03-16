@@ -31,14 +31,14 @@ import (
 
 // MockAgent is a mock implementation of the Agent interface for testing.
 type MockAgent struct {
-	processFunc     func(ctx context.Context, sessionID string, req *proto.ProcessRequest, handler agent.OutputHandler) error
+	processFunc     func(ctx context.Context, t *agent.Task, e agent.TaskExecutor, o agent.OutputHandler) error
 	healthCheckFunc func(ctx context.Context) error
 	closeFunc       func() error
 }
 
-func (m *MockAgent) Process(ctx context.Context, sessionID string, req *proto.ProcessRequest, handler agent.OutputHandler) error {
+func (m *MockAgent) Process(ctx context.Context, t *agent.Task, e agent.TaskExecutor, o agent.OutputHandler) error {
 	if m.processFunc != nil {
-		return m.processFunc(ctx, sessionID, req, handler)
+		return m.processFunc(ctx, t, e, o)
 	}
 	return nil
 }
@@ -84,14 +84,12 @@ func startMockGRPCServer(t *testing.T, healthy bool) (string, func()) {
 	}
 }
 
-
-
 func TestRegistry_HealthCheckScenarios(t *testing.T) {
 	tests := []struct {
 		name          string
 		enabled       bool
 		agentType     string
-		expectHealthy bool	
+		expectHealthy bool
 	}{
 		{
 			name:          "Local Agent (Always Healthy)",
@@ -165,7 +163,7 @@ func TestRegistry_HealthCheckScenarios(t *testing.T) {
 				timeout := time.After(2 * time.Second)
 				ticker := time.NewTicker(20 * time.Millisecond)
 				defer ticker.Stop()
-				
+
 				success := false
 				for !success {
 					select {
@@ -186,10 +184,10 @@ func TestRegistry_HealthCheckScenarios(t *testing.T) {
 				// Should be immediately healthy (local or disabled)
 				// Important: for disabled+remote, it is optimistically healthy.
 				// For local, it is always healthy (unless manually updated, but default is true).
-				
+
 				// Wait a tiny bit just in case async things happen, but usually sync for registration
-				time.Sleep(10 * time.Millisecond) 
-				
+				time.Sleep(10 * time.Millisecond)
+
 				info, err := r.GetInfo(id)
 				if err != nil {
 					t.Fatalf("GetInfo failed: %v", err)
@@ -201,8 +199,6 @@ func TestRegistry_HealthCheckScenarios(t *testing.T) {
 		})
 	}
 }
-
-
 
 func TestRegistry_GracefulShutdown(t *testing.T) {
 	healthCheckConfig := config.HealthCheckConfig{

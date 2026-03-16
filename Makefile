@@ -61,3 +61,8 @@ deps:
 build-router:
 	@echo "Building sandbox-router Linux binary..."
 	@GOOS=linux CGO_ENABLED=0 GOARCH=amd64 go build -o sandbox-router ./cmd/sandbox-router
+
+clean-logs:
+	@echo "Cleaning the event logs..."
+	rm -rf ./eventlog
+	mkdir ./eventlog

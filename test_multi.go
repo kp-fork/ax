@@ -40,7 +40,6 @@ func main() {
 
 	// 2. Initialize controller
 	c, err := controller.New(ctx, controller.Config{
-		MaxSteps: 15,
 		HealthCheck: config.HealthCheckConfig{
 			Enabled: false, // disable to speed up
 		},
@@ -111,7 +110,7 @@ func main() {
 
 	for i := 0; i < 4; i++ {
 		log.Printf("\n--- Triggering step %d ---\n", i+1)
-		if err := c.TriggerSession(ctx, sessionID, req, handler); err != nil {
+		if err := c.TriggerSession(ctx, sessionID, "", req, handler); err != nil {
 			log.Fatalf("Error triggering session step %d: %v\n", i+1, err)
 		}
 		// Subsequent triggers just ask the planner to continue processing the existing history
@@ -120,8 +119,8 @@ func main() {
 }
 
 func createLocalAgent() (*agent.LocalAgent, error) {
-	processFunc := func(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler agent.OutputHandler) error {
-		for _, content := range incoming.Contents {
+	processFunc := func(ctx context.Context, t *agent.Task, e agent.TaskExecutor, handler agent.OutputHandler) error {
+		for _, content := range t.Inputs {
 			textContent := content.GetText()
 			if textContent == nil {
 				continue
@@ -156,51 +155,57 @@ func (m *mockPlanner) ID() string                            { return "__planner
 func (m *mockPlanner) Name() string                          { return "Mock Planner" }
 func (m *mockPlanner) HealthCheck(ctx context.Context) error { return nil }
 func (m *mockPlanner) Close() error                          { return nil }
-func (m *mockPlanner) Process(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler agent.OutputHandler) error {
+func (m *mockPlanner) Process(ctx context.Context, t *agent.Task, e agent.TaskExecutor, handler agent.OutputHandler) error {
 	var lastText string
-	for _, c := range incoming.Contents {
-		if t := c.GetText(); t != nil {
-			lastText = t.Text
+	for _, c := range t.Inputs {
+		if textMsg := c.GetText(); textMsg != nil {
+			lastText = textMsg.Text
 		}
 	}
 
 	// Step 1: User -> Local
 	if strings.HasPrefix(lastText, "Send the word") {
-		return handler(&proto.ProcessResponse{
-			AgentHandoff: "local-echo-agent",
-			Contents: []*proto.Content{{
-				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{Text: "oRanGe"},
-				},
-			}},
+		inputs := append(t.Inputs, &proto.Content{
+			Role: "assistant",
+			Content: &proto.Content_Text{
+				Text: &proto.TextContent{Text: "oRanGe"},
+			},
 		})
+		return e.Exec(ctx, &agent.Task{
+			ID:      "local-echo",
+			AgentID: "local-echo-agent",
+			Inputs:  inputs,
+		}, handler)
 	}
 
 	// Step 2: Local -> Remote
 	if lastText == "orange" {
-		return handler(&proto.ProcessResponse{
-			AgentHandoff: "remote-text-processor",
-			Contents: []*proto.Content{{
-				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{Text: lastText},
-				},
-			}},
+		inputs := append(t.Inputs, &proto.Content{
+			Role: "assistant",
+			Content: &proto.Content_Text{
+				Text: &proto.TextContent{Text: lastText},
+			},
 		})
+		return e.Exec(ctx, &agent.Task{
+			ID:      "remote-text",
+			AgentID: "remote-text-processor",
+			Inputs:  inputs,
+		}, handler)
 	}
 
 	// Step 3: Remote -> Sandbox
 	if strings.HasPrefix(lastText, "Remote Prefix:") {
-		return handler(&proto.ProcessResponse{
-			AgentHandoff: "uppercase",
-			Contents: []*proto.Content{{
-				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{Text: lastText},
-				},
-			}},
+		inputs := append(t.Inputs, &proto.Content{
+			Role: "assistant",
+			Content: &proto.Content_Text{
+				Text: &proto.TextContent{Text: lastText},
+			},
 		})
+		return e.Exec(ctx, &agent.Task{
+			ID:      "uppercase-task",
+			AgentID: "uppercase",
+			Inputs:  inputs,
+		}, handler)
 	}
 
 	// Final step: Sandbox -> Done

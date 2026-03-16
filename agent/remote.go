@@ -94,9 +94,9 @@ func (a *RemoteAgent) connect() error {
 }
 
 // Process handles processing of input content with the remote agent.
-func (a *RemoteAgent) Process(ctx context.Context, sessionID string, incoming *proto.ProcessRequest, handler OutputHandler) error {
+func (a *RemoteAgent) Process(ctx context.Context, t *Task, e TaskExecutor, o OutputHandler) error {
 	// Add session_id to gRPC metadata without overwriting existing metadata hooks (e.g. sandbox routers)
-	ctx = metadata.AppendToOutgoingContext(ctx, "session-id", sessionID)
+	ctx = metadata.AppendToOutgoingContext(ctx, "session-id", t.ID)
 
 	stream, err := a.client.Process(ctx)
 	if err != nil {
@@ -104,10 +104,7 @@ func (a *RemoteAgent) Process(ctx context.Context, sessionID string, incoming *p
 	}
 
 	// Send all inputs to the remote agent
-	if err := stream.Send(&proto.ProcessRequest{
-		CheckpointId: incoming.CheckpointId,
-		Contents:     incoming.Contents,
-	}); err != nil {
+	if err := stream.Send(&proto.ProcessRequest{Contents: t.Inputs}); err != nil {
 		return fmt.Errorf("failed to send content: %w", err)
 	}
 
@@ -128,7 +125,7 @@ func (a *RemoteAgent) Process(ctx context.Context, sessionID string, incoming *p
 		}
 
 		// Call the handler with the received content
-		if err := handler(resp); err != nil {
+		if err := o(resp); err != nil {
 			return fmt.Errorf("handler error: %w", err)
 		}
 

@@ -71,6 +71,13 @@ func NewRegistry(healthCheckConfig config.HealthCheckConfig) (*Registry, error) 
 	return r, nil
 }
 
+func (r *Registry) Map() map[string]agent.Agent {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.agents
+}
+
 // RegisterLocal registers a local (in-process) agent.
 func (r *Registry) RegisterLocal(cfg config.LocalAgentConfig) error {
 	r.mu.Lock()

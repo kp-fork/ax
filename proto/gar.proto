@@ -23,27 +23,15 @@ option go_package = "github.com/google/gar/proto";
 
 // ProcessRequest is an input to an agent.
 message ProcessRequest {
-  // Checkpoint is the optional checkpoint associated with
-  // the contents.
-  string checkpoint_id = 1;
-
-  // Contents as input.
-  repeated Content contents = 2;
+  repeated Content contents = 1;
 }
 
 // ProcessResponse is an output from an agent.
 // It can be returned in a streaming fashion.
 message ProcessResponse {
-  // Checkpoint is the optional checkpoint associated with
-  // the contents.
   string checkpoint_id = 1;
-
-  // Contents as output.
   repeated Content contents = 2;
-
-  // Optional agent handoff. If set controller, hands off the
-  // execution to the provided agent.
-  string agent_handoff = 3;
+  bool from_cache = 3;
 }
 
 // TextContent represents a text content.
@@ -105,52 +93,17 @@ message Content {
   // fully compatible with the Interactions Content message.
 }
 
-// Event that represents a session state change.
-// Some sessions may not be resumable based on their latest state.
-// For example, controller doesn't continue a session once
-// the state is set to STATE_FAILED.
-message SessionStateEvent {
-  State state = 1;
-}
-
-// AgentCallEvent represents an agent call.
-message AgentCallEvent {
-  reserved 1, 2;
-  string sender = 3;
-  repeated Content contents = 4;
-  bool awaiting_more = 5;
-
-  // TODO(jbd): Support pauses and async calls.
-}
-
-// HandoffEvent represents an agent handoff.
-// Controller records the agent handoff with
-// associated content.
-message HandoffEvent {
-  reserved 1, 2;
-  string source_agent_id = 3;
-  string target_agent_id = 4;
-  repeated Content contents = 5;
-}
-
-// Event is the entry in the event log. Events are used
-// to record the actions taken place in the GAR controller.
-// GAR controller can replay the events for resumability.
-message Event {
-  string session_id = 1;
-  string checkpoint_id = 2;
-
-  string sender_name = 3;
-  string sender_id = 4;
-
-  google.protobuf.Timestamp timestamp = 5;
-  google.protobuf.Timestamp controller_timestamp = 6;
-
-  oneof kind {
-    SessionStateEvent session_state_event = 7; // TODO: remove
-    AgentCallEvent agent_call_event = 8;
-    HandoffEvent handoff_event = 9;
-  }
+// ExecutionEvent is the entry in the event log. ExecutionEvents are used
+// to record the actions taken place in the executor.
+// The executor can replay the events for resumability.
+message ExecutionEvent {
+  string task_id = 2;
+  string agent_id = 3;
+  repeated Content inputs = 4;
+  repeated Content outputs = 5;
+  State state = 6;
+  google.protobuf.Timestamp timestamp = 7;
+  // string checkpoint_id = 10;
 }
 
 // HealthCheckRequest for agent health checks
@@ -174,26 +127,23 @@ service AgentService {
 // State represents the state of a session
 enum State {
   STATE_UNSPECIFIED = 0;  // Unspecified state
-  STATE_RUNNING = 1;      // Session is currently running
-  STATE_FAILED = 2;       // Session failed
-  STATE_COMPLETED = 3;    // Completed, can accept new triggers
-
-  // TODO(jbd): Add STATE_COMPLETED and only allow triggers if
-  // the state is STATE_UNSPECIFIED or STATE_COMPLETED.
+  STATE_PENDING = 1;
+  STATE_FAILED = 2;
+  STATE_COMPLETED = 3;
 }
 
 // TriggerSessionRequest for triggering a new session
 message TriggerSessionRequest {
   string session_id = 1;               // Unique session identifier
-  repeated Content inputs = 2;         // Input content to process
+  string agent_id = 2;                 // Agent ID, if empty planner is used.
+  repeated Content inputs = 3;         // Input content to process
 }
 
 // TriggerSessionResponse contains the result of triggering a session
 message TriggerSessionResponse {
   string session_id = 1;          // Session ID (in case it was generated or modified by server)
-  string checkpoint_id = 2;       // Current checkpoint ID
-  repeated Content outputs = 3;   // Output content
-  State state = 4;                // Session state
+  repeated Content outputs = 2;   // Output content
+  State state = 3;                // Session state
 }
 
 message ForkSessionRequest {
