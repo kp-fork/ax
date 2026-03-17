@@ -190,6 +190,30 @@ ax fork --src-id abc123 --src-checkpoint "550e..."
 ax fork --src-id abc123 --src-checkpoint "550e..." --dest-id new-id
 ```
 
+#### Trace Execution
+
+Visualize the trace of an agentic execution in a Web UI, directly fetching from the SQLite event log.
+
+```bash
+ax trace <execution-id> [--server <server-address>] [--config <file>]
+```
+
+This will parse the execution logs and spin up a local web server (defaulting to e.g. `http://localhost:8080`), automatically opening it in your browser.
+
+Options:
+- `--server`: Server address to listen on (optional, defaults to "localhost:8080")
+- `--config`: Path to YAML configuration file (optional, defaults to "ax.yaml")
+
+**Examples:**
+
+```bash
+# Trace on default server localhost:8080
+ax trace 1a6e0b29-87c2-4af0-81ac-0c73bf8fa293
+
+# Trace on a custom server address and port
+ax trace 1a6e0b29-87c2-4af0-81ac-0c73bf8fa293 --server 0.0.0.0:9090
+```
+
 #### Register a Remote Agent
 
 ```bash

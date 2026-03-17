@@ -115,6 +115,35 @@ func (l *SQLiteEventLog) Events(ctx context.Context, id string) ([]*proto.Execut
 	return events, nil
 }
 
+// EventsByPrefix retrieves all events from the database matching a task_id prefix, ordered by insertion order.
+func (l *SQLiteEventLog) EventsByPrefix(ctx context.Context, prefix string) ([]*proto.ExecutionEvent, error) {
+	rows, err := l.db.QueryContext(ctx, "SELECT payload FROM event_log WHERE task_id LIKE ? ORDER BY id", prefix+"%")
+	if err != nil {
+		return nil, fmt.Errorf("sqlite_eventlog: query: %w", err)
+	}
+	defer rows.Close()
+
+	var events []*proto.ExecutionEvent
+	for rows.Next() {
+		var payload string
+		if err := rows.Scan(&payload); err != nil {
+			return nil, fmt.Errorf("sqlite_eventlog: scan: %w", err)
+		}
+
+		ev := &proto.ExecutionEvent{}
+		if err := unmarshalOpts.Unmarshal([]byte(payload), ev); err != nil {
+			continue
+		}
+		events = append(events, ev)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("sqlite_eventlog: iterate: %w", err)
+	}
+
+	return events, nil
+}
+
 // Close releases the database connection.
 func (l *SQLiteEventLog) Close() error {
 	return l.db.Close()
