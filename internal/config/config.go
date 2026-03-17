@@ -72,7 +72,6 @@ type GeminiPlannerConfig struct {
 	Temperature   float32       `yaml:"temperature,omitempty"`
 	MaxTokens     int32         `yaml:"max_tokens,omitempty"`
 	Timeout       time.Duration `yaml:"timeout,omitempty"`
-	ContextWindow int           `yaml:"context_window,omitempty"`
 	SystemPrompt  string        `yaml:"system_prompt,omitempty"`
 	SkillsDir     string        `yaml:"skills_dir,omitempty"` // Directory to discover skills from
 }

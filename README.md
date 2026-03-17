@@ -237,7 +237,6 @@ planner:
     temperature: 0.7
     max_tokens: 8192
     timeout: 60s
-    context_window: 30
     system_prompt: "..."
     skills_dir: "./examples/skills"
 
