@@ -311,9 +311,10 @@ AX includes a built-in Gemini agent that can be used to generate text based on a
 
 ## Building Custom Agents
 
-### Local Agent
-
-See `examples/local_agent/main.go` for a complete implementation.
+There are several ways to register custom agents in AX by implementing
+the `AgentService` interface defined in `proto/ax.proto`:
+- Remote agents
+- GKE Sandbox agents
 
 ### Remote Agent
 
