@@ -45,9 +45,6 @@ planner:
     # Request timeout (e.g., "30s", "1m")
     timeout: 60s
 
-    # Number of recent messages to include in context
-    context_window: 30
-
     # Custom system prompt for the planner (optional)
     system_prompt: ""
 
