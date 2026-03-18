@@ -28,7 +28,7 @@ import (
 )
 
 // Data structures
-type TextPart struct {
+type Text struct {
 	Text string `json:"text"`
 }
 
@@ -44,7 +44,7 @@ type Confirmation struct {
 
 type Content struct {
 	Role         string        `json:"role"`
-	Text         *TextPart     `json:"text,omitempty"`
+	Text         *Text         `json:"text,omitempty"`
 	Confirmation *Confirmation `json:"confirmation,omitempty"`
 }
 
@@ -69,33 +69,33 @@ type TraceData struct {
 }
 
 var (
+	traceID         string
 	traceServerAddr string
 	traceConfigFile string
 )
 
 var traceCmd = &cobra.Command{
-	Use:   "trace <execution-id>",
-	Short: "View the execution trace for a given execution ID (uses SQLite eventlog)",
-	Args:  cobra.ExactArgs(1),
+	Use:   "trace",
+	Short: "View the execution trace",
 	RunE:  runTrace,
 }
 
 func init() {
-	traceCmd.Flags().StringVar(&traceServerAddr, "server", "localhost:8080", "Server address to listen on")
+	traceCmd.Flags().StringVar(&traceID, "id", "", "Execution ID")
+	traceCmd.Flags().StringVar(&traceServerAddr, "addr", "localhost:8080", "Server address to listen on")
 	traceCmd.Flags().StringVar(&traceConfigFile, "config", "ax.yaml", "Path to YAML configuration file")
+	traceCmd.MarkFlagRequired("id")
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {
-	taskID := args[0]
-
 	// Load trace data
-	data, err := loadTraceData(taskID)
+	data, err := loadTraceData(traceID)
 	if err != nil {
 		return fmt.Errorf("error loading trace data: %w", err)
 	}
 
 	if len(data.Tasks) == 0 {
-		return fmt.Errorf("no trace data found for execution-id: %s", taskID)
+		return fmt.Errorf("no trace data found for execution ID: %s", traceID)
 	}
 
 	// Start HTTP server on specified address
@@ -189,7 +189,7 @@ func extractContents(protoContents []*proto.Content) []Content {
 	for _, c := range protoContents {
 		content := Content{Role: c.Role}
 		if textC := c.GetText(); textC != nil {
-			content.Text = &TextPart{Text: textC.Text}
+			content.Text = &Text{Text: textC.Text}
 		} else if conf := c.GetConfirmation(); conf != nil {
 			content.Confirmation = &Confirmation{
 				ID:       conf.Id,
