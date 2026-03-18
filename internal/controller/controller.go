@@ -111,11 +111,7 @@ func (d *Controller) Exec(ctx context.Context, id string, agentID string, agentC
 		return err
 	}
 	o := func(resp *proto.ProcessResponse) error {
-		// Always filter out from_cache results.
-		if !resp.FromCache {
-			return handler(resp)
-		}
-		return nil
+		return handler(resp)
 	}
 
 	// For testing only! Remove this once the project is stable.

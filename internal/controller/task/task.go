@@ -59,12 +59,6 @@ func (tm *taskExecutor) Exec(ctx context.Context, t *agent.Task, o agent.OutputH
 	}
 
 	if state == proto.State_STATE_COMPLETED {
-		if t.Rehydrate {
-			return o(&proto.ProcessResponse{
-				Contents:  allInputs,
-				FromCache: true,
-			})
-		}
 		return nil
 	}
 	return tm.exec(ctx, t, tm.eventLog, a, allInputs, o)
@@ -105,6 +99,7 @@ func (tm *taskExecutor) exec(
 		ID:      t.ID,
 		AgentID: t.AgentID,
 		Inputs:  allInputs,
+		Config:  t.Config,
 	}, child, outputBuffer); err != nil {
 		_ = logFailed(ctx, el, t) // Attempt to log failure, but prioritize returning the original error.
 		return err

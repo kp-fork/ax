@@ -10,8 +10,10 @@ import (
 
 	"github.com/google/ax/agent"
 	"github.com/google/ax/internal/historyutil"
+	testagentpb "github.com/google/ax/internal/testagent/proto"
 	"github.com/google/ax/proto"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func Agents() map[string]agent.Agent {
@@ -28,85 +30,86 @@ type CodingAgent struct{}
 // Process handles processing of input content with callback handler.
 func (a *CodingAgent) Process(ctx context.Context, t *agent.Task, e agent.TaskExecutor, o agent.OutputHandler) error {
 	exec := NewExecutor(e, o)
+
+	var history []*proto.Content
 	{
-		exec.Append(&proto.Content{
-			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "Generate Cloud Run Python server code. Only show Python code, the output should be deployable as a server. We will deploy it to Kubernetes.",
+		inputs := []*proto.Content{
+			{
+				Role: "user",
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: "Generate Cloud Run Python server code. Only show Python code, the output should be deployable as a server. We will deploy it to Kubernetes.",
+					},
 				},
 			},
-		})
-		exec.Append(t.Inputs...)
-		outputs, err := exec.Exec(ctx, &Execution{
-			TaskID:  "code",
+		}
+		inputs = append(inputs, t.Inputs...)
+		outputs, err := exec.Exec(ctx, &agent.Task{
+			ID:      "code",
 			AgentID: "gemini",
-			Inputs:  exec.History(),
+			Inputs:  inputs,
 		})
 		if err != nil {
 			return err
 		}
-		exec.Append(outputs...)
+		history = append(inputs, outputs...)
 	}
 
 	{
-		outputs, err := exec.Exec(ctx, &Execution{
-			TaskID:  "docker",
+		outputs, err := exec.Exec(ctx, &agent.Task{
+			ID:      "docker",
 			AgentID: "docker-build",
-			Inputs:  exec.History(),
+			Inputs:  history,
 		})
 		if err != nil {
 			return err
 		}
-		exec.Append(outputs...)
+		history = append(history, outputs...)
 	}
 
 	{
-		exec.Append(&proto.Content{
-			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "Deploy to us-central1.",
-				},
-			},
-		})
-		exec.Append(t.Inputs...)
-		outputs, err := exec.Exec(ctx, &Execution{
-			TaskID:  "deploy",
-			AgentID: "kubernetes-deploy",
-			Inputs:  exec.History(),
+		config, err := anypb.New(&testagentpb.KubernetesDeployAgentConfig{
+			Regions: []string{"us-central1"},
 		})
 		if err != nil {
 			return err
 		}
-		exec.Append(outputs...)
+		outputs, err := exec.Exec(ctx, &agent.Task{
+			ID:      "deploy",
+			AgentID: "kubernetes-deploy",
+			Inputs:  history,
+			Config:  config,
+		})
+		if err != nil {
+			return err
+		}
+		history = append(history, outputs...)
 		// User may need to take control back to confirm
 		// or after decline.
-		if historyutil.WaitsForUser(exec.History()) {
+		if historyutil.WaitsForUser(history) {
 			return nil
 		}
 	}
 
 	{
-		exec.Append(&proto.Content{
-			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "Can you deploy it other regions, avoiding the us-central1?",
-				},
-			},
-		})
-		exec.Append(t.Inputs...)
-		outputs, err := exec.Exec(ctx, &Execution{
-			TaskID:  "deploy-more",
-			AgentID: "kubernetes-deploy",
-			Inputs:  exec.History(),
+		config, err := anypb.New(&testagentpb.KubernetesDeployAgentConfig{
+			Regions: []string{"europe-north1", "asia-east1", "us-west2"},
 		})
 		if err != nil {
 			return err
 		}
-		exec.Append(outputs...)
-		if historyutil.WaitsForUser(exec.History()) {
+		outputs, err := exec.Exec(ctx, &agent.Task{
+			ID:      "deploy-more",
+			AgentID: "kubernetes-deploy",
+			Inputs:  history,
+			Config:  config,
+		})
+		if err != nil {
+			return err
+		}
+
+		history = append(history, outputs...)
+		if historyutil.WaitsForUser(history) {
 			return nil
 		}
 	}
@@ -125,7 +128,7 @@ func (a *CodingAgent) Process(ctx context.Context, t *agent.Task, e agent.TaskEx
 	}
 
 	{
-		exec.Append(&proto.Content{
+		history = append(history, &proto.Content{
 			Role: "user",
 			Content: &proto.Content_Text{
 				Text: &proto.TextContent{
@@ -133,16 +136,15 @@ func (a *CodingAgent) Process(ctx context.Context, t *agent.Task, e agent.TaskEx
 				},
 			},
 		})
-		_, err := exec.Exec(ctx, &Execution{
-			TaskID:  "summarize",
+		_, err := exec.Exec(ctx, &agent.Task{
+			ID:      "summarize",
 			AgentID: "gemini",
-			Inputs:  exec.History(),
+			Inputs:  history,
 		})
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -185,8 +187,8 @@ func (a *KubernetesDeployAgent) Process(ctx context.Context, t *agent.Task, e ag
 
 		for _, region := range regions {
 			if region != "us-central1" {
-				_, err := exec.Exec(ctx, &Execution{
-					TaskID:  "mirror-" + region,
+				_, err := exec.Exec(ctx, &agent.Task{
+					ID:      "mirror-" + region,
 					AgentID: "docker-mirror",
 					Inputs: []*proto.Content{
 						{
@@ -246,43 +248,26 @@ func (a *KubernetesDeployAgent) Process(ctx context.Context, t *agent.Task, e ag
 		return nil
 	}
 
-	var regions []string = []string{"europe-north1", "asia-east1", "us-west2"}
-	{
-		inputs := t.Inputs
-		inputs = append(inputs, &proto.Content{
-			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "Return comma separated regions, no other text. If instructed to use a region already, just return it. Otherwise, return europe-north1,asia-east1,us-west2",
-				},
-			},
-		})
-		var outputs []*proto.Content
-		if err := e.Exec(ctx, &agent.Task{
-			ID:      "region-picker",
-			AgentID: "gemini",
-			Inputs:  inputs,
-		}, func(resp *proto.ProcessResponse) error {
-			outputs = append(outputs, resp.Contents...)
-			return nil
-		}); err != nil {
-			return err
-		}
-
-		last := outputs[len(outputs)-1]
-		text := last.GetContent().(*proto.Content_Text).Text.GetText()
-		regions = strings.Split(text, ",")
+	if t.Config == nil {
+		return fmt.Errorf("no config for id=%v", t.ID)
+	}
+	var config testagentpb.KubernetesDeployAgentConfig
+	if err := t.Config.UnmarshalTo(&config); err != nil {
+		return err
+	}
+	if len(config.Regions) == 0 {
+		return fmt.Errorf("no regions specified")
 	}
 
 	confID := uuid.NewString()
-	pendingRegions[confID] = regions
+	pendingRegions[confID] = config.Regions
 	return o(&proto.ProcessResponse{
 		Contents: []*proto.Content{{
 			Role: "assistant",
 			Content: &proto.Content_Confirmation{
 				Confirmation: &proto.ConfirmationContent{
 					Id:       confID,
-					Question: fmt.Sprintf("Picked %v region(s) to deploy, continue?", strings.Join(regions, ",")),
+					Question: fmt.Sprintf("Picked %v region(s) to deploy, continue?", strings.Join(config.Regions, ",")),
 				},
 			},
 		}},
@@ -301,7 +286,6 @@ func (a *KubernetesDeployAgent) Close() error {
 type Executor struct {
 	exec    agent.TaskExecutor
 	handler agent.OutputHandler
-	history []*proto.Content
 }
 
 func NewExecutor(e agent.TaskExecutor, o agent.OutputHandler) *Executor {
@@ -311,41 +295,22 @@ func NewExecutor(e agent.TaskExecutor, o agent.OutputHandler) *Executor {
 	}
 }
 
-type Execution struct {
-	TaskID  string
-	AgentID string
-	Inputs  []*proto.Content
-}
-
-func (e *Executor) Exec(ctx context.Context, execution *Execution) ([]*proto.Content, error) {
+func (e *Executor) Exec(ctx context.Context, t *agent.Task) ([]*proto.Content, error) {
 	var outputs []*proto.Content
-	if execution.TaskID == "" {
+	if t.ID == "" {
 		var err error
-		execution.TaskID, err = randomHex(8)
+		t.ID, err = randomHex(8)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	if err := e.exec.Exec(ctx, &agent.Task{
-		ID:      execution.TaskID,
-		AgentID: execution.AgentID,
-		Inputs:  execution.Inputs,
-	}, func(resp *proto.ProcessResponse) error {
+	if err := e.exec.Exec(ctx, t, func(resp *proto.ProcessResponse) error {
 		outputs = append(outputs, resp.Contents...)
 		return e.handler(resp)
 	}); err != nil {
 		return nil, err
 	}
 	return outputs, nil
-}
-
-func (e *Executor) Append(c ...*proto.Content) {
-	e.history = append(e.history, c...)
-}
-
-func (e *Executor) History() []*proto.Content {
-	return e.history
 }
 
 func randomHex(n int) (string, error) {

@@ -32,7 +32,6 @@ message ProcessRequest {
 message ProcessResponse {
   string checkpoint_id = 1;
   repeated Content contents = 2;
-  bool from_cache = 3;
 }
 
 // TextContent represents a text content.

@@ -28,11 +28,10 @@ import (
 type OutputHandler func(outgoing *proto.ProcessResponse) error
 
 type Task struct {
-	ID        string
-	AgentID   string
-	Inputs    []*proto.Content
-	Rehydrate bool
-	Config    *anypb.Any // agent implementation specific configuration
+	ID      string
+	AgentID string
+	Inputs  []*proto.Content
+	Config  *anypb.Any // agent implementation specific configuration
 }
 
 type TaskExecutor interface {
