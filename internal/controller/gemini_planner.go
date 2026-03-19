@@ -4,17 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
-	"runtime"
-	"strings"
 
 	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/google/ax/agent"
-	"github.com/google/ax/internal/skills"
 	"github.com/google/ax/proto"
 	"github.com/google/uuid"
 	"google.golang.org/genai"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // GeminiPlannerConfig configures the Gemini-based planner.
@@ -26,11 +21,11 @@ type GeminiPlannerConfig struct {
 
 // geminiPlannerAgent implements task.Agent using Gemini.
 type geminiPlannerAgent struct {
-	config    GeminiPlannerConfig
-	client    *genai.Client
-	bashTool  *bashTool
-	registry  *Registry
-	skillExec *skills.Executor
+	config     GeminiPlannerConfig
+	client     *genai.Client
+	bashTool   Tool
+	skillsTool Tool
+	registry   *Registry
 }
 
 // NewGeminiPlannerAgent creates a new Gemini-based agent.
@@ -46,10 +41,6 @@ func NewGeminiPlannerAgent(ctx context.Context, registry *Registry, config Gemin
 		if config.GeminiConfig.Model == "" {
 			config.GeminiConfig.Model = "gemini-3-flash-preview"
 		}
-	}
-
-	if config.MaxSteps == 0 {
-		config.MaxSteps = 5
 	}
 
 	// Default system prompt
@@ -81,28 +72,13 @@ Guidelines:
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
-	skillsDir := config.SkillsDir
-	if skillsDir == "" {
-		skillsDir = os.Getenv("SKILLS_DIR")
-	}
-	if skillsDir == "" {
-		skillsDir = skills.DefaultDir()
-	}
+	// TODO(jbd): Enable skills tool.
 
-	skillExec, err := skills.NewExecutor(client, config.GeminiConfig.Model, skillsDir)
-	if err != nil {
-		return nil, err
-	}
-
-	if skillExec.HasSkills() {
-		// config.SystemPrompt += "\n\n" + skillExec.SystemPrompt()
-	}
 	return &geminiPlannerAgent{
-		client:    client,
-		bashTool:  newBashTool(),
-		registry:  registry,
-		config:    config,
-		skillExec: skillExec,
+		client:   client,
+		bashTool: &BashTool{},
+		registry: registry,
+		config:   config,
 	}, nil
 }
 
@@ -140,17 +116,16 @@ func (p *geminiPlannerAgent) Close() error {
 }
 
 func (p *geminiPlannerAgent) process(ctx context.Context, t *agent.Task, handler agent.OutputHandler) (agentID string, err error) {
-	tools, err := agentsToTools(p.bashTool, p.registry)
+	tools, err := agentsToTools(p.registry, p.bashTool, p.skillsTool)
 	if err != nil {
 		return "", fmt.Errorf("failed to convert agents to tools: %w", err)
-	}
-	if p.skillExec.HasSkills() {
-		// tools = append(tools, skills.BuildTool(p.skillExec.SkillNames()))
 	}
 
 	inputs := t.Inputs
 	if fc, approved := p.handleConfirmationAnswer(inputs); fc != nil {
-		return "", p.handleExecute(ctx, fc, approved, handler)
+		if p.bashTool.Name() == fc.Name {
+			return "", p.bashTool.HandleExecute(ctx, fc, approved, handler)
+		}
 	}
 
 	contents := protoToContents(inputs)
@@ -205,208 +180,16 @@ func (p *geminiPlannerAgent) process(ctx context.Context, t *agent.Task, handler
 		if fc := part.FunctionCall; fc != nil {
 			fc.ID = uuid.NewString()
 			switch fc.Name {
-			case bashToolName:
-				return "", p.handleBash(fc, handler)
+			case p.bashTool.Name():
+				return "", p.bashTool.HandleCall(ctx, fc, handler)
 			case "run_skill_script", "activate_skill":
-				return "", p.handleSkill(ctx, fc, handler)
+				return "", p.skillsTool.HandleCall(ctx, fc, handler)
 			default:
 				return fc.Name, nil
 			}
 		}
 	}
 	return "", nil
-}
-
-func (p *geminiPlannerAgent) handleSkill(ctx context.Context, fc *genai.FunctionCall, o agent.OutputHandler) error {
-	if fc.Name == "run_skill_script" {
-		skill, _ := fc.Args["skill"].(string)
-		script, _ := fc.Args["script"].(string)
-		question := fmt.Sprintf("Can I run script %q from skill %q?", script, skill)
-
-		argsStruct, err := structpb.NewStruct(fc.Args)
-		if err != nil {
-			return err
-		}
-		return o(&proto.ProcessResponse{
-			Contents: []*proto.Content{
-				{
-					Content: &proto.Content_FunctionCall{
-						FunctionCall: &proto.FunctionCallContent{
-							Id:   fc.ID,
-							Name: fc.Name,
-							Args: argsStruct,
-						},
-					},
-				},
-				{
-					Content: &proto.Content_Confirmation{
-						Confirmation: &proto.ConfirmationContent{
-							Id:       fc.ID,
-							Question: question,
-						},
-					},
-				}},
-		})
-	}
-
-	resultPart := p.skillExec.HandleCall(ctx, fc)
-	var output string
-	if resultPart != nil && resultPart.FunctionResponse != nil {
-		resultMap := resultPart.FunctionResponse.Response
-		if body, ok := resultMap["instructions"]; ok {
-			output = body.(string)
-		} else if errStr, ok := resultMap["error"]; ok {
-			output = "Error: " + errStr.(string)
-		} else {
-			if so, ok := resultMap["stdout"].(string); ok && so != "" {
-				output += so
-			}
-			if se, ok := resultMap["stderr"].(string); ok && se != "" {
-				if output != "" {
-					output += "\n"
-				}
-				output += "Stderr: " + se
-			}
-			if output == "" {
-				output = "Command executed successfully (no output)"
-			}
-		}
-	} else {
-		output = "Error: nil response from executor"
-	}
-
-	respStruct, err := structpb.NewStruct(map[string]any{"result": output})
-	if err != nil {
-		return fmt.Errorf("failed to convert function response to structpb: %w", err)
-	}
-	return o(&proto.ProcessResponse{
-		Contents: []*proto.Content{{
-			Role: "assistant",
-			Content: &proto.Content_FunctionResponse{
-				FunctionResponse: &proto.FunctionResponseContent{
-					Name:     fc.Name,
-					Response: respStruct,
-					Id:       fc.ID,
-				},
-			},
-		}},
-	})
-}
-
-func (p *geminiPlannerAgent) handleBash(fc *genai.FunctionCall, o agent.OutputHandler) error {
-	command, _ := fc.Args["command"].(string)
-	argsStruct, err := structpb.NewStruct(fc.Args)
-	if err != nil {
-		return err
-	}
-	return o(&proto.ProcessResponse{
-		Contents: []*proto.Content{
-			{
-				Content: &proto.Content_FunctionCall{
-					FunctionCall: &proto.FunctionCallContent{
-						Id:   fc.ID,
-						Name: fc.Name,
-						Args: argsStruct,
-					},
-				},
-			},
-			{
-				Content: &proto.Content_Confirmation{
-					Confirmation: &proto.ConfirmationContent{
-						Id:       fc.ID,
-						Question: fmt.Sprintf("Can I run %q?", command),
-					},
-				},
-			}},
-	})
-
-}
-
-func (p *geminiPlannerAgent) handleExecute(ctx context.Context, fc *genai.FunctionCall, approved bool, o agent.OutputHandler) error {
-	if !approved {
-		// Declined, nothing to do in terms of executing any commands.
-		// But we still have to finish with a function response,
-		// not to keep the previously log function call hanging forever.
-		return o(&proto.ProcessResponse{
-			Contents: []*proto.Content{
-				{
-					Role: "assistant",
-					Content: &proto.Content_FunctionResponse{
-						FunctionResponse: &proto.FunctionResponseContent{
-							Name: fc.Name,
-							Id:   fc.ID,
-						},
-					},
-				},
-				{
-					Role: "assistant",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{
-							Text: "Okay.",
-						},
-					},
-				},
-			},
-		})
-	}
-
-	var output string
-	switch fc.Name {
-	case "bash":
-		var err error
-		output, err = execute(fc.Args)
-		if err != nil {
-			return err
-		}
-	case "run_skill_script":
-		result := p.skillExec.HandleCall(ctx, fc)
-		if result != nil && result.FunctionResponse != nil {
-			resultMap := result.FunctionResponse.Response
-			if body, ok := resultMap["instructions"]; ok {
-				output = body.(string)
-			} else if errStr, ok := resultMap["error"]; ok {
-				output = "Error: " + errStr.(string)
-			} else {
-				if so, ok := resultMap["stdout"].(string); ok && so != "" {
-					output += so
-				}
-				if se, ok := resultMap["stderr"].(string); ok && se != "" {
-					if output != "" {
-						output += "\n"
-					}
-					output += "Stderr: " + se
-				}
-			}
-		} else {
-			output = "Error: nil response from executor"
-		}
-	}
-	respStruct, err := structpb.NewStruct(map[string]any{"result": output})
-	if err != nil {
-		return fmt.Errorf("failed to convert function response to structpb: %w", err)
-	}
-	return o(&proto.ProcessResponse{
-		Contents: []*proto.Content{
-			{
-				Role: "assistant",
-				Content: &proto.Content_FunctionResponse{
-					FunctionResponse: &proto.FunctionResponseContent{
-						Name:     fc.Name,
-						Response: respStruct,
-						Id:       fc.ID,
-					},
-				},
-			},
-			{
-				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{
-						Text: output,
-					},
-				},
-			},
-		},
-	})
 }
 
 func (p *geminiPlannerAgent) handleConfirmationAnswer(inputs []*proto.Content) (*genai.FunctionCall, bool) {
@@ -461,7 +244,7 @@ func (p *geminiPlannerAgent) handleConfirmationAnswer(inputs []*proto.Content) (
 }
 
 // agentsToTools converts registry agents to Gemini function declarations.
-func agentsToTools(bashTool *bashTool, registry *Registry) ([]*genai.Tool, error) {
+func agentsToTools(registry *Registry, nativeTools ...Tool) ([]*genai.Tool, error) {
 	healthyAgents := registry.ListHealthy()
 
 	var tools []*genai.Tool
@@ -482,8 +265,11 @@ func agentsToTools(bashTool *bashTool, registry *Registry) ([]*genai.Tool, error
 			FunctionDeclarations: []*genai.FunctionDeclaration{funcDecl},
 		})
 	}
-	if bashTool != nil {
-		tools = append(tools, bashTool.funcDecl())
+	for _, nativeTool := range nativeTools {
+		if nativeTool == nil {
+			continue
+		}
+		tools = append(tools, nativeTool.FuncDecl()...)
 	}
 	return tools, nil
 }
@@ -555,33 +341,4 @@ func protoToContents(inputs []*proto.Content) []*genai.Content {
 		// TODO(jbd): Handle other content types (e.g., images, files)
 	}
 	return contents
-}
-
-func execute(args map[string]any) (string, error) {
-	command, ok := args["command"].(string)
-	if !ok {
-		return "", fmt.Errorf("command parameter missing or invalid")
-	}
-
-	// Execute the command.
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/C", command)
-	} else {
-		cmd = exec.Command("sh", "-c", command)
-	}
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		// Return both the error and any output that was produced
-		return fmt.Sprintf("Error: %v\nOutput: %s\n\n", err, output), nil
-	}
-
-	result := strings.TrimSpace(string(output))
-	if result == "" {
-		return "Command executed successfully (no output)", nil
-	}
-	result += "\n\n"
-
-	return result, nil
 }

@@ -22,49 +22,16 @@ import (
 	"google.golang.org/genai"
 )
 
-// UpdateKind identifies the type of an UpdateEvent.
-type UpdateKind int
-
-const (
-	UpdateSkillActivated UpdateKind = iota
-	UpdateScriptRunning
-	UpdateScriptDone
-)
-
-// UpdateEvent describes a state change during execution.
-type UpdateEvent struct {
-	Kind     UpdateKind
-	Skill    string
-	Script   string // UpdateScriptRunning and UpdateScriptDone
-	ExitCode int    // UpdateScriptDone only
-}
-
 // Executor runs an agentskills.io-compatible agentic loop.
 type Executor struct {
-	client *genai.Client
 	model  string
-	cfg    *genai.GenerateContentConfig
-
-	byName   map[string]Skill
-	names    []string
-	onUpdate func(UpdateEvent)
-}
-
-// OnUpdate registers a callback that is called when a skill is activated or a
-// script is run. Replaces any previously registered callback.
-func (e *Executor) OnUpdate(fn func(UpdateEvent)) {
-	e.onUpdate = fn
-}
-
-func (e *Executor) update(ev UpdateEvent) {
-	if e.onUpdate != nil {
-		e.onUpdate(ev)
-	}
+	byName map[string]Skill
+	names  []string
 }
 
 // NewExecutor discovers skills in dir, then creates an Executor. The caller is
 // responsible for creating the client and choosing a model.
-func NewExecutor(client *genai.Client, model, dir string) (*Executor, error) {
+func NewExecutor(dir string) (*Executor, error) {
 	if dir == "" {
 		dir = os.Getenv("SKILLS_DIR")
 	}
@@ -87,52 +54,10 @@ func NewExecutor(client *genai.Client, model, dir string) (*Executor, error) {
 		byName[s.Name] = s
 	}
 
-	si := "You are a helpful AI assistant with access to a set of skills.\n" +
-		"When a user task matches one or more skills, call activate_skill to load\n" +
-		"its full instructions before answering.\n\n" +
-		SystemPrompt(found)
-
-	cfg := &genai.GenerateContentConfig{
-		SystemInstruction: genai.NewContentFromText(si, genai.RoleUser),
-		Tools:             []*genai.Tool{BuildTool(names)},
-	}
-
 	return &Executor{
-		client: client,
 		byName: byName,
 		names:  names,
-		cfg:    cfg,
-		model:  model,
 	}, nil
-}
-
-// Run sends task to the model and returns the final text response, activating
-// skills and executing scripts as requested by the model along the way.
-func (e *Executor) Run(ctx context.Context, prompt string) (string, error) {
-	history := []*genai.Content{
-		genai.NewContentFromText(prompt, genai.RoleUser),
-	}
-
-	for {
-		resp, err := e.client.Models.GenerateContent(ctx, e.model, history, e.cfg)
-		if err != nil {
-			return "", err
-		}
-		if len(resp.Candidates) > 0 && resp.Candidates[0].Content != nil {
-			history = append(history, resp.Candidates[0].Content)
-		}
-
-		calls := resp.FunctionCalls()
-		if len(calls) == 0 {
-			return resp.Text(), nil
-		}
-
-		var results []*genai.Part
-		for _, call := range calls {
-			results = append(results, e.HandleCall(ctx, call))
-		}
-		history = append(history, genai.NewContentFromParts(results, genai.RoleUser))
-	}
 }
 
 // HandleCall processes an 'activate_skill' or 'run_skill_script' call.
@@ -152,7 +77,6 @@ func (e *Executor) HandleCall(ctx context.Context, call *genai.FunctionCall) *ge
 		if !ok {
 			return respond(map[string]any{"error": "unknown skill: " + name})
 		}
-		e.update(UpdateEvent{Kind: UpdateSkillActivated, Skill: name})
 		body, err := s.Body()
 		if err != nil {
 			return respond(map[string]any{"error": err.Error()})
@@ -181,12 +105,10 @@ func (e *Executor) HandleCall(ctx context.Context, call *genai.FunctionCall) *ge
 			return respond(map[string]any{"error": "unknown skill: " + skillName})
 		}
 
-		e.update(UpdateEvent{Kind: UpdateScriptRunning, Skill: skillName, Script: script})
 		result, err := s.RunScript(ctx, script, args)
 		if err != nil {
 			return respond(map[string]any{"error": err.Error()})
 		}
-		e.update(UpdateEvent{Kind: UpdateScriptDone, Skill: skillName, Script: script, ExitCode: result.ExitCode})
 		return respond(map[string]any{
 			"stdout":    result.Stdout,
 			"stderr":    result.Stderr,
