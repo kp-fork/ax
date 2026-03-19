@@ -102,9 +102,9 @@ cat ax.yaml
 # ...
 registry:
   remote_agents:
-    - id: "uppercase"
-      name: "Upper Case Agent"
-      description: "Converts text to uppercase."
+    - id: "lowercase"
+      name: "Lowercase Agent"
+      description: "Converts text to lowercase."
       address: "localhost:50051"
 
 ax serve
@@ -276,7 +276,7 @@ registry:
        version: "1.0"
   k8s_sandbox_agents:
     - id: "uppercase"
-      name: "Upper Case Agent"
+      name: "Uppercase Agent"
       description: "Converts text to uppercase."
       sandbox_template_ref: "uppercase-agent-template"
       container_port: 8494

@@ -66,7 +66,7 @@ func (s *server) Process(stream proto.AgentService_ProcessServer) error {
 		last := contents[len(contents)-1]
 		last.Content = &proto.Content_Text{
 			Text: &proto.TextContent{
-				Text: strings.ToUpper(last.GetText().Text),
+				Text: strings.ToLower(last.GetText().Text),
 			},
 		}
 
