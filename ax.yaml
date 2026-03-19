@@ -54,19 +54,16 @@ planner:
 # Remote agents configuration (optional)
 # List of remote or sandbox agents to register on startup.
 registry:
-  remote_agents:
-    - id: "remote-text-processor"
-      name: "Remote Text Processor"
-      description: "Converts text to lowercase."
-      address: "localhost:50051"
-      metadata:
-       version: "1.0"
-  k8s_sandbox_agents: # TODO: Rename to k8s_sandbox_agents
-    - id: "uppercase"
-      name: "Upper Case Agent"
-      description: "Converts text to uppercase."
-      sandbox_template_ref: "uppercase-agent-template"
-      container_port: 8494
-      use_router: true
-      metadata:
-       version: "1.0"
+  # remote_agents:
+  #   - id: "uppercase"
+  #     name: "Upper Case Agent"
+  #     description: "Converts text to uppercase."
+  #     address: "localhost:50051"
+
+  # k8s_sandbox_agents:
+  #   - id: "uppercase"
+  #     name: "Upper Case Agent"
+  #     description: "Converts text to uppercase."
+  #     sandbox_template_ref: "uppercase-agent-template"
+  #     container_port: 8494
+  #     use_router: true

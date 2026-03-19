@@ -113,7 +113,6 @@ func (p *geminiPlannerAgent) Process(ctx context.Context, t *agent.Task, e agent
 		return handler(resp)
 	}
 
-	t.Inputs = append(t.Inputs, outputs...)
 	nextAgentID, err := p.process(ctx, t, outputCapturer)
 	if err != nil {
 		return err
@@ -128,6 +127,7 @@ func (p *geminiPlannerAgent) Process(ctx context.Context, t *agent.Task, e agent
 	}, handler); err != nil {
 		return err
 	}
+	t.Inputs = append(t.Inputs, outputs...)
 	return nil
 }
 

@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -31,13 +30,7 @@ import (
 // RemoteAgent is a gRPC client that implements the Agent interface.
 // It communicates with remote agent services over gRPC.
 type RemoteAgent struct {
-	address    string
-	conn       *grpc.ClientConn
-	client     proto.AgentServiceClient
-	mu         sync.Mutex
-	reconnect  bool
-	maxRetries int
-	dialOpts   []grpc.DialOption
+	cfg RemoteAgentConfig
 }
 
 // RemoteAgentConfig configures a remote agent client.
@@ -53,51 +46,35 @@ func NewRemoteAgent(config RemoteAgentConfig) (*RemoteAgent, error) {
 	if config.Address == "" {
 		return nil, fmt.Errorf("agent address cannot be empty")
 	}
-
-	agent := &RemoteAgent{
-		address:    config.Address,
-		reconnect:  config.Reconnect,
-		maxRetries: config.MaxRetries,
-		dialOpts:   config.DialOpts,
-	}
-
-	if err := agent.connect(); err != nil {
-		return nil, fmt.Errorf("failed to connect to remote agent: %w", err)
-	}
-
-	return agent, nil
+	return &RemoteAgent{cfg: config}, nil
 }
 
 // connect establishes a gRPC connection to the remote agent.
-func (a *RemoteAgent) connect() error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	if a.conn != nil {
-		a.conn.Close()
-	}
-
+func (a *RemoteAgent) connect() (*grpc.ClientConn, error) {
 	// Use provided dial options, or default to insecure credentials
-	opts := a.dialOpts
+	opts := a.cfg.DialOpts
 	if len(opts) == 0 {
 		opts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	}
 
-	conn, err := grpc.NewClient(a.address, opts...)
+	conn, err := grpc.NewClient(a.cfg.Address, opts...)
 	if err != nil {
-		return fmt.Errorf("failed to dial: %w", err)
+		return nil, fmt.Errorf("failed to dial: %w", err)
 	}
-
-	a.conn = conn
-	a.client = proto.NewAgentServiceClient(conn)
-	return nil
+	return conn, nil
 }
 
 // Process handles processing of input content with the remote agent.
 func (a *RemoteAgent) Process(ctx context.Context, t *Task, e TaskExecutor, o OutputHandler) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, "execution-id", t.ID)
+	conn, err := a.connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect: %w", err)
+	}
+	defer conn.Close()
 
-	stream, err := a.client.Process(ctx)
+	client := proto.NewAgentServiceClient(conn)
+	stream, err := client.Process(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create stream: %w", err)
 	}
@@ -142,7 +119,14 @@ func (a *RemoteAgent) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	resp, err := a.client.HealthCheck(ctx, &proto.HealthCheckRequest{})
+	conn, err := a.connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect: %w", err)
+	}
+	defer conn.Close()
+
+	client := proto.NewAgentServiceClient(conn)
+	resp, err := client.HealthCheck(ctx, &proto.HealthCheckRequest{})
 	if err != nil {
 		return fmt.Errorf("health check failed: %w", err)
 	}
@@ -156,11 +140,5 @@ func (a *RemoteAgent) HealthCheck(ctx context.Context) error {
 
 // Close gracefully shuts down the remote agent connection.
 func (a *RemoteAgent) Close() error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	if a.conn != nil {
-		return a.conn.Close()
-	}
 	return nil
 }

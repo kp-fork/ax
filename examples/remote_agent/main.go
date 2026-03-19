@@ -16,10 +16,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"strings"
 
 	"google.golang.org/grpc"
 
@@ -53,17 +55,23 @@ func (s *server) Process(stream proto.AgentService_ProcessServer) error {
 			if textContent == nil {
 				continue
 			}
-			contents = append(contents, &proto.Content{
-				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{
-						Text: "Remote Prefix: " + textContent.Text,
-					},
-				},
-			})
+			contents = append(contents, input)
 		}
+		if len(contents) == 0 {
+			return errors.New("no text inputs, cannot uppercase")
+		}
+
+		// We don't need to uppercase the whole history.
+		// Only uppercase the last text message.
+		last := contents[len(contents)-1]
+		last.Content = &proto.Content_Text{
+			Text: &proto.TextContent{
+				Text: strings.ToUpper(last.GetText().Text),
+			},
+		}
+
 		if err := stream.Send(&proto.ProcessResponse{
-			Contents:     contents,
+			Contents:     []*proto.Content{last},
 			CheckpointId: uuid.New().String(),
 		}); err != nil {
 			return err

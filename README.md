@@ -97,19 +97,22 @@ The remote agent runs as a gRPC server implementing `AgentService` on port `:500
 
 **Terminal 2** - Start the AX controller server:
 ```bash
+# Ensure the agent is registered as a remote agent in ax.yaml.
+cat ax.yaml
+# ...
+registry:
+  remote_agents:
+    - id: "uppercase"
+      name: "Upper Case Agent"
+      description: "Converts text to uppercase."
+      address: "localhost:50051"
+
 ax serve
 ```
-The server exposes the `AXService` on port `:8494`.
+The server exposes the `AXService` on port `:8494` by default.
 
 **Terminal 3** - Register the remote agent and execute:
 ```bash
-ax register \
-    --server localhost:8494 \
-    --agent-id uppercase-agent \
-    --agent-name "Uppercase Agent" \
-    --agent-description "Converts input text to uppercase." \
-    --agent-addr localhost:50051
-
 ax exec \
     --server localhost:8494 \
     --id task123 \
