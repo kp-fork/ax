@@ -116,9 +116,6 @@ func (d *Controller) Exec(ctx context.Context, id string, agentID string, agentC
 		for id, agent := range testagent.Agents() {
 			registry[id] = agent
 		}
-		if agentID == "" {
-			agentID = "coding"
-		}
 	}
 
 	if agentID == "" {
