@@ -315,7 +315,12 @@ For safety and control, any execution initiated by the bash tool requires explic
 
 ### Gemini Agent
 
-AX includes a built-in Gemini agent that can be used to generate text based on a given prompt. The agent is registered as `gemini`.
+AX includes a built-in Gemini agent that can be used to generate text based on a given prompt. The agent is registered as `gemini` and can be triggered as a standalone agent or used from custom agent implementations.
+
+```
+ax exec --agent gemini \
+  --input "Hello, how are you?"
+```
 
 ## Building Custom Agents
 
