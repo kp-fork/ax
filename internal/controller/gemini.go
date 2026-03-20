@@ -452,7 +452,7 @@ func execute(args map[string]any) (string, error) {
 	if result == "" {
 		return "Command executed successfully (no output)", nil
 	}
-	result += "\n\n"
+	result = strings.TrimSpace(result) + "\n"
 
 	return result, nil
 }

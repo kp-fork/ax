@@ -64,6 +64,7 @@ func (s *server) Process(stream proto.AgentService_ProcessServer) error {
 		// We don't need to uppercase the whole history.
 		// Only uppercase the last text message.
 		last := contents[len(contents)-1]
+		last.Role = "assistant"
 		last.Content = &proto.Content_Text{
 			Text: &proto.TextContent{
 				Text: strings.ToLower(last.GetText().Text),

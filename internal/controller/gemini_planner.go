@@ -99,11 +99,10 @@ func (p *geminiPlannerAgent) Process(ctx context.Context, t *agent.Task, e agent
 	if err := e.Exec(ctx, &agent.Task{
 		ID:      nextAgentID,
 		AgentID: nextAgentID,
-		Inputs:  t.Inputs,
+		Inputs:  append(t.Inputs, outputs...),
 	}, handler); err != nil {
 		return err
 	}
-	t.Inputs = append(t.Inputs, outputs...)
 	return nil
 }
 
