@@ -23,8 +23,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/google/ax/agent"
 	"github.com/google/ax/cmd/ax/internal"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/controller"
 	"github.com/google/ax/proto"

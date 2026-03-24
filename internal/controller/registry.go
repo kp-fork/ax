@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/internal/config"
 )
 

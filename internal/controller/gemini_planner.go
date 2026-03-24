@@ -20,7 +20,7 @@ import (
 	"os"
 
 	"github.com/golang/protobuf/ptypes/duration"
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/proto"
 	"github.com/google/uuid"
 	"google.golang.org/genai"

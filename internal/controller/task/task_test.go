@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/proto"
 	"golang.org/x/sync/errgroup"
 )

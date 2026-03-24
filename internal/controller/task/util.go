@@ -17,7 +17,7 @@ package task
 import (
 	"context"
 
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/proto"
 )
 

@@ -22,7 +22,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/controller/task"
 	"github.com/google/ax/internal/testagent"

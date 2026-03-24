@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/duration"
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/internal/skills"
 	"github.com/google/ax/proto"
 	"google.golang.org/genai"
