@@ -94,7 +94,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .loading{display:flex;align-items:center;justify-content:center;height:120px;color:#6c7086}
 
 .trace-hdr .label{font-size:11px;color:#6c7086;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.trace-hdr .tid{font-family:monospace;font-size:15px;font-weight:700;color:#1a1a2e}
+.trace-hdr .exec-id{font-family:monospace;font-size:15px;font-weight:700;color:#1a1a2e}
 
 .timeline-card{background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.08);flex-shrink:0}
 .card-title{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#6c7086;margin-bottom:10px;font-weight:600}
@@ -112,19 +112,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tl-bar.c5{background:#94e2d5}
 .tl-bar.c6{background:#f9e2af}
 
-.task-card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;flex-shrink:0}
-.task-card-hdr{padding:11px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;background:#fafafa;border-bottom:1px solid #f0f0f0}
-.task-card-hdr:hover{background:#f4f4f8}
+.exec-card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;flex-shrink:0}
+.exec-card-hdr{padding:11px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;background:#fafafa;border-bottom:1px solid #f0f0f0}
+.exec-card-hdr:hover{background:#f4f4f8}
 .expand-ico{color:#6c7086;font-size:11px;transition:transform .15s;flex-shrink:0}
-.task-card-hdr.collapsed .expand-ico{transform:rotate(-90deg)}
-.task-card-body.hidden{display:none}
-.task-name{font-family:monospace;font-size:13px;font-weight:700;color:#1e1e2e}
+.exec-card-hdr.collapsed .expand-ico{transform:rotate(-90deg)}
+.exec-card-body.hidden{display:none}
+.exec-name{font-family:monospace;font-size:13px;font-weight:700;color:#1e1e2e}
 .agent-badge{font-size:12px;padding:2px 8px;border-radius:10px;background:#ede9fe;color:#6d28d9;font-family:monospace}
 .state-badge{font-size:11px;padding:2px 8px;border-radius:10px;margin-left:auto;font-weight:600}
 .state-badge.completed{background:#dcfce7;color:#166534}
 .state-badge.pending{background:#fef3c7;color:#92400e}
 .state-badge.failed{background:#fee2e2;color:#991b1b}
-.task-card-body{}
+.exec-card-body{}
 
 .event{border-top:1px solid #f5f5f5}
 .state-evt{padding:7px 18px;font-size:11px;color:#7c7ca0;font-style:italic;background:#fafafe;display:flex;align-items:center;gap:8px}
@@ -254,19 +254,19 @@ function getLastState(events){
 
 function renderTrace(data){
   // Build timeline
-  const taskTimes=data.tasks.map(t=>{
-    const ts=t.events.map(e=>new Date(e.timestamp).getTime());
+  const execTimes=data.execs.map(e=>{
+    const ts=e.events.map(ev=>new Date(ev.timestamp).getTime());
     const start=ts.length?Math.min(...ts):null;
     const end=ts.length?Math.max(...ts):null;
-    return{execID:t.exec_id,start,end};
+    return{execID:e.exec_id,start,end};
   });
-  taskTimes.sort((a,b)=>{
+  execTimes.sort((a,b)=>{
     if(a.start==null)return 1;
     if(b.start==null)return -1;
     return a.start-b.start;
   });
   let minT=null,maxT=null;
-  taskTimes.forEach(({start,end})=>{
+  execTimes.forEach(({start,end})=>{
     if(start!=null){
       if(minT==null||start<minT)minT=start;
       if(maxT==null||end>maxT)maxT=end;
@@ -274,10 +274,10 @@ function renderTrace(data){
   });
   const span=maxT-minT||1;
 
-  let html='<div class="trace-hdr"><div class="label">Trace</div><div class="tid">'+esc(data.root_exec_id)+'</div></div>';
+  let html='<div class="trace-hdr"><div class="label">Trace</div><div class="exec-id">'+esc(data.root_exec_id)+'</div></div>';
 
   html+='<div class="timeline-card"><div class="card-title">Timeline</div><div class="tl-rows">';
-  taskTimes.forEach(({execID,start,end},i)=>{
+  execTimes.forEach(({execID,start,end},i)=>{
     const shortName=execID===data.root_exec_id?'root':execID.slice(data.root_exec_id.length+1);
     const left=start!=null?((start-minT)/span*100).toFixed(2):0;
     const width=start!=null?Math.max((end-start)/span*100,0.4).toFixed(2):0;
@@ -291,22 +291,22 @@ function renderTrace(data){
   });
   html+='</div></div>';
 
-  // Task sections
-  data.tasks.forEach((task,i)=>{
-    const shortName=task.exec_id===data.root_exec_id?'root':task.exec_id.slice(data.root_exec_id.length+1);
-    const lastState=getLastState(task.events);
+  // Exec sections
+  data.execs.forEach((exec,i)=>{
+    const shortName=exec.exec_id===data.root_exec_id?'root':exec.exec_id.slice(data.root_exec_id.length+1);
+    const lastState=getLastState(exec.events);
     const stateClass=lastState?lastState.toLowerCase().replace('state_',''):'';
     const stateBadge=lastState?'<span class="state-badge '+esc(stateClass)+'">'+esc(lastState.replace('STATE_',''))+'</span>':'';
 
-    html+='<div class="task-card" id="card-'+esc(task.exec_id)+'">'
-      +'<div class="task-card-hdr collapsed" onclick="toggleCard(this)">'
+    html+='<div class="exec-card" id="card-'+esc(exec.exec_id)+'">'
+      +'<div class="exec-card-hdr collapsed" onclick="toggleCard(this)">'
       +'<span class="expand-ico">▼</span>'
-      +'<span class="task-name">'+esc(shortName)+'</span>'
-      +'<span class="agent-badge">'+esc(task.agent_id||'—')+'</span>'
+      +'<span class="exec-name">'+esc(shortName)+'</span>'
+      +'<span class="agent-badge">'+esc(exec.agent_id||'—')+'</span>'
       +stateBadge
       +'</div>'
-      +'<div class="task-card-body hidden">';
-    task.events.forEach(ev=>{html+=renderEvent(ev);});
+      +'<div class="exec-card-body hidden">';
+    exec.events.forEach(ev=>{html+=renderEvent(ev);});
     html+='</div></div>';
   });
 
@@ -316,8 +316,8 @@ function renderTrace(data){
 function scrollToCard(execID){
   const el=document.getElementById('card-'+execID);
   if(!el)return;
-  const hdr=el.querySelector('.task-card-hdr');
-  const body=el.querySelector('.task-card-body');
+  const hdr=el.querySelector('.exec-card-hdr');
+  const body=el.querySelector('.exec-card-body');
   if(hdr&&hdr.classList.contains('collapsed')){
     hdr.classList.remove('collapsed');
     body.classList.remove('hidden');

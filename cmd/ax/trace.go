@@ -57,7 +57,7 @@ type ExecutionEvent struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-type TaskTrace struct {
+type ExecTrace struct {
 	ExecID  string           `json:"exec_id"`
 	AgentID string           `json:"agent_id"`
 	Events  []ExecutionEvent `json:"events"`
@@ -65,7 +65,7 @@ type TaskTrace struct {
 
 type TraceData struct {
 	RootExecID string      `json:"root_exec_id"`
-	Tasks      []TaskTrace `json:"tasks"`
+	Execs      []ExecTrace `json:"execs"`
 }
 
 var (
@@ -94,7 +94,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error loading trace data: %w", err)
 	}
 
-	if len(data.Tasks) == 0 {
+	if len(data.Execs) == 0 {
 		return fmt.Errorf("no trace data found for execution ID: %s", traceID)
 	}
 
@@ -118,7 +118,7 @@ func loadTraceData(rootExecID string) (*TraceData, error) {
 
 	data := &TraceData{
 		RootExecID: rootExecID,
-		Tasks:      buildTaskTraces(rootExecID, events),
+		Execs:      buildExecTraces(rootExecID, events),
 	}
 
 	return data, nil
@@ -145,17 +145,17 @@ func fetchEventsFromDB(configPath string, rootExecID string) ([]*proto.Execution
 	return events, nil
 }
 
-func buildTaskTraces(rootExecID string, events []*proto.ExecutionEvent) []TaskTrace {
-	tasksMap := make(map[string][]ExecutionEvent)
+func buildExecTraces(rootExecID string, events []*proto.ExecutionEvent) []ExecTrace {
+	execsMap := make(map[string][]ExecutionEvent)
 
 	for _, protoEv := range events {
 		exID := protoEv.ExecId
 		ev := extractExecutionEvent(exID, protoEv)
-		tasksMap[exID] = append(tasksMap[exID], ev)
+		execsMap[exID] = append(execsMap[exID], ev)
 	}
 
-	var tasks []TaskTrace
-	for execID, evs := range tasksMap {
+	var execs []ExecTrace
+	for execID, evs := range execsMap {
 		agentID := ""
 		for _, ev := range evs {
 			if ev.AgentID != "" {
@@ -163,25 +163,25 @@ func buildTaskTraces(rootExecID string, events []*proto.ExecutionEvent) []TaskTr
 				break
 			}
 		}
-		tasks = append(tasks, TaskTrace{
+		execs = append(execs, ExecTrace{
 			ExecID:  execID,
 			AgentID: agentID,
 			Events:  evs,
 		})
 	}
 
-	// Root task first, then sub-tasks sorted by name.
-	sort.Slice(tasks, func(i, j int) bool {
-		if tasks[i].ExecID == rootExecID {
+	// Root exec first, then sub-execs sorted by name.
+	sort.Slice(execs, func(i, j int) bool {
+		if execs[i].ExecID == rootExecID {
 			return true
 		}
-		if tasks[j].ExecID == rootExecID {
+		if execs[j].ExecID == rootExecID {
 			return false
 		}
-		return tasks[i].ExecID < tasks[j].ExecID
+		return execs[i].ExecID < execs[j].ExecID
 	})
 
-	return tasks
+	return execs
 }
 
 func extractContents(protoContents []*proto.Content) []Content {
