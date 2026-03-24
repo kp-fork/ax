@@ -59,8 +59,8 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 		}
 		inputs = append(inputs, start.Contents...)
 		outputs, err := exec.Exec(ctx, "code", &proto.AgentStart{
-			AgentId: "gemini",
-			Contents:  inputs,
+			AgentId:  "gemini",
+			Contents: inputs,
 		})
 		if err != nil {
 			return err
@@ -70,8 +70,8 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 
 	{
 		outputs, err := exec.Exec(ctx, "docker", &proto.AgentStart{
-			AgentId: "docker-build",
-			Contents:  history,
+			AgentId:  "docker-build",
+			Contents: history,
 		})
 		if err != nil {
 			return err
@@ -87,9 +87,9 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 			return err
 		}
 		outputs, err := exec.Exec(ctx, "deploy", &proto.AgentStart{
-			AgentId: "kubernetes-deploy",
-			Contents:  history,
-			Config:  config,
+			AgentId:  "kubernetes-deploy",
+			Contents: history,
+			Config:   config,
 		})
 		if err != nil {
 			return err
@@ -110,9 +110,9 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 			return err
 		}
 		outputs, err := exec.Exec(ctx, "deploy-more", &proto.AgentStart{
-			AgentId: "kubernetes-deploy",
-			Contents:  history,
-			Config:  config,
+			AgentId:  "kubernetes-deploy",
+			Contents: history,
+			Config:   config,
 		})
 		if err != nil {
 			return err
@@ -147,8 +147,8 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 			},
 		})
 		_, err := exec.Exec(ctx, "summarize", &proto.AgentStart{
-			AgentId: "gemini",
-			Contents:  history,
+			AgentId:  "gemini",
+			Contents: history,
 		})
 		if err != nil {
 			return err
@@ -196,7 +196,7 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 
 		for _, region := range regions {
 			if region != "us-central1" {
-				_, err := exec.Exec(ctx, "mirror-" + region, &proto.AgentStart{
+				_, err := exec.Exec(ctx, "mirror-"+region, &proto.AgentStart{
 					AgentId: "docker-mirror",
 					Contents: []*proto.Content{
 						{

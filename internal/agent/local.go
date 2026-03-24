@@ -17,8 +17,8 @@ package agent
 import (
 	"context"
 
-	"github.com/google/ax/proto"
 	"fmt"
+	"github.com/google/ax/proto"
 )
 
 // LocalAgent wraps a local (in-process) agent implementation.
