@@ -16,6 +16,7 @@ package skills
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 
@@ -61,36 +62,31 @@ func NewExecutor(dir string) (*Executor, error) {
 }
 
 // HandleCall processes an 'activate_skill' or 'run_skill_script' call.
-// It returns a genai.Part containing the function response.
-func (e *Executor) HandleCall(ctx context.Context, call *genai.FunctionCall) *genai.Part {
-	respond := func(v map[string]any) *genai.Part {
-		return genai.NewPartFromFunctionResponse(call.Name, v)
-	}
-
+func (e *Executor) HandleCall(ctx context.Context, call *genai.FunctionCall) (*ScriptResult, error) {
 	switch call.Name {
 	case "activate_skill":
 		name, ok := call.Args["name"].(string)
 		if !ok {
-			return respond(map[string]any{"error": "invalid or missing 'name' argument"})
+			return nil, fmt.Errorf("invalid or missing 'name' argument")
 		}
 		s, ok := e.byName[name]
 		if !ok {
-			return respond(map[string]any{"error": "unknown skill: " + name})
+			return nil, fmt.Errorf("unknown skill: %s", name)
 		}
 		body, err := s.Body()
 		if err != nil {
-			return respond(map[string]any{"error": err.Error()})
+			return nil, err
 		}
-		return respond(map[string]any{"instructions": body})
+		return &ScriptResult{Stdout: body}, nil
 
 	case "run_skill_script":
 		skillName, ok := call.Args["skill"].(string)
 		if !ok {
-			return respond(map[string]any{"error": "invalid or missing 'skill' argument"})
+			return nil, fmt.Errorf("invalid or missing 'skill' argument")
 		}
 		script, ok := call.Args["script"].(string)
 		if !ok {
-			return respond(map[string]any{"error": "invalid or missing 'script' argument"})
+			return nil, fmt.Errorf("invalid or missing 'script' argument")
 		}
 		var args []string
 		if raw, ok := call.Args["args"].([]any); ok {
@@ -102,21 +98,13 @@ func (e *Executor) HandleCall(ctx context.Context, call *genai.FunctionCall) *ge
 		}
 		s, ok := e.byName[skillName]
 		if !ok {
-			return respond(map[string]any{"error": "unknown skill: " + skillName})
+			return nil, fmt.Errorf("unknown skill: %s", skillName)
 		}
 
-		result, err := s.RunScript(ctx, script, args)
-		if err != nil {
-			return respond(map[string]any{"error": err.Error()})
-		}
-		return respond(map[string]any{
-			"stdout":    result.Stdout,
-			"stderr":    result.Stderr,
-			"exit_code": result.ExitCode,
-		})
+		return s.RunScript(ctx, script, args)
 
 	default:
-		return respond(map[string]any{"error": "unknown tool: " + call.Name})
+		return nil, fmt.Errorf("unknown tool: %s", call.Name)
 	}
 }
 

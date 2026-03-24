@@ -357,27 +357,19 @@ func (t *SkillsTool) HandleExecute(ctx context.Context, fc *genai.FunctionCall, 
 	}
 
 	var output string
-	if fc.Name == "run_skill_script" {
-		result := t.executor.HandleCall(ctx, fc)
-		if result != nil && result.FunctionResponse != nil {
-			resultMap := result.FunctionResponse.Response
-			if body, ok := resultMap["instructions"]; ok {
-				output = body.(string)
-			} else if errStr, ok := resultMap["error"]; ok {
-				output = "Error: " + errStr.(string)
-			} else {
-				if so, ok := resultMap["stdout"].(string); ok && so != "" {
-					output += so
-				}
-				if se, ok := resultMap["stderr"].(string); ok && se != "" {
-					if output != "" {
-						output += "\n"
-					}
-					output += "Stderr: " + se
-				}
-			}
+	if fc.Name == "run_skill_script" || fc.Name == "activate_skill" {
+		result, err := t.executor.HandleCall(ctx, fc)
+		if err != nil {
+			output = "Error: " + err.Error()
 		} else {
-			output = "Error: nil response from executor"
+			var parts []string
+			if result.Stdout != "" {
+				parts = append(parts, result.Stdout)
+			}
+			if result.Stderr != "" {
+				parts = append(parts, "Stderr: "+result.Stderr)
+			}
+			output = strings.Join(parts, "\n")
 		}
 	}
 
