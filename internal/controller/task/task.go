@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

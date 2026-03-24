@@ -20,7 +20,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"gopkg.in/yaml.v3"
 )
 

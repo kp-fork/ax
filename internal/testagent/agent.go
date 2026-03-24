@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/ax/agent"
+	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/internal/historyutil"
 	testagentpb "github.com/google/ax/internal/testagent/proto"
 	"github.com/google/ax/proto"
