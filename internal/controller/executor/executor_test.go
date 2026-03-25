@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -333,5 +334,42 @@ func TestResume(t *testing.T) {
 		Contents: []*proto.Content{text("user", "hello!")},
 	}, nil); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestResumeAgentIDMismatch(t *testing.T) {
+	ctx := context.Background()
+	eventLog := memoryEventLog()
+
+	registry := map[string]agent.Agent{
+		"root": AgentFunc(func(inputs []*proto.Content, tm agent.Executor, o agent.OutputHandler) {
+			// Do nothing to leave it in PENDING state
+		}),
+		"other": AgentFunc(func(inputs []*proto.Content, tm agent.Executor, o agent.OutputHandler) {
+		}),
+	}
+
+	tm := DefaultExecutor(eventLog, registry)
+
+	// First run: starts as "root"
+	if err := tm.Exec(ctx, "task1", &proto.AgentStart{
+		AgentId:  "root",
+		Contents: []*proto.Content{text("user", "hello!")},
+	}, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	// Second run: attempts to resume as "other" for same execID "task1"
+	err := tm.Exec(ctx, "task1", &proto.AgentStart{
+		AgentId:  "other",
+		Contents: []*proto.Content{text("user", "hello again!")},
+	}, nil)
+
+	if err == nil {
+		t.Fatal("expected error due to agent ID mismatch, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "resumption not allowed") {
+		t.Fatalf("expected 'resumption not allowed' error, got: %v", err)
 	}
 }

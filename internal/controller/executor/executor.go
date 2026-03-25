@@ -17,6 +17,7 @@ package executor
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/proto"
@@ -53,9 +54,13 @@ func (tm *defaultExecutor) Exec(ctx context.Context, execID string, start *proto
 		return errors.New("no agent found")
 	}
 
-	allInputs, state, err := history(ctx, tm.eventLog, execID)
+	allInputs, state, earlierAgentID, err := history(ctx, tm.eventLog, execID)
 	if err != nil {
 		return err
+	}
+
+	if earlierAgentID != "" && earlierAgentID != start.AgentId {
+		return fmt.Errorf("resumption not allowed: agent ID changed from %s to %s", earlierAgentID, start.AgentId)
 	}
 
 	if state == proto.State_STATE_COMPLETED {
@@ -70,7 +75,7 @@ func (tm *defaultExecutor) exec(
 	start *proto.AgentStart,
 	el EventLog,
 	a agent.Agent,
-	allInputs []*proto.Content,
+	history []*proto.Content,
 	o agent.OutputHandler) error {
 	child := &defaultExecutor{
 		id:       execID,
@@ -87,15 +92,15 @@ func (tm *defaultExecutor) exec(
 		return nil
 	}
 
-	allInputs = append(allInputs, start.Contents...)
-	if len(allInputs) == 0 {
+	history = append(history, start.Contents...)
+	if len(history) == 0 {
 		return errors.New("no inputs")
 	}
 	if err := logPending(ctx, el, execID, start); err != nil {
 		return err
 	}
 
-	start.Contents = allInputs
+	start.Contents = history
 	if err := a.Connect(ctx, execID, start, child, outputBuffer); err != nil {
 		_ = logFailed(ctx, el, execID, start) // Attempt to log failure, but prioritize returning the original error.
 		return err
@@ -118,18 +123,22 @@ func (tm *defaultExecutor) exec(
 	return nil
 }
 
-func history(ctx context.Context, el EventLog, execID string) ([]*proto.Content, proto.State, error) {
+func history(ctx context.Context, el EventLog, execID string) ([]*proto.Content, proto.State, string, error) {
 	events, err := el.Events(ctx, execID)
 	if err != nil {
-		return nil, proto.State_STATE_UNSPECIFIED, err
+		return nil, proto.State_STATE_UNSPECIFIED, "", err
 	}
 
 	var history []*proto.Content
 	var state proto.State
+	var agentID string
 
 	for _, event := range events {
 		if event.ExecId != execID {
 			continue
+		}
+		if event.AgentId != "" {
+			agentID = event.AgentId
 		}
 		// Reset after the status change ensure
 		// that we have a clean state even if we are
@@ -143,11 +152,7 @@ func history(ctx context.Context, el EventLog, execID string) ([]*proto.Content,
 		state = event.State
 	}
 
-	if state == proto.State_STATE_COMPLETED || state == proto.State_STATE_FAILED {
-		return history, state, nil
-	}
-
-	return history, state, nil
+	return history, state, agentID, nil
 }
 
 func logPending(ctx context.Context, el EventLog, execID string, start *proto.AgentStart) error {
