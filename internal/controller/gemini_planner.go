@@ -17,6 +17,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/golang/protobuf/ptypes/duration"
@@ -86,35 +87,27 @@ Guidelines:
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
-	// TODO(jbd): Enable skills tool.
-	return &geminiPlannerAgent{
-		client:   client,
-		bashTool: &BashTool{},
-		registry: registry,
-		config:   config,
-	}, nil
+	skillsTool, err := NewSkillsTool(config.SkillsDir)
+	if err != nil && err != io.EOF {
+		return nil, fmt.Errorf("failed to initialize skills tool: %w", err)
+	}
+
+	p := &geminiPlannerAgent{
+		client:     client,
+		bashTool:   &BashTool{},
+		skillsTool: skillsTool,
+		registry:   registry,
+		config:     config,
+	}
+
+	if sp := skillsTool.SystemPrompt(); sp != "" {
+		p.config.GeminiConfig.SystemPrompt += "\n\n" + sp
+	}
+	return p, nil
 }
 
 func (p *geminiPlannerAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
-	var outputs []*proto.Message
-	var outputCapturer = func(resp *proto.AgentOutputs) error {
-		outputs = append(outputs, resp.Messages...)
-		return handler(resp)
-	}
-	nextAgentID, err := p.process(ctx, start, outputCapturer)
-	if err != nil {
-		return err
-	}
-	if nextAgentID == "" {
-		return nil
-	}
-	if err := e.Exec(ctx, nextAgentID, &proto.AgentStart{
-		AgentId:  nextAgentID,
-		Messages: append(start.Messages, outputs...),
-	}, handler); err != nil {
-		return err
-	}
-	return nil
+	return p.loop(ctx, start, e, handler)
 }
 
 func (p *geminiPlannerAgent) HealthCheck(ctx context.Context) error {
@@ -125,16 +118,55 @@ func (p *geminiPlannerAgent) Close() error {
 	return nil
 }
 
-func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStart, handler agent.OutputHandler) (agentID string, err error) {
+func (p *geminiPlannerAgent) loop(ctx context.Context, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) (err error) {
+	var outputs []*proto.Message
+	var outputCapturer = func(resp *proto.AgentOutputs) error {
+		outputs = append(outputs, resp.Messages...)
+		return handler(resp)
+	}
+
+	for {
+		nextAgentID, keepLooping, err := p.process(ctx, start, outputCapturer)
+		if err != nil {
+			return err
+		}
+		if keepLooping {
+			// Some function calls require multiple turns to complete,
+			// e.g. the skill activation and running.
+			// Allow the loop to continue without switching agents or user input.
+			start.Messages = append(start.Messages, outputs...)
+			outputs = nil
+			continue
+		}
+
+		if nextAgentID == "" {
+			// No agent to delegate, we are done.
+			return nil
+		}
+		start = &proto.AgentStart{
+			AgentId:  nextAgentID,
+			Messages: append(start.Messages, outputs...),
+		}
+		outputs = nil
+		if err := e.Exec(ctx, nextAgentID, start, handler); err != nil {
+			return err
+		}
+	}
+}
+
+func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStart, handler agent.OutputHandler) (agentID string, keepLooping bool, err error) {
 	tools, err := agentsToTools(p.registry, p.bashTool, p.skillsTool)
 	if err != nil {
-		return "", fmt.Errorf("failed to convert agents to tools: %w", err)
+		return "", false, fmt.Errorf("failed to convert agents to tools: %w", err)
 	}
 
 	inputs := start.Messages
 	if fc, approved := p.handleConfirmationAnswer(inputs); fc != nil {
-		if p.bashTool.Name() == fc.Name {
-			return "", p.bashTool.HandleExecute(ctx, fc, approved, handler)
+		if fc.Name == p.bashTool.Name() {
+			return "", false, p.bashTool.HandleExecute(ctx, fc, approved, handler)
+		}
+		if fc.Name == "run_skill_script" {
+			return "", false, p.skillsTool.HandleExecute(ctx, fc, approved, handler)
 		}
 	}
 
@@ -155,17 +187,17 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("failed to generate in planner: %w", err)
+		return "", false, fmt.Errorf("failed to generate in planner: %w", err)
 	}
 	if len(resp.Candidates) == 0 {
-		return "", fmt.Errorf("no candidates from Gemini in planner")
+		return "", false, fmt.Errorf("no candidates from Gemini in planner")
 	}
 	candidate := resp.Candidates[0]
 	if candidate.Content == nil || candidate.Content.Parts == nil {
 		if candidate.FinishReason == genai.FinishReasonStop {
-			return "", nil // No more tasks
+			return "", false, nil // No more tasks
 		}
-		return "", fmt.Errorf("no content in candidates from Gemini")
+		return "", false, fmt.Errorf("no content in candidates from Gemini")
 	}
 
 	// Look for function calls in the response
@@ -185,7 +217,7 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 					},
 				}},
 			}); err != nil {
-				return "", err
+				return "", false, err
 			}
 		}
 
@@ -193,15 +225,17 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 			fc.ID = uuid.NewString()
 			switch fc.Name {
 			case p.bashTool.Name():
-				return "", p.bashTool.HandleCall(ctx, fc, handler)
-			case "run_skill_script", "activate_skill":
-				return "", p.skillsTool.HandleCall(ctx, fc, handler)
+				return "", false, p.bashTool.HandleCall(ctx, fc, handler)
+			case "run_skill_script":
+				return "", false, p.skillsTool.HandleCall(ctx, fc, handler)
+			case "activate_skill":
+				return "", true, p.skillsTool.HandleCall(ctx, fc, handler)
 			default:
-				return fc.Name, nil
+				return fc.Name, false, nil
 			}
 		}
 	}
-	return "", nil
+	return "", false, nil
 }
 
 func (p *geminiPlannerAgent) handleConfirmationAnswer(inputs []*proto.Message) (*genai.FunctionCall, bool) {

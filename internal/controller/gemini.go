@@ -133,6 +133,7 @@ func (a *GeminiAgent) Close() error {
 type Tool interface {
 	Name() string
 	FuncDecl() []*genai.Tool
+	SystemPrompt() string
 	HandleCall(ctx context.Context, fc *genai.FunctionCall, o agent.OutputHandler) error
 	HandleExecute(ctx context.Context, fc *genai.FunctionCall, approved bool, o agent.OutputHandler) error
 }
@@ -141,6 +142,10 @@ type BashTool struct{}
 
 func (t *BashTool) Name() string {
 	return "bash"
+}
+
+func (t *BashTool) SystemPrompt() string {
+	return ""
 }
 
 func (t *BashTool) FuncDecl() []*genai.Tool {
@@ -273,13 +278,13 @@ type SkillsTool struct {
 	executor *skills.Executor
 }
 
-func NewSkillsTool(dir string) (*SkillsTool, error) {
+func NewSkillsTool(dir string) (Tool, error) {
 	executor, err := skills.NewExecutor(dir)
 	if err != nil {
 		return nil, err
 	}
 	if !executor.HasSkills() {
-		return nil, nil
+		return &NoopTool{}, nil
 	}
 	return &SkillsTool{executor: executor}, nil
 }
@@ -304,6 +309,12 @@ func (t *SkillsTool) HandleCall(ctx context.Context, fc *genai.FunctionCall, o a
 	if err != nil {
 		return err
 	}
+
+	if fc.Name == "activate_skill" {
+		// Skill activation is always approved.
+		return t.HandleExecute(ctx, fc, true, o)
+	}
+
 	if fc.Name == "run_skill_script" {
 		skill, _ := fc.Args["skill"].(string)
 		script, _ := fc.Args["script"].(string)
@@ -336,24 +347,49 @@ func (t *SkillsTool) HandleCall(ctx context.Context, fc *genai.FunctionCall, o a
 				}},
 		})
 	}
-	return o(&proto.AgentOutputs{
-		Messages: []*proto.Message{
-			{
-				Role: "model",
-				Content: &proto.Content{
-					Content: &proto.Content_FunctionCall{
-						FunctionCall: &proto.FunctionCallContent{
-							Id:   fc.ID,
-							Name: fc.Name,
-							Args: argsStruct,
-						},
-					},
-				},
-			}},
-	})
+	return nil
 }
 
 func (t *SkillsTool) HandleExecute(ctx context.Context, fc *genai.FunctionCall, approved bool, o agent.OutputHandler) error {
+	if fc.Name == "activate_skill" {
+		var output string
+		result, err := t.executor.HandleCall(ctx, fc)
+		if err != nil {
+			output = "Error: " + err.Error()
+		} else {
+			var parts []string
+			if result.Stdout != "" {
+				parts = append(parts, result.Stdout)
+			}
+			if result.Stderr != "" {
+				parts = append(parts, "Stderr: "+result.Stderr)
+			}
+			output = strings.Join(parts, "\n")
+		}
+
+		respStruct, err := structpb.NewStruct(map[string]any{"result": output})
+		if err != nil {
+			return fmt.Errorf("failed to convert function response to structpb: %w", err)
+		}
+
+		return o(&proto.AgentOutputs{
+			Messages: []*proto.Message{
+				{
+					Role: "model",
+					Content: &proto.Content{
+						Content: &proto.Content_FunctionResponse{
+							FunctionResponse: &proto.FunctionResponseContent{
+								Name:     fc.Name,
+								Response: respStruct,
+								Id:       fc.ID,
+							},
+						},
+					},
+				},
+			},
+		})
+	}
+
 	if !approved {
 		// Declined, nothing to do in terms of executing any commands.
 		// But we still have to finish with a function response,
@@ -438,6 +474,10 @@ type NoopTool struct {
 }
 
 func (t *NoopTool) Name() string {
+	return ""
+}
+
+func (t *NoopTool) SystemPrompt() string {
 	return ""
 }
 
