@@ -50,7 +50,7 @@ func (s *Server) Exec(req *proto.ExecRequest, stream grpc.ServerStreamingServer[
 	// Create output handler to stream outputs back to client
 	outputHandler := agent.OutputHandler(func(outgoing *proto.AgentOutputs) error {
 		return stream.Send(&proto.ExecResponse{
-			Outputs: outgoing.Contents,
+			Outputs: outgoing.Messages,
 		})
 	})
 	return s.controller.Exec(stream.Context(), &proto.AgentMessage{
@@ -59,7 +59,7 @@ func (s *Server) Exec(req *proto.ExecRequest, stream grpc.ServerStreamingServer[
 			Start: &proto.AgentStart{
 				AgentId:  req.AgentId,
 				Config:   req.AgentConfig,
-				Contents: req.Inputs,
+				Messages: req.Inputs,
 			},
 		},
 	}, outputHandler)

@@ -96,7 +96,7 @@ func execLoop(ctx context.Context, id string, agentID string, input string) erro
 	d := internal.NewDisplay(id)
 	d.DisplayHeader()
 
-	var history []*proto.Content
+	var history []*proto.Message
 	if !execResume {
 		input, quit, err := promptUser(d, input)
 		if err != nil {
@@ -105,12 +105,14 @@ func execLoop(ctx context.Context, id string, agentID string, input string) erro
 		if quit {
 			return nil
 		}
-		history = []*proto.Content{
+		history = []*proto.Message{
 			{
 				Role: "user",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{
-						Text: input,
+				Content: &proto.Content{
+					Content: &proto.Content_Text{
+						Text: &proto.TextContent{
+							Text: input,
+						},
 					},
 				},
 			},
@@ -130,27 +132,31 @@ func execLoop(ctx context.Context, id string, agentID string, input string) erro
 				if err != nil {
 					return err
 				}
-				var decision []*proto.Content
+				var decision []*proto.Message
 				if approved {
-					decision = []*proto.Content{{
+					decision = []*proto.Message{{
 						Role: "user",
-						Content: &proto.Content_Confirmation{
-							Confirmation: &proto.ConfirmationContent{
-								Id: conf.Id,
-								Decision: &proto.ConfirmationContent_Approval{
-									Approval: &proto.ApprovalDecision{Approved: true},
+						Content: &proto.Content{
+							Content: &proto.Content_Confirmation{
+								Confirmation: &proto.ConfirmationContent{
+									Id: conf.Id,
+									Decision: &proto.ConfirmationContent_Approval{
+										Approval: &proto.ApprovalDecision{Approved: true},
+									},
 								},
 							},
 						},
 					}}
 				} else {
-					decision = []*proto.Content{{
+					decision = []*proto.Message{{
 						Role: "user",
-						Content: &proto.Content_Confirmation{
-							Confirmation: &proto.ConfirmationContent{
-								Id: conf.Id,
-								Decision: &proto.ConfirmationContent_Decline{
-									Decline: &proto.DeclineDecision{Declined: true},
+						Content: &proto.Content{
+							Content: &proto.Content_Confirmation{
+								Confirmation: &proto.ConfirmationContent{
+									Id: conf.Id,
+									Decision: &proto.ConfirmationContent_Decline{
+										Decline: &proto.DeclineDecision{Declined: true},
+									},
 								},
 							},
 						},
@@ -189,18 +195,20 @@ func execLoop(ctx context.Context, id string, agentID string, input string) erro
 		if quit {
 			return nil
 		}
-		history = append(history, &proto.Content{
+		history = append(history, &proto.Message{
 			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: input,
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: input,
+					},
 				},
 			},
 		})
 	}
 }
 
-func runAutoExec(ctx context.Context, d *internal.Display, id string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
+func runAutoExec(ctx context.Context, d *internal.Display, id string, agentID string, inputs []*proto.Message) (*proto.ConfirmationContent, []*proto.Message, error) {
 	fn := runExecHeadless
 	if execServerAddr != "" {
 		fn = runExecServer
@@ -208,7 +216,7 @@ func runAutoExec(ctx context.Context, d *internal.Display, id string, agentID st
 	return fn(ctx, d, id, agentID, inputs)
 }
 
-func runExecHeadless(ctx context.Context, d *internal.Display, id string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
+func runExecHeadless(ctx context.Context, d *internal.Display, id string, agentID string, inputs []*proto.Message) (*proto.ConfirmationContent, []*proto.Message, error) {
 	if execController == nil {
 		cfg, err := config.LoadFromFile(execConfigFile)
 		if err != nil {
@@ -223,20 +231,20 @@ func runExecHeadless(ctx context.Context, d *internal.Display, id string, agentI
 	}
 
 	var checkpoint string
-	var outputs []*proto.Content
+	var outputs []*proto.Message
 	var confirmation *proto.ConfirmationContent
 	outputHandler := agent.OutputHandler(func(resp *proto.AgentOutputs) error {
 		if resp.CheckpointId != "" {
 			checkpoint = resp.CheckpointId
 		}
 
-		for _, c := range resp.Contents {
-			if conf := c.GetConfirmation(); conf != nil {
+		for _, m := range resp.Messages {
+			if conf := m.GetContent().GetConfirmation(); conf != nil {
 				confirmation = conf
 			}
 		}
-		outputs = append(outputs, resp.Contents...)
-		displayContents(d, resp.Contents)
+		outputs = append(outputs, resp.Messages...)
+		displayContents(d, resp.Messages)
 		return nil
 	})
 	if err := execController.Exec(ctx, &proto.AgentMessage{
@@ -244,7 +252,7 @@ func runExecHeadless(ctx context.Context, d *internal.Display, id string, agentI
 		Msg: &proto.AgentMessage_Start{
 			Start: &proto.AgentStart{
 				AgentId:  agentID,
-				Contents: inputs,
+				Messages: inputs,
 			},
 		},
 	}, outputHandler); err != nil {
@@ -257,7 +265,7 @@ func runExecHeadless(ctx context.Context, d *internal.Display, id string, agentI
 	return confirmation, outputs, nil
 }
 
-func runExecServer(ctx context.Context, d *internal.Display, id string, agentID string, inputs []*proto.Content) (*proto.ConfirmationContent, []*proto.Content, error) {
+func runExecServer(ctx context.Context, d *internal.Display, id string, agentID string, inputs []*proto.Message) (*proto.ConfirmationContent, []*proto.Message, error) {
 	conn, err := connect(execServerAddr)
 	if err != nil {
 		return nil, nil, err
@@ -275,7 +283,7 @@ func runExecServer(ctx context.Context, d *internal.Display, id string, agentID 
 	}
 
 	var checkpoint string
-	var outputs []*proto.Content
+	var outputs []*proto.Message
 	var confirmation *proto.ConfirmationContent
 	for {
 		resp, err := stream.Recv()
@@ -286,8 +294,8 @@ func runExecServer(ctx context.Context, d *internal.Display, id string, agentID 
 			return nil, nil, fmt.Errorf("error receiving response: %w", err)
 		}
 		if resp.Outputs != nil {
-			for _, c := range resp.Outputs {
-				if conf := c.GetConfirmation(); conf != nil {
+			for _, m := range resp.Outputs {
+				if conf := m.GetContent().GetConfirmation(); conf != nil {
 					confirmation = conf
 				}
 			}
@@ -301,9 +309,13 @@ func runExecServer(ctx context.Context, d *internal.Display, id string, agentID 
 	return confirmation, outputs, nil
 }
 
-func displayContents(d *internal.Display, contents []*proto.Content) {
+func displayContents(d *internal.Display, contents []*proto.Message) {
 	for _, output := range contents {
-		switch o := output.Content.(type) {
+		content := output.GetContent()
+		if content == nil {
+			continue
+		}
+		switch o := content.Content.(type) {
 		case *proto.Content_Text:
 			d.DisplayOutput(o.Text.Text)
 		case *proto.Content_Confirmation:
@@ -322,19 +334,20 @@ func displayContents(d *internal.Display, contents []*proto.Content) {
 	}
 }
 
-func resetHistory(history []*proto.Content) []*proto.Content {
-	var out []*proto.Content
-	for _, c := range history {
-		if c.GetFunctionCall() != nil {
+func resetHistory(history []*proto.Message) []*proto.Message {
+	var out []*proto.Message
+	for _, m := range history {
+		content := m.GetContent()
+		if content.GetFunctionCall() != nil {
 			continue
 		}
-		if c.GetFunctionResponse() != nil {
+		if content.GetFunctionResponse() != nil {
 			continue
 		}
-		if c.GetConfirmation() != nil {
+		if content.GetConfirmation() != nil {
 			continue
 		}
-		out = append(out, c)
+		out = append(out, m)
 	}
 	return out
 }

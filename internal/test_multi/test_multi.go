@@ -82,12 +82,14 @@ func main() {
 		log.Fatalf("Error registering sandbox agent: %v\n", err)
 	}
 
-	inputs := []*proto.Content{
+	inputs := []*proto.Message{
 		{
 			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: input,
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: input,
+					},
 				},
 			},
 		},
@@ -96,8 +98,8 @@ func main() {
 	log.Printf("ID: %s\n", execID)
 
 	handler := agent.OutputHandler(func(outgoing *proto.AgentOutputs) error {
-		for _, c := range outgoing.Contents {
-			if textContent := c.GetText(); textContent != nil {
+		for _, m := range outgoing.Messages {
+			if textContent := m.GetContent().GetText(); textContent != nil {
 				fmt.Printf("Output received: %s\n", textContent.Text)
 			}
 		}
@@ -109,7 +111,7 @@ func main() {
 		Msg: &proto.AgentMessage_Start{
 			Start: &proto.AgentStart{
 				AgentId:  "planner",
-				Contents: inputs,
+				Messages: inputs,
 			},
 		},
 	}
@@ -125,7 +127,7 @@ func main() {
 			Msg: &proto.AgentMessage_Start{
 				Start: &proto.AgentStart{
 					AgentId:  "planner",
-					Contents: inputs,
+					Messages: inputs,
 				},
 			},
 		}
@@ -134,18 +136,24 @@ func main() {
 
 func createLocalAgent() (*agent.LocalAgent, error) {
 	processFunc := func(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
-		for _, content := range start.Contents {
+		for _, msg := range start.Messages {
+			content := msg.GetContent()
+			if content == nil {
+				continue
+			}
 			textContent := content.GetText()
 			if textContent == nil {
 				continue
 			}
 			if err := handler(&proto.AgentOutputs{
-				Contents: []*proto.Content{
+				Messages: []*proto.Message{
 					{
 						Role: "assistant",
-						Content: &proto.Content_Text{
-							Text: &proto.TextContent{
-								Text: strings.ToLower(textContent.Text),
+						Content: &proto.Content{
+							Content: &proto.Content_Text{
+								Text: &proto.TextContent{
+									Text: strings.ToLower(textContent.Text),
+								},
 							},
 						},
 					},
@@ -171,62 +179,70 @@ func (m *mockPlanner) HealthCheck(ctx context.Context) error { return nil }
 func (m *mockPlanner) Close() error                          { return nil }
 func (m *mockPlanner) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
 	var lastText string
-	for _, c := range start.Contents {
-		if textMsg := c.GetText(); textMsg != nil {
+	for _, m := range start.Messages {
+		if textMsg := m.GetContent().GetText(); textMsg != nil {
 			lastText = textMsg.Text
 		}
 	}
 
 	// Step 1: User -> Local
 	if strings.HasPrefix(lastText, "Send the word") {
-		inputs := append(start.Contents, &proto.Content{
+		inputs := append(start.Messages, &proto.Message{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{Text: "oRanGe"},
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{Text: "oRanGe"},
+				},
 			},
 		})
 		return e.Exec(ctx, "local-echo", &proto.AgentStart{
 			AgentId:  "local-echo-agent",
-			Contents: inputs,
+			Messages: inputs,
 		}, handler)
 	}
 
 	// Step 2: Local -> Remote
 	if lastText == "orange" {
-		inputs := append(start.Contents, &proto.Content{
+		inputs := append(start.Messages, &proto.Message{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{Text: lastText},
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{Text: lastText},
+				},
 			},
 		})
 		return e.Exec(ctx, "remote-text", &proto.AgentStart{
 			AgentId:  "remote-text-processor",
-			Contents: inputs,
+			Messages: inputs,
 		}, handler)
 	}
 
 	// Step 3: Remote -> Sandbox
 	if strings.HasPrefix(lastText, "Remote Prefix:") {
-		inputs := append(start.Contents, &proto.Content{
+		inputs := append(start.Messages, &proto.Message{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{Text: lastText},
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{Text: lastText},
+				},
 			},
 		})
 		return e.Exec(ctx, "uppercase-task", &proto.AgentStart{
 			AgentId:  "uppercase",
-			Contents: inputs,
+			Messages: inputs,
 		}, handler)
 	}
 
 	// Final step: Sandbox -> Done
 	if strings.Contains(lastText, "UPPERCASE") {
 		return handler(&proto.AgentOutputs{
-			Contents: []*proto.Content{{
+			Messages: []*proto.Message{{
 				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{
-						Text: "Final Result: " + lastText,
+				Content: &proto.Content{
+					Content: &proto.Content_Text{
+						Text: &proto.TextContent{
+							Text: "Final Result: " + lastText,
+						},
 					},
 				},
 			}},

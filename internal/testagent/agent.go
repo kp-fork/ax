@@ -45,22 +45,24 @@ type CodingAgent struct{}
 func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	exec := NewExecutor(e, o)
 
-	var history []*proto.Content
+	var history []*proto.Message
 	{
-		inputs := []*proto.Content{
+		inputs := []*proto.Message{
 			{
 				Role: "user",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{
-						Text: "Generate Cloud Run Python server code. Only show Python code, the output should be deployable as a server. We will deploy it to Kubernetes.",
+				Content: &proto.Content{
+					Content: &proto.Content_Text{
+						Text: &proto.TextContent{
+							Text: "Generate Cloud Run Python server code. Only show Python code, the output should be deployable as a server. We will deploy it to Kubernetes.",
+						},
 					},
 				},
 			},
 		}
-		inputs = append(inputs, start.Contents...)
+		inputs = append(inputs, start.Messages...)
 		outputs, err := exec.Exec(ctx, "code", &proto.AgentStart{
 			AgentId:  "gemini",
-			Contents: inputs,
+			Messages: inputs,
 		})
 		if err != nil {
 			return err
@@ -71,7 +73,7 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 	{
 		outputs, err := exec.Exec(ctx, "docker", &proto.AgentStart{
 			AgentId:  "docker-build",
-			Contents: history,
+			Messages: history,
 		})
 		if err != nil {
 			return err
@@ -88,7 +90,7 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 		}
 		outputs, err := exec.Exec(ctx, "deploy", &proto.AgentStart{
 			AgentId:  "kubernetes-deploy",
-			Contents: history,
+			Messages: history,
 			Config:   config,
 		})
 		if err != nil {
@@ -111,7 +113,7 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 		}
 		outputs, err := exec.Exec(ctx, "deploy-more", &proto.AgentStart{
 			AgentId:  "kubernetes-deploy",
-			Contents: history,
+			Messages: history,
 			Config:   config,
 		})
 		if err != nil {
@@ -125,11 +127,13 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 	}
 
 	if err := o(&proto.AgentOutputs{
-		Contents: []*proto.Content{{
+		Messages: []*proto.Message{{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "One last step, a summary...\n\n",
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: "One last step, a summary...\n\n",
+					},
 				},
 			},
 		}},
@@ -138,17 +142,19 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 	}
 
 	{
-		history = append(history, &proto.Content{
+		history = append(history, &proto.Message{
 			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "Summarize what we did, and list links to the final deployment endpoints. Give instructions how to revert the deployments if needed",
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: "Summarize what we did, and list links to the final deployment endpoints. Give instructions how to revert the deployments if needed",
+					},
 				},
 			},
 		})
 		_, err := exec.Exec(ctx, "summarize", &proto.AgentStart{
 			AgentId:  "gemini",
-			Contents: history,
+			Messages: history,
 		})
 		if err != nil {
 			return err
@@ -174,7 +180,7 @@ type KubernetesDeployAgent struct{}
 func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	exec := NewExecutor(e, o)
 
-	approved, conf := historyutil.HasConfirmationAnswer(start.Contents)
+	approved, conf := historyutil.HasConfirmationAnswer(start.Messages)
 	if conf != nil && pendingRegions[conf.Id] != nil {
 		if !approved {
 			return nil
@@ -182,11 +188,13 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 
 		regions := pendingRegions[conf.Id]
 		if err := o(&proto.AgentOutputs{
-			Contents: []*proto.Content{{
+			Messages: []*proto.Message{{
 				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{
-						Text: fmt.Sprintf("\nPicked %v region(s) for deployment.\n", strings.Join(regions, ",")),
+				Content: &proto.Content{
+					Content: &proto.Content_Text{
+						Text: &proto.TextContent{
+							Text: fmt.Sprintf("\nPicked %v region(s) for deployment.\n", strings.Join(regions, ",")),
+						},
 					},
 				},
 			}},
@@ -198,12 +206,14 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 			if region != "us-central1" {
 				_, err := exec.Exec(ctx, "mirror-"+region, &proto.AgentStart{
 					AgentId: "docker-mirror",
-					Contents: []*proto.Content{
+					Messages: []*proto.Message{
 						{
 							Role: "user",
-							Content: &proto.Content_Text{
-								Text: &proto.TextContent{
-									Text: "Provide a mirror to the region if the image doesn't exist.",
+							Content: &proto.Content{
+								Content: &proto.Content_Text{
+									Text: &proto.TextContent{
+										Text: "Provide a mirror to the region if the image doesn't exist.",
+									},
 								},
 							},
 						},
@@ -214,11 +224,13 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 				}
 			}
 			if err := o(&proto.AgentOutputs{
-				Contents: []*proto.Content{{
+				Messages: []*proto.Message{{
 					Role: "assistant",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{
-							Text: "* Deploying to " + region + ", this may take a while...\n",
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{
+								Text: "* Deploying to " + region + ", this may take a while...\n",
+							},
 						},
 					},
 				}},
@@ -226,11 +238,13 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 				return err
 			}
 			if err := o(&proto.AgentOutputs{
-				Contents: []*proto.Content{{
+				Messages: []*proto.Message{{
 					Role: "assistant",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{
-							Text: "* kubectl apply -f deployment.yaml\n",
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{
+								Text: "* kubectl apply -f deployment.yaml\n",
+							},
 						},
 					},
 				}},
@@ -240,11 +254,13 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 
 			time.Sleep(1500 * time.Millisecond)
 			if err := o(&proto.AgentOutputs{
-				Contents: []*proto.Content{{
+				Messages: []*proto.Message{{
 					Role: "assistant",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{
-							Text: fmt.Sprintf("* Deployment complete. You can access the service at https://%v.test.services.acme.com\n\n", region),
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{
+								Text: fmt.Sprintf("* Deployment complete. You can access the service at https://%v.test.services.acme.com\n\n", region),
+							},
 						},
 					},
 				}},
@@ -270,12 +286,14 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 	confID := uuid.NewString()
 	pendingRegions[confID] = config.Regions
 	return o(&proto.AgentOutputs{
-		Contents: []*proto.Content{{
+		Messages: []*proto.Message{{
 			Role: "assistant",
-			Content: &proto.Content_Confirmation{
-				Confirmation: &proto.ConfirmationContent{
-					Id:       confID,
-					Question: fmt.Sprintf("Picked %v region(s) to deploy, continue?", strings.Join(config.Regions, ",")),
+			Content: &proto.Content{
+				Content: &proto.Content_Confirmation{
+					Confirmation: &proto.ConfirmationContent{
+						Id:       confID,
+						Question: fmt.Sprintf("Picked %v region(s) to deploy, continue?", strings.Join(config.Regions, ",")),
+					},
 				},
 			},
 		}},
@@ -303,8 +321,8 @@ func NewExecutor(e agent.Executor, o agent.OutputHandler) *Executor {
 	}
 }
 
-func (e *Executor) Exec(ctx context.Context, execID string, start *proto.AgentStart) ([]*proto.Content, error) {
-	var outputs []*proto.Content
+func (e *Executor) Exec(ctx context.Context, execID string, start *proto.AgentStart) ([]*proto.Message, error) {
+	var outputs []*proto.Message
 	if execID == "" {
 		var err error
 		execID, err = randomHex(8)
@@ -313,7 +331,7 @@ func (e *Executor) Exec(ctx context.Context, execID string, start *proto.AgentSt
 		}
 	}
 	if err := e.exec.Exec(ctx, execID, start, func(resp *proto.AgentOutputs) error {
-		outputs = append(outputs, resp.Contents...)
+		outputs = append(outputs, resp.Messages...)
 		return e.handler(resp)
 	}); err != nil {
 		return nil, err

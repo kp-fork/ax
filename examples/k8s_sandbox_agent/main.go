@@ -49,14 +49,15 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 			return err
 		}
 
-		var outputs []*proto.Content
+		var outputs []*proto.Message
 		start := req.GetStart()
-		if start != nil && len(start.Contents) > 0 {
+		if start != nil && len(start.Messages) > 0 {
 			// Find the most recent message from the "user" in the history
 			var targetText string
-			for i := len(start.Contents) - 1; i >= 0; i-- {
-				if text := start.Contents[i].GetText(); text != nil && start.Contents[i].Role == "user" {
-					targetText = text.Text
+			for i := len(start.Messages) - 1; i >= 0; i-- {
+				msg := start.Messages[i]
+				if textContent := msg.GetContent().GetText(); textContent != nil && msg.Role == "user" {
+					targetText = textContent.Text
 					break
 				}
 			}
@@ -68,19 +69,23 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 				log.Printf("📥 Processed resolved text: %q", targetText)
 				log.Printf("📤 Sending response: %q", upper)
 
-				outputs = append(outputs, &proto.Content{
+				outputs = append(outputs, &proto.Message{
 					Role: "agent",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{
-							Text: "Hey, I'm your sandbox agent.\n",
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{
+								Text: "Hey, I'm your sandbox agent.\n",
+							},
 						},
 					},
 				})
-				outputs = append(outputs, &proto.Content{
+				outputs = append(outputs, &proto.Message{
 					Role: "agent",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{
-							Text: fmt.Sprintf("here is your upper case text: %s", upper),
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{
+								Text: fmt.Sprintf("here is your upper case text: %s", upper),
+							},
 						},
 					},
 				})
@@ -93,7 +98,7 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 				ExecId: req.ExecId,
 				Msg: &proto.AgentMessage_Outputs{
 					Outputs: &proto.AgentOutputs{
-						Contents: outputs,
+						Messages: outputs,
 					},
 				},
 			}); err != nil {

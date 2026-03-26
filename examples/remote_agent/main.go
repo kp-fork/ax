@@ -54,25 +54,31 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 			continue // optionally wait for start
 		}
 
-		var contents []*proto.Content
-		for _, input := range startMsg.Contents {
-			textContent := input.GetText()
+		var messages []*proto.Message
+		for _, input := range startMsg.Messages {
+			textContent := input.GetContent().GetText()
 			if textContent == nil {
 				continue
 			}
-			contents = append(contents, input)
+			messages = append(messages, input)
 		}
-		if len(contents) == 0 {
+		if len(messages) == 0 {
 			return errors.New("no text inputs, cannot uppercase")
 		}
 
 		// We don't need to uppercase the whole history.
 		// Only uppercase the last text message.
-		last := contents[len(contents)-1]
-		last.Role = "assistant"
-		last.Content = &proto.Content_Text{
-			Text: &proto.TextContent{
-				Text: strings.ToLower(last.GetText().Text),
+		lastMsg := messages[len(messages)-1]
+		responseText := strings.ToLower(lastMsg.GetContent().GetText().Text) // Preserving ToLower as in original code
+
+		responseMsg := &proto.Message{
+			Role: "assistant",
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: responseText,
+					},
+				},
 			},
 		}
 
@@ -80,7 +86,7 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 			ExecId: incoming.ExecId,
 			Msg: &proto.AgentMessage_Outputs{
 				Outputs: &proto.AgentOutputs{
-					Contents:     []*proto.Content{last},
+					Messages:     []*proto.Message{responseMsg},
 					CheckpointId: uuid.New().String(),
 				},
 			},

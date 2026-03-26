@@ -96,9 +96,9 @@ Guidelines:
 }
 
 func (p *geminiPlannerAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
-	var outputs []*proto.Content
+	var outputs []*proto.Message
 	var outputCapturer = func(resp *proto.AgentOutputs) error {
-		outputs = append(outputs, resp.Contents...)
+		outputs = append(outputs, resp.Messages...)
 		return handler(resp)
 	}
 	nextAgentID, err := p.process(ctx, start, outputCapturer)
@@ -110,7 +110,7 @@ func (p *geminiPlannerAgent) Connect(ctx context.Context, execID string, start *
 	}
 	if err := e.Exec(ctx, nextAgentID, &proto.AgentStart{
 		AgentId:  nextAgentID,
-		Contents: append(start.Contents, outputs...),
+		Messages: append(start.Messages, outputs...),
 	}, handler); err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 		return "", fmt.Errorf("failed to convert agents to tools: %w", err)
 	}
 
-	inputs := start.Contents
+	inputs := start.Messages
 	if fc, approved := p.handleConfirmationAnswer(inputs); fc != nil {
 		if p.bashTool.Name() == fc.Name {
 			return "", p.bashTool.HandleExecute(ctx, fc, approved, handler)
@@ -176,10 +176,12 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 
 		if part.Text != "" {
 			if err := handler(&proto.AgentOutputs{
-				Contents: []*proto.Content{{
-					Role: "assistant",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{Text: part.Text},
+				Messages: []*proto.Message{{
+					Role: "model",
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{Text: part.Text},
+						},
 					},
 				}},
 			}); err != nil {
@@ -202,16 +204,17 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 	return "", nil
 }
 
-func (p *geminiPlannerAgent) handleConfirmationAnswer(inputs []*proto.Content) (*genai.FunctionCall, bool) {
+func (p *geminiPlannerAgent) handleConfirmationAnswer(inputs []*proto.Message) (*genai.FunctionCall, bool) {
 	var conf *proto.ConfirmationContent
 	var approved bool
 	for _, input := range inputs {
-		if input.GetConfirmation() != nil && input.GetConfirmation().GetApproval() != nil {
-			conf = input.GetConfirmation()
+		content := input.GetContent()
+		if content.GetConfirmation() != nil && content.GetConfirmation().GetApproval() != nil {
+			conf = content.GetConfirmation()
 			approved = true
 		}
-		if input.GetConfirmation() != nil && input.GetConfirmation().GetDecline() != nil {
-			conf = input.GetConfirmation()
+		if content.GetConfirmation() != nil && content.GetConfirmation().GetDecline() != nil {
+			conf = content.GetConfirmation()
 			approved = false
 		}
 	}
@@ -221,10 +224,11 @@ func (p *geminiPlannerAgent) handleConfirmationAnswer(inputs []*proto.Content) (
 
 	var fc *genai.FunctionCall
 	for _, input := range inputs {
-		if input.GetFunctionCall() == nil {
+		content := input.GetContent()
+		if content.GetFunctionCall() == nil {
 			continue
 		}
-		if fn := input.GetFunctionCall(); fn != nil && fn.Id == conf.Id {
+		if fn := content.GetFunctionCall(); fn != nil && fn.Id == conf.Id {
 			fc = &genai.FunctionCall{
 				ID:   conf.Id,
 				Name: fn.Name,
@@ -241,10 +245,11 @@ func (p *geminiPlannerAgent) handleConfirmationAnswer(inputs []*proto.Content) (
 	// Ensure that we don't have a response for the function call.
 	// Otherwise, we will execute the function call forever.
 	for _, input := range inputs {
-		if input.GetFunctionResponse() == nil {
+		content := input.GetContent()
+		if content.GetFunctionResponse() == nil {
 			continue
 		}
-		if fr := input.GetFunctionResponse(); fr != nil && fr.Id == fc.ID {
+		if fr := content.GetFunctionResponse(); fr != nil && fr.Id == fc.ID {
 			// We executed this previously.
 			// There is nothing more to execute.
 			return nil, false
@@ -285,7 +290,7 @@ func agentsToTools(registry *Registry, nativeTools ...Tool) ([]*genai.Tool, erro
 }
 
 // protoToContents converts history to Gemini conversation format.
-func protoToContents(inputs []*proto.Content) []*genai.Content {
+func protoToContents(inputs []*proto.Message) []*genai.Content {
 	var contents []*genai.Content
 
 	// Convert each message to Gemini format
@@ -295,7 +300,12 @@ func protoToContents(inputs []*proto.Content) []*genai.Content {
 			role = "model"
 		}
 
-		switch m := msg.Content.(type) {
+		content := msg.GetContent()
+		if content == nil {
+			continue
+		}
+
+		switch m := content.Content.(type) {
 		case *proto.Content_Text:
 			contents = append(contents, &genai.Content{
 				Role: role,

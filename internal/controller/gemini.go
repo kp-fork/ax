@@ -69,7 +69,7 @@ func (a *GeminiAgent) Connect(ctx context.Context, execID string, start *proto.A
 		return fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
-	inputs := start.Contents
+	inputs := start.Messages
 	contents := protoToContents(inputs)
 	ctx, cancel := context.WithTimeout(ctx, cfg.Timeout.AsDuration())
 	defer cancel()
@@ -103,10 +103,12 @@ func (a *GeminiAgent) Connect(ctx context.Context, execID string, start *proto.A
 		if part.Text != "" {
 			respCount++
 			if err := handler(&proto.AgentOutputs{
-				Contents: []*proto.Content{{
+				Messages: []*proto.Message{{
 					Role: "model",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{Text: part.Text},
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{Text: part.Text},
+						},
 					},
 				}},
 			}); err != nil {
@@ -172,21 +174,27 @@ func (t *BashTool) HandleCall(ctx context.Context, fc *genai.FunctionCall, o age
 		return err
 	}
 	return o(&proto.AgentOutputs{
-		Contents: []*proto.Content{
+		Messages: []*proto.Message{
 			{
-				Content: &proto.Content_FunctionCall{
-					FunctionCall: &proto.FunctionCallContent{
-						Id:   fc.ID,
-						Name: fc.Name,
-						Args: argsStruct,
+				Role: "model",
+				Content: &proto.Content{
+					Content: &proto.Content_FunctionCall{
+						FunctionCall: &proto.FunctionCallContent{
+							Id:   fc.ID,
+							Name: fc.Name,
+							Args: argsStruct,
+						},
 					},
 				},
 			},
 			{
-				Content: &proto.Content_Confirmation{
-					Confirmation: &proto.ConfirmationContent{
-						Id:       fc.ID,
-						Question: fmt.Sprintf("Can I run %q?", command),
+				Role: "model",
+				Content: &proto.Content{
+					Content: &proto.Content_Confirmation{
+						Confirmation: &proto.ConfirmationContent{
+							Id:       fc.ID,
+							Question: fmt.Sprintf("Can I run %q?", command),
+						},
 					},
 				},
 			}},
@@ -199,21 +207,25 @@ func (t *BashTool) HandleExecute(ctx context.Context, fc *genai.FunctionCall, ap
 		// But we still have to finish with a function response,
 		// not to keep the previously log function call hanging forever.
 		return o(&proto.AgentOutputs{
-			Contents: []*proto.Content{
+			Messages: []*proto.Message{
 				{
-					Role: "assistant",
-					Content: &proto.Content_FunctionResponse{
-						FunctionResponse: &proto.FunctionResponseContent{
-							Name: fc.Name,
-							Id:   fc.ID,
+					Role: "model",
+					Content: &proto.Content{
+						Content: &proto.Content_FunctionResponse{
+							FunctionResponse: &proto.FunctionResponseContent{
+								Name: fc.Name,
+								Id:   fc.ID,
+							},
 						},
 					},
 				},
 				{
-					Role: "assistant",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{
-							Text: "Okay.",
+					Role: "model",
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{
+								Text: "Okay.",
+							},
 						},
 					},
 				},
@@ -230,22 +242,26 @@ func (t *BashTool) HandleExecute(ctx context.Context, fc *genai.FunctionCall, ap
 		return fmt.Errorf("failed to convert function response to structpb: %w", err)
 	}
 	return o(&proto.AgentOutputs{
-		Contents: []*proto.Content{
+		Messages: []*proto.Message{
 			{
-				Role: "assistant",
-				Content: &proto.Content_FunctionResponse{
-					FunctionResponse: &proto.FunctionResponseContent{
-						Name:     fc.Name,
-						Response: respStruct,
-						Id:       fc.ID,
+				Role: "model",
+				Content: &proto.Content{
+					Content: &proto.Content_FunctionResponse{
+						FunctionResponse: &proto.FunctionResponseContent{
+							Name:     fc.Name,
+							Response: respStruct,
+							Id:       fc.ID,
+						},
 					},
 				},
 			},
 			{
-				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{
-						Text: output,
+				Role: "model",
+				Content: &proto.Content{
+					Content: &proto.Content_Text{
+						Text: &proto.TextContent{
+							Text: output,
+						},
 					},
 				},
 			},
@@ -294,34 +310,43 @@ func (t *SkillsTool) HandleCall(ctx context.Context, fc *genai.FunctionCall, o a
 		question := fmt.Sprintf("Can I run script %q from skill %q?", script, skill)
 
 		return o(&proto.AgentOutputs{
-			Contents: []*proto.Content{
+			Messages: []*proto.Message{
 				{
-					Content: &proto.Content_FunctionCall{
-						FunctionCall: &proto.FunctionCallContent{
-							Id:   fc.ID,
-							Name: fc.Name,
-							Args: argsStruct,
+					Role: "model",
+					Content: &proto.Content{
+						Content: &proto.Content_FunctionCall{
+							FunctionCall: &proto.FunctionCallContent{
+								Id:   fc.ID,
+								Name: fc.Name,
+								Args: argsStruct,
+							},
 						},
 					},
 				},
 				{
-					Content: &proto.Content_Confirmation{
-						Confirmation: &proto.ConfirmationContent{
-							Id:       fc.ID,
-							Question: question,
+					Role: "model",
+					Content: &proto.Content{
+						Content: &proto.Content_Confirmation{
+							Confirmation: &proto.ConfirmationContent{
+								Id:       fc.ID,
+								Question: question,
+							},
 						},
 					},
 				}},
 		})
 	}
 	return o(&proto.AgentOutputs{
-		Contents: []*proto.Content{
+		Messages: []*proto.Message{
 			{
-				Content: &proto.Content_FunctionCall{
-					FunctionCall: &proto.FunctionCallContent{
-						Id:   fc.ID,
-						Name: fc.Name,
-						Args: argsStruct,
+				Role: "model",
+				Content: &proto.Content{
+					Content: &proto.Content_FunctionCall{
+						FunctionCall: &proto.FunctionCallContent{
+							Id:   fc.ID,
+							Name: fc.Name,
+							Args: argsStruct,
+						},
 					},
 				},
 			}},
@@ -334,21 +359,25 @@ func (t *SkillsTool) HandleExecute(ctx context.Context, fc *genai.FunctionCall, 
 		// But we still have to finish with a function response,
 		// not to keep the previously log function call hanging forever.
 		return o(&proto.AgentOutputs{
-			Contents: []*proto.Content{
+			Messages: []*proto.Message{
 				{
-					Role: "assistant",
-					Content: &proto.Content_FunctionResponse{
-						FunctionResponse: &proto.FunctionResponseContent{
-							Name: fc.Name,
-							Id:   fc.ID,
+					Role: "model",
+					Content: &proto.Content{
+						Content: &proto.Content_FunctionResponse{
+							FunctionResponse: &proto.FunctionResponseContent{
+								Name: fc.Name,
+								Id:   fc.ID,
+							},
 						},
 					},
 				},
 				{
-					Role: "assistant",
-					Content: &proto.Content_Text{
-						Text: &proto.TextContent{
-							Text: "Okay.",
+					Role: "model",
+					Content: &proto.Content{
+						Content: &proto.Content_Text{
+							Text: &proto.TextContent{
+								Text: "Okay.",
+							},
 						},
 					},
 				},
@@ -378,22 +407,26 @@ func (t *SkillsTool) HandleExecute(ctx context.Context, fc *genai.FunctionCall, 
 		return fmt.Errorf("failed to convert function response to structpb: %w", err)
 	}
 	return o(&proto.AgentOutputs{
-		Contents: []*proto.Content{
+		Messages: []*proto.Message{
 			{
-				Role: "assistant",
-				Content: &proto.Content_FunctionResponse{
-					FunctionResponse: &proto.FunctionResponseContent{
-						Name:     fc.Name,
-						Response: respStruct,
-						Id:       fc.ID,
+				Role: "model",
+				Content: &proto.Content{
+					Content: &proto.Content_FunctionResponse{
+						FunctionResponse: &proto.FunctionResponseContent{
+							Name:     fc.Name,
+							Response: respStruct,
+							Id:       fc.ID,
+						},
 					},
 				},
 			},
 			{
-				Role: "assistant",
-				Content: &proto.Content_Text{
-					Text: &proto.TextContent{
-						Text: output,
+				Role: "model",
+				Content: &proto.Content{
+					Content: &proto.Content_Text{
+						Text: &proto.TextContent{
+							Text: output,
+						},
 					},
 				},
 			},

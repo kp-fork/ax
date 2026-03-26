@@ -75,7 +75,7 @@ func (tm *defaultExecutor) exec(
 	start *proto.AgentStart,
 	el EventLog,
 	a agent.Agent,
-	history []*proto.Content,
+	history []*proto.Message,
 	o agent.OutputHandler) error {
 	child := &defaultExecutor{
 		id:       execID,
@@ -83,16 +83,16 @@ func (tm *defaultExecutor) exec(
 		registry: tm.registry,
 	}
 
-	var allOutputs []*proto.Content
+	var allOutputs []*proto.Message
 	outputBuffer := func(outgoing *proto.AgentOutputs) error {
-		allOutputs = append(allOutputs, outgoing.Contents...)
+		allOutputs = append(allOutputs, outgoing.Messages...)
 		if o != nil {
 			return o(outgoing)
 		}
 		return nil
 	}
 
-	history = append(history, start.Contents...)
+	history = append(history, start.Messages...)
 	if len(history) == 0 {
 		return errors.New("no inputs")
 	}
@@ -100,7 +100,7 @@ func (tm *defaultExecutor) exec(
 		return err
 	}
 
-	start.Contents = history
+	start.Messages = history
 	if err := a.Connect(ctx, execID, start, child, outputBuffer); err != nil {
 		_ = logFailed(ctx, el, execID, start) // Attempt to log failure, but prioritize returning the original error.
 		return err
@@ -114,7 +114,7 @@ func (tm *defaultExecutor) exec(
 		}
 
 		last := allOutputs[len(allOutputs)-1]
-		if last.GetConfirmation() == nil || last.GetConfirmation().GetQuestion() == "" {
+		if last.GetContent().GetConfirmation() == nil || last.GetContent().GetConfirmation().GetQuestion() == "" {
 			// Log completed only if we are not waiting
 			// for an answer to a confirmation.
 			return logCompleted(ctx, el, execID, start)
@@ -123,13 +123,13 @@ func (tm *defaultExecutor) exec(
 	return nil
 }
 
-func history(ctx context.Context, el EventLog, execID string) ([]*proto.Content, proto.State, string, error) {
+func history(ctx context.Context, el EventLog, execID string) ([]*proto.Message, proto.State, string, error) {
 	events, err := el.Events(ctx, execID)
 	if err != nil {
 		return nil, proto.State_STATE_UNSPECIFIED, "", err
 	}
 
-	var history []*proto.Content
+	var history []*proto.Message
 	var state proto.State
 	var agentID string
 
@@ -145,7 +145,7 @@ func history(ctx context.Context, el EventLog, execID string) ([]*proto.Content,
 		// presented an event log with dirty entries
 		// from previous runs.
 		if event.State == proto.State_STATE_PENDING {
-			history = []*proto.Content{}
+			history = []*proto.Message{}
 		}
 		history = append(history, event.Inputs...)
 		history = append(history, event.Outputs...)
@@ -160,7 +160,7 @@ func logPending(ctx context.Context, el EventLog, execID string, start *proto.Ag
 		Timestamp: timestamppb.Now(),
 		ExecId:    execID,
 		AgentId:   start.AgentId,
-		Inputs:    start.Contents,
+		Inputs:    start.Messages,
 		State:     proto.State_STATE_PENDING,
 	})
 }
@@ -183,7 +183,7 @@ func logCompleted(ctx context.Context, el EventLog, execID string, start *proto.
 	})
 }
 
-func logOutputs(ctx context.Context, el EventLog, execID string, start *proto.AgentStart, outputs []*proto.Content) error {
+func logOutputs(ctx context.Context, el EventLog, execID string, start *proto.AgentStart, outputs []*proto.Message) error {
 	return el.Append(ctx, &proto.ExecutionEvent{
 		Timestamp: timestamppb.Now(),
 		ExecId:    execID,

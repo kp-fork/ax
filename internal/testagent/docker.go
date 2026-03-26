@@ -26,11 +26,13 @@ type DockerBuilderAgent struct{}
 
 func (a *DockerBuilderAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	o(&proto.AgentOutputs{
-		Contents: []*proto.Content{{
+		Messages: []*proto.Message{{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "\n\nBuilding the docker image now...\n",
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: "\n\nBuilding the docker image now...\n",
+					},
 				},
 			},
 		}},
@@ -38,11 +40,13 @@ func (a *DockerBuilderAgent) Connect(ctx context.Context, execID string, start *
 
 	time.Sleep(500 * time.Millisecond)
 	o(&proto.AgentOutputs{
-		Contents: []*proto.Content{{
+		Messages: []*proto.Message{{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "* us-central1-docker.pkg.dev/acme/test/test:latest is built and is ready to push.\n",
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: "* us-central1-docker.pkg.dev/acme/test/test:latest is built and is ready to push.\n",
+					},
 				},
 			},
 		}},
@@ -50,11 +54,13 @@ func (a *DockerBuilderAgent) Connect(ctx context.Context, execID string, start *
 
 	time.Sleep(1000 * time.Millisecond)
 	o(&proto.AgentOutputs{
-		Contents: []*proto.Content{{
+		Messages: []*proto.Message{{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "* The container image is pushed.\n\n",
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: "* The container image is pushed.\n\n",
+					},
 				},
 			},
 		}},
@@ -75,11 +81,13 @@ type DockerMirrorAgent struct{}
 
 func (a *DockerMirrorAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	o(&proto.AgentOutputs{
-		Contents: []*proto.Content{{
+		Messages: []*proto.Message{{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "* Starting pushing docker image now...\n",
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: "* Starting pushing docker image now...\n",
+					},
 				},
 			},
 		}},
@@ -87,11 +95,13 @@ func (a *DockerMirrorAgent) Connect(ctx context.Context, execID string, start *p
 
 	time.Sleep(2000 * time.Millisecond)
 	o(&proto.AgentOutputs{
-		Contents: []*proto.Content{{
+		Messages: []*proto.Message{{
 			Role: "assistant",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: "* The container image is mirrored.\n",
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{
+						Text: "* The container image is mirrored.\n",
+					},
 				},
 			},
 		}},

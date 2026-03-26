@@ -18,12 +18,12 @@ import "github.com/google/ax/proto"
 
 // WaitsForConfirmation returns true if the last message in the history
 // is a confirmation question waiting for user input.
-func WaitsForConfirmation(history []*proto.Content) bool {
+func WaitsForConfirmation(history []*proto.Message) bool {
 	if len(history) == 0 {
 		return false
 	}
 	last := history[len(history)-1]
-	if last.GetConfirmation() != nil && last.GetConfirmation().Question != "" {
+	if last.GetContent().GetConfirmation() != nil && last.GetContent().GetConfirmation().Question != "" {
 		return true
 	}
 	return false
@@ -31,26 +31,26 @@ func WaitsForConfirmation(history []*proto.Content) bool {
 
 // HasConfirmationAnswer returns true if the last message in the history
 // is a confirmation question waiting for user input.
-func HasConfirmationAnswer(history []*proto.Content) (approved bool, conf *proto.ConfirmationContent) {
+func HasConfirmationAnswer(history []*proto.Message) (approved bool, conf *proto.ConfirmationContent) {
 	if len(history) == 0 {
 		return false, nil
 	}
 	last := history[len(history)-1]
-	if last.GetConfirmation() == nil {
+	if last.GetContent().GetConfirmation() == nil {
 		return false, nil
 	}
-	if last.GetConfirmation().GetApproval() != nil {
-		conf = last.GetConfirmation()
+	if last.GetContent().GetConfirmation().GetApproval() != nil {
+		conf = last.GetContent().GetConfirmation()
 		approved = true
 	}
-	if last.GetConfirmation().GetDecline() != nil {
-		conf = last.GetConfirmation()
+	if last.GetContent().GetConfirmation().GetDecline() != nil {
+		conf = last.GetContent().GetConfirmation()
 		approved = false
 	}
 	return approved, conf
 }
 
-func WaitsForUser(history []*proto.Content) bool {
+func WaitsForUser(history []*proto.Message) bool {
 	if len(history) == 0 {
 		return false
 	}
@@ -59,7 +59,7 @@ func WaitsForUser(history []*proto.Content) bool {
 	}
 
 	last := history[len(history)-1]
-	if last.GetConfirmation() != nil && last.GetConfirmation().GetDecline() != nil {
+	if last.GetContent().GetConfirmation() != nil && last.GetContent().GetConfirmation().GetDecline() != nil {
 		return true
 	}
 	return false

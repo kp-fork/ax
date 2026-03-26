@@ -96,7 +96,7 @@ type AgentStart struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
 	Config        *anypb.Any             `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
-	Contents      []*Content             `protobuf:"bytes,3,rep,name=contents,proto3" json:"contents,omitempty"`
+	Messages      []*Message             `protobuf:"bytes,3,rep,name=messages,proto3" json:"messages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -145,16 +145,16 @@ func (x *AgentStart) GetConfig() *anypb.Any {
 	return nil
 }
 
-func (x *AgentStart) GetContents() []*Content {
+func (x *AgentStart) GetMessages() []*Message {
 	if x != nil {
-		return x.Contents
+		return x.Messages
 	}
 	return nil
 }
 
 type AgentOutputs struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Contents      []*Content             `protobuf:"bytes,1,rep,name=contents,proto3" json:"contents,omitempty"`
+	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
 	CheckpointId  string                 `protobuf:"bytes,2,opt,name=checkpoint_id,json=checkpointId,proto3" json:"checkpoint_id,omitempty"` // TODO: Add awaiting_more field.
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -190,9 +190,9 @@ func (*AgentOutputs) Descriptor() ([]byte, []int) {
 	return file_proto_ax_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *AgentOutputs) GetContents() []*Content {
+func (x *AgentOutputs) GetMessages() []*Message {
 	if x != nil {
-		return x.Contents
+		return x.Messages
 	}
 	return nil
 }
@@ -653,7 +653,7 @@ func (x *FunctionResponseContent) GetId() string {
 	return ""
 }
 
-// Content represents a message with role, type, mimetype, and data fields
+// Content represents a content input or output.
 type Content struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Content:
@@ -663,7 +663,6 @@ type Content struct {
 	//	*Content_FunctionCall
 	//	*Content_FunctionResponse
 	Content       isContent_Content `protobuf_oneof:"content"`
-	Role          string            `protobuf:"bytes,1000,opt,name=role,proto3" json:"role,omitempty"` // The role of the content (e.g., "user", "assistant", "system")
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -741,13 +740,6 @@ func (x *Content) GetFunctionResponse() *FunctionResponseContent {
 	return nil
 }
 
-func (x *Content) GetRole() string {
-	if x != nil {
-		return x.Role
-	}
-	return ""
-}
-
 type isContent_Content interface {
 	isContent_Content()
 }
@@ -776,6 +768,59 @@ func (*Content_FunctionCall) isContent_Content() {}
 
 func (*Content_FunctionResponse) isContent_Content() {}
 
+// Message is a message in the history.
+type Message struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`       // user, assistant, or model
+	Content       *Content               `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"` // content of the message
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Message) Reset() {
+	*x = Message{}
+	mi := &file_proto_ax_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Message) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Message) ProtoMessage() {}
+
+func (x *Message) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_ax_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Message.ProtoReflect.Descriptor instead.
+func (*Message) Descriptor() ([]byte, []int) {
+	return file_proto_ax_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Message) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *Message) GetContent() *Content {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
 // ExecutionEvent is the entry in the event log. ExecutionEvents are used
 // to record the actions taken place in the executor.
 // The executor can replay the events for resumability.
@@ -783,8 +828,8 @@ type ExecutionEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ExecId        string                 `protobuf:"bytes,1,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	Inputs        []*Content             `protobuf:"bytes,3,rep,name=inputs,proto3" json:"inputs,omitempty"`
-	Outputs       []*Content             `protobuf:"bytes,4,rep,name=outputs,proto3" json:"outputs,omitempty"`
+	Inputs        []*Message             `protobuf:"bytes,3,rep,name=inputs,proto3" json:"inputs,omitempty"`
+	Outputs       []*Message             `protobuf:"bytes,4,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	State         State                  `protobuf:"varint,5,opt,name=state,proto3,enum=proto.State" json:"state,omitempty"`
 	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"` // string checkpoint_id = 10;
 	unknownFields protoimpl.UnknownFields
@@ -793,7 +838,7 @@ type ExecutionEvent struct {
 
 func (x *ExecutionEvent) Reset() {
 	*x = ExecutionEvent{}
-	mi := &file_proto_ax_proto_msgTypes[10]
+	mi := &file_proto_ax_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -805,7 +850,7 @@ func (x *ExecutionEvent) String() string {
 func (*ExecutionEvent) ProtoMessage() {}
 
 func (x *ExecutionEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[10]
+	mi := &file_proto_ax_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -818,7 +863,7 @@ func (x *ExecutionEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecutionEvent.ProtoReflect.Descriptor instead.
 func (*ExecutionEvent) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{10}
+	return file_proto_ax_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ExecutionEvent) GetExecId() string {
@@ -835,14 +880,14 @@ func (x *ExecutionEvent) GetAgentId() string {
 	return ""
 }
 
-func (x *ExecutionEvent) GetInputs() []*Content {
+func (x *ExecutionEvent) GetInputs() []*Message {
 	if x != nil {
 		return x.Inputs
 	}
 	return nil
 }
 
-func (x *ExecutionEvent) GetOutputs() []*Content {
+func (x *ExecutionEvent) GetOutputs() []*Message {
 	if x != nil {
 		return x.Outputs
 	}
@@ -872,7 +917,7 @@ type HealthCheckRequest struct {
 
 func (x *HealthCheckRequest) Reset() {
 	*x = HealthCheckRequest{}
-	mi := &file_proto_ax_proto_msgTypes[11]
+	mi := &file_proto_ax_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -884,7 +929,7 @@ func (x *HealthCheckRequest) String() string {
 func (*HealthCheckRequest) ProtoMessage() {}
 
 func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[11]
+	mi := &file_proto_ax_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -897,7 +942,7 @@ func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{11}
+	return file_proto_ax_proto_rawDescGZIP(), []int{12}
 }
 
 // HealthCheckResponse contains agent health status
@@ -911,7 +956,7 @@ type HealthCheckResponse struct {
 
 func (x *HealthCheckResponse) Reset() {
 	*x = HealthCheckResponse{}
-	mi := &file_proto_ax_proto_msgTypes[12]
+	mi := &file_proto_ax_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -923,7 +968,7 @@ func (x *HealthCheckResponse) String() string {
 func (*HealthCheckResponse) ProtoMessage() {}
 
 func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[12]
+	mi := &file_proto_ax_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -936,7 +981,7 @@ func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{12}
+	return file_proto_ax_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *HealthCheckResponse) GetHealthy() bool {
@@ -959,14 +1004,14 @@ type ExecRequest struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                      // Unique execution identifier
 	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`             // Agent ID, if empty planner is used
 	AgentConfig   *anypb.Any             `protobuf:"bytes,3,opt,name=agent_config,json=agentConfig,proto3" json:"agent_config,omitempty"` // Agent configuration if any
-	Inputs        []*Content             `protobuf:"bytes,4,rep,name=inputs,proto3" json:"inputs,omitempty"`                              // Input content to process
+	Inputs        []*Message             `protobuf:"bytes,4,rep,name=inputs,proto3" json:"inputs,omitempty"`                              // Input content to process
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ExecRequest) Reset() {
 	*x = ExecRequest{}
-	mi := &file_proto_ax_proto_msgTypes[13]
+	mi := &file_proto_ax_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -978,7 +1023,7 @@ func (x *ExecRequest) String() string {
 func (*ExecRequest) ProtoMessage() {}
 
 func (x *ExecRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[13]
+	mi := &file_proto_ax_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -991,7 +1036,7 @@ func (x *ExecRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecRequest.ProtoReflect.Descriptor instead.
 func (*ExecRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{13}
+	return file_proto_ax_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ExecRequest) GetId() string {
@@ -1015,7 +1060,7 @@ func (x *ExecRequest) GetAgentConfig() *anypb.Any {
 	return nil
 }
 
-func (x *ExecRequest) GetInputs() []*Content {
+func (x *ExecRequest) GetInputs() []*Message {
 	if x != nil {
 		return x.Inputs
 	}
@@ -1025,14 +1070,14 @@ func (x *ExecRequest) GetInputs() []*Content {
 // ExecResponse contains the result of an execution.
 type ExecResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Outputs       []*Content             `protobuf:"bytes,1,rep,name=outputs,proto3" json:"outputs,omitempty"` // Output content
+	Outputs       []*Message             `protobuf:"bytes,1,rep,name=outputs,proto3" json:"outputs,omitempty"` // Output content
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ExecResponse) Reset() {
 	*x = ExecResponse{}
-	mi := &file_proto_ax_proto_msgTypes[14]
+	mi := &file_proto_ax_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1044,7 +1089,7 @@ func (x *ExecResponse) String() string {
 func (*ExecResponse) ProtoMessage() {}
 
 func (x *ExecResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[14]
+	mi := &file_proto_ax_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1057,10 +1102,10 @@ func (x *ExecResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecResponse.ProtoReflect.Descriptor instead.
 func (*ExecResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{14}
+	return file_proto_ax_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *ExecResponse) GetOutputs() []*Content {
+func (x *ExecResponse) GetOutputs() []*Message {
 	if x != nil {
 		return x.Outputs
 	}
@@ -1078,7 +1123,7 @@ type ForkRequest struct {
 
 func (x *ForkRequest) Reset() {
 	*x = ForkRequest{}
-	mi := &file_proto_ax_proto_msgTypes[15]
+	mi := &file_proto_ax_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1090,7 +1135,7 @@ func (x *ForkRequest) String() string {
 func (*ForkRequest) ProtoMessage() {}
 
 func (x *ForkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[15]
+	mi := &file_proto_ax_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1103,7 +1148,7 @@ func (x *ForkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForkRequest.ProtoReflect.Descriptor instead.
 func (*ForkRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{15}
+	return file_proto_ax_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ForkRequest) GetSrcId() string {
@@ -1136,7 +1181,7 @@ type ForkResponse struct {
 
 func (x *ForkResponse) Reset() {
 	*x = ForkResponse{}
-	mi := &file_proto_ax_proto_msgTypes[16]
+	mi := &file_proto_ax_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1148,7 +1193,7 @@ func (x *ForkResponse) String() string {
 func (*ForkResponse) ProtoMessage() {}
 
 func (x *ForkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[16]
+	mi := &file_proto_ax_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1161,7 +1206,7 @@ func (x *ForkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForkResponse.ProtoReflect.Descriptor instead.
 func (*ForkResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{16}
+	return file_proto_ax_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ForkResponse) GetNewId() string {
@@ -1180,7 +1225,7 @@ type RemoteAgentConfig struct {
 
 func (x *RemoteAgentConfig) Reset() {
 	*x = RemoteAgentConfig{}
-	mi := &file_proto_ax_proto_msgTypes[17]
+	mi := &file_proto_ax_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1192,7 +1237,7 @@ func (x *RemoteAgentConfig) String() string {
 func (*RemoteAgentConfig) ProtoMessage() {}
 
 func (x *RemoteAgentConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[17]
+	mi := &file_proto_ax_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1205,7 +1250,7 @@ func (x *RemoteAgentConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteAgentConfig.ProtoReflect.Descriptor instead.
 func (*RemoteAgentConfig) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{17}
+	return file_proto_ax_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RemoteAgentConfig) GetAddress() string {
@@ -1232,7 +1277,7 @@ type RegisterAgentRequest struct {
 
 func (x *RegisterAgentRequest) Reset() {
 	*x = RegisterAgentRequest{}
-	mi := &file_proto_ax_proto_msgTypes[18]
+	mi := &file_proto_ax_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1244,7 +1289,7 @@ func (x *RegisterAgentRequest) String() string {
 func (*RegisterAgentRequest) ProtoMessage() {}
 
 func (x *RegisterAgentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[18]
+	mi := &file_proto_ax_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1257,7 +1302,7 @@ func (x *RegisterAgentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterAgentRequest.ProtoReflect.Descriptor instead.
 func (*RegisterAgentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{18}
+	return file_proto_ax_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *RegisterAgentRequest) GetAgentId() string {
@@ -1323,7 +1368,7 @@ type RegisterAgentResponse struct {
 
 func (x *RegisterAgentResponse) Reset() {
 	*x = RegisterAgentResponse{}
-	mi := &file_proto_ax_proto_msgTypes[19]
+	mi := &file_proto_ax_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1335,7 +1380,7 @@ func (x *RegisterAgentResponse) String() string {
 func (*RegisterAgentResponse) ProtoMessage() {}
 
 func (x *RegisterAgentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[19]
+	mi := &file_proto_ax_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1348,7 +1393,7 @@ func (x *RegisterAgentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterAgentResponse.ProtoReflect.Descriptor instead.
 func (*RegisterAgentResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{19}
+	return file_proto_ax_proto_rawDescGZIP(), []int{20}
 }
 
 // GeminiConfig is the configuration for a Gemini agent.
@@ -1364,7 +1409,7 @@ type GeminiConfig struct {
 
 func (x *GeminiConfig) Reset() {
 	*x = GeminiConfig{}
-	mi := &file_proto_ax_proto_msgTypes[20]
+	mi := &file_proto_ax_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1376,7 +1421,7 @@ func (x *GeminiConfig) String() string {
 func (*GeminiConfig) ProtoMessage() {}
 
 func (x *GeminiConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[20]
+	mi := &file_proto_ax_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1389,7 +1434,7 @@ func (x *GeminiConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeminiConfig.ProtoReflect.Descriptor instead.
 func (*GeminiConfig) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{20}
+	return file_proto_ax_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GeminiConfig) GetModel() string {
@@ -1429,9 +1474,9 @@ const file_proto_ax_proto_rawDesc = "" +
 	"AgentStart\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12,\n" +
 	"\x06config\x18\x02 \x01(\v2\x14.google.protobuf.AnyR\x06config\x12*\n" +
-	"\bcontents\x18\x03 \x03(\v2\x0e.proto.ContentR\bcontents\"_\n" +
+	"\bmessages\x18\x03 \x03(\v2\x0e.proto.MessageR\bmessages\"_\n" +
 	"\fAgentOutputs\x12*\n" +
-	"\bcontents\x18\x01 \x03(\v2\x0e.proto.ContentR\bcontents\x12#\n" +
+	"\bmessages\x18\x01 \x03(\v2\x0e.proto.MessageR\bmessages\x12#\n" +
 	"\rcheckpoint_id\x18\x02 \x01(\tR\fcheckpointId\"\x8a\x01\n" +
 	"\fAgentMessage\x12\x17\n" +
 	"\aexec_id\x18\x01 \x01(\tR\x06execId\x12)\n" +
@@ -1459,21 +1504,23 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\x17FunctionResponseContent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x123\n" +
 	"\bresponse\x18\x02 \x01(\v2\x17.google.protobuf.StructR\bresponse\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"\xb9\x02\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\"\xa4\x02\n" +
 	"\aContent\x12(\n" +
 	"\x04text\x18\n" +
 	" \x01(\v2\x12.proto.TextContentH\x00R\x04text\x12@\n" +
 	"\fconfirmation\x18\x1a \x01(\v2\x1a.proto.ConfirmationContentH\x00R\fconfirmation\x12A\n" +
 	"\rfunction_call\x18\x1b \x01(\v2\x1a.proto.FunctionCallContentH\x00R\ffunctionCall\x12M\n" +
-	"\x11function_response\x18\x1c \x01(\v2\x1e.proto.FunctionResponseContentH\x00R\x10functionResponse\x12\x13\n" +
-	"\x04role\x18\xe8\a \x01(\tR\x04roleB\t\n" +
+	"\x11function_response\x18\x1c \x01(\v2\x1e.proto.FunctionResponseContentH\x00R\x10functionResponseB\t\n" +
 	"\acontentJ\x04\b\x01\x10\x05J\x04\b\x06\x10\n" +
-	"J\x04\b\v\x10\x1a\"\xf4\x01\n" +
+	"J\x04\b\v\x10\x1a\"G\n" +
+	"\aMessage\x12\x12\n" +
+	"\x04role\x18\x01 \x01(\tR\x04role\x12(\n" +
+	"\acontent\x18\x02 \x01(\v2\x0e.proto.ContentR\acontent\"\xf4\x01\n" +
 	"\x0eExecutionEvent\x12\x17\n" +
 	"\aexec_id\x18\x01 \x01(\tR\x06execId\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12&\n" +
-	"\x06inputs\x18\x03 \x03(\v2\x0e.proto.ContentR\x06inputs\x12(\n" +
-	"\aoutputs\x18\x04 \x03(\v2\x0e.proto.ContentR\aoutputs\x12\"\n" +
+	"\x06inputs\x18\x03 \x03(\v2\x0e.proto.MessageR\x06inputs\x12(\n" +
+	"\aoutputs\x18\x04 \x03(\v2\x0e.proto.MessageR\aoutputs\x12\"\n" +
 	"\x05state\x18\x05 \x01(\x0e2\f.proto.StateR\x05state\x128\n" +
 	"\ttimestamp\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\x14\n" +
 	"\x12HealthCheckRequest\"I\n" +
@@ -1484,9 +1531,9 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x127\n" +
 	"\fagent_config\x18\x03 \x01(\v2\x14.google.protobuf.AnyR\vagentConfig\x12&\n" +
-	"\x06inputs\x18\x04 \x03(\v2\x0e.proto.ContentR\x06inputs\"8\n" +
+	"\x06inputs\x18\x04 \x03(\v2\x0e.proto.MessageR\x06inputs\"8\n" +
 	"\fExecResponse\x12(\n" +
-	"\aoutputs\x18\x01 \x03(\v2\x0e.proto.ContentR\aoutputs\"i\n" +
+	"\aoutputs\x18\x01 \x03(\v2\x0e.proto.MessageR\aoutputs\"i\n" +
 	"\vForkRequest\x12\x15\n" +
 	"\x06src_id\x18\x01 \x01(\tR\x05srcId\x12*\n" +
 	"\x11src_checkpoint_id\x18\x02 \x01(\tR\x0fsrcCheckpointId\x12\x17\n" +
@@ -1538,7 +1585,7 @@ func file_proto_ax_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_ax_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_ax_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_proto_ax_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_proto_ax_proto_goTypes = []any{
 	(State)(0),                      // 0: proto.State
 	(*AgentStart)(nil),              // 1: proto.AgentStart
@@ -1551,62 +1598,64 @@ var file_proto_ax_proto_goTypes = []any{
 	(*FunctionCallContent)(nil),     // 8: proto.FunctionCallContent
 	(*FunctionResponseContent)(nil), // 9: proto.FunctionResponseContent
 	(*Content)(nil),                 // 10: proto.Content
-	(*ExecutionEvent)(nil),          // 11: proto.ExecutionEvent
-	(*HealthCheckRequest)(nil),      // 12: proto.HealthCheckRequest
-	(*HealthCheckResponse)(nil),     // 13: proto.HealthCheckResponse
-	(*ExecRequest)(nil),             // 14: proto.ExecRequest
-	(*ExecResponse)(nil),            // 15: proto.ExecResponse
-	(*ForkRequest)(nil),             // 16: proto.ForkRequest
-	(*ForkResponse)(nil),            // 17: proto.ForkResponse
-	(*RemoteAgentConfig)(nil),       // 18: proto.RemoteAgentConfig
-	(*RegisterAgentRequest)(nil),    // 19: proto.RegisterAgentRequest
-	(*RegisterAgentResponse)(nil),   // 20: proto.RegisterAgentResponse
-	(*GeminiConfig)(nil),            // 21: proto.GeminiConfig
-	nil,                             // 22: proto.RegisterAgentRequest.MetadataEntry
-	(*anypb.Any)(nil),               // 23: google.protobuf.Any
-	(*structpb.Struct)(nil),         // 24: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil),   // 25: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),     // 26: google.protobuf.Duration
+	(*Message)(nil),                 // 11: proto.Message
+	(*ExecutionEvent)(nil),          // 12: proto.ExecutionEvent
+	(*HealthCheckRequest)(nil),      // 13: proto.HealthCheckRequest
+	(*HealthCheckResponse)(nil),     // 14: proto.HealthCheckResponse
+	(*ExecRequest)(nil),             // 15: proto.ExecRequest
+	(*ExecResponse)(nil),            // 16: proto.ExecResponse
+	(*ForkRequest)(nil),             // 17: proto.ForkRequest
+	(*ForkResponse)(nil),            // 18: proto.ForkResponse
+	(*RemoteAgentConfig)(nil),       // 19: proto.RemoteAgentConfig
+	(*RegisterAgentRequest)(nil),    // 20: proto.RegisterAgentRequest
+	(*RegisterAgentResponse)(nil),   // 21: proto.RegisterAgentResponse
+	(*GeminiConfig)(nil),            // 22: proto.GeminiConfig
+	nil,                             // 23: proto.RegisterAgentRequest.MetadataEntry
+	(*anypb.Any)(nil),               // 24: google.protobuf.Any
+	(*structpb.Struct)(nil),         // 25: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil),   // 26: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),     // 27: google.protobuf.Duration
 }
 var file_proto_ax_proto_depIdxs = []int32{
-	23, // 0: proto.AgentStart.config:type_name -> google.protobuf.Any
-	10, // 1: proto.AgentStart.contents:type_name -> proto.Content
-	10, // 2: proto.AgentOutputs.contents:type_name -> proto.Content
+	24, // 0: proto.AgentStart.config:type_name -> google.protobuf.Any
+	11, // 1: proto.AgentStart.messages:type_name -> proto.Message
+	11, // 2: proto.AgentOutputs.messages:type_name -> proto.Message
 	1,  // 3: proto.AgentMessage.start:type_name -> proto.AgentStart
 	2,  // 4: proto.AgentMessage.outputs:type_name -> proto.AgentOutputs
 	5,  // 5: proto.ConfirmationContent.approval:type_name -> proto.ApprovalDecision
 	6,  // 6: proto.ConfirmationContent.decline:type_name -> proto.DeclineDecision
-	24, // 7: proto.FunctionCallContent.args:type_name -> google.protobuf.Struct
-	24, // 8: proto.FunctionResponseContent.response:type_name -> google.protobuf.Struct
+	25, // 7: proto.FunctionCallContent.args:type_name -> google.protobuf.Struct
+	25, // 8: proto.FunctionResponseContent.response:type_name -> google.protobuf.Struct
 	4,  // 9: proto.Content.text:type_name -> proto.TextContent
 	7,  // 10: proto.Content.confirmation:type_name -> proto.ConfirmationContent
 	8,  // 11: proto.Content.function_call:type_name -> proto.FunctionCallContent
 	9,  // 12: proto.Content.function_response:type_name -> proto.FunctionResponseContent
-	10, // 13: proto.ExecutionEvent.inputs:type_name -> proto.Content
-	10, // 14: proto.ExecutionEvent.outputs:type_name -> proto.Content
-	0,  // 15: proto.ExecutionEvent.state:type_name -> proto.State
-	25, // 16: proto.ExecutionEvent.timestamp:type_name -> google.protobuf.Timestamp
-	23, // 17: proto.ExecRequest.agent_config:type_name -> google.protobuf.Any
-	10, // 18: proto.ExecRequest.inputs:type_name -> proto.Content
-	10, // 19: proto.ExecResponse.outputs:type_name -> proto.Content
-	22, // 20: proto.RegisterAgentRequest.metadata:type_name -> proto.RegisterAgentRequest.MetadataEntry
-	18, // 21: proto.RegisterAgentRequest.remote:type_name -> proto.RemoteAgentConfig
-	26, // 22: proto.GeminiConfig.timeout:type_name -> google.protobuf.Duration
-	3,  // 23: proto.AgentService.Connect:input_type -> proto.AgentMessage
-	12, // 24: proto.AgentService.HealthCheck:input_type -> proto.HealthCheckRequest
-	14, // 25: proto.AXService.Exec:input_type -> proto.ExecRequest
-	16, // 26: proto.AXService.Fork:input_type -> proto.ForkRequest
-	19, // 27: proto.AXService.RegisterAgent:input_type -> proto.RegisterAgentRequest
-	3,  // 28: proto.AgentService.Connect:output_type -> proto.AgentMessage
-	13, // 29: proto.AgentService.HealthCheck:output_type -> proto.HealthCheckResponse
-	15, // 30: proto.AXService.Exec:output_type -> proto.ExecResponse
-	17, // 31: proto.AXService.Fork:output_type -> proto.ForkResponse
-	20, // 32: proto.AXService.RegisterAgent:output_type -> proto.RegisterAgentResponse
-	28, // [28:33] is the sub-list for method output_type
-	23, // [23:28] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	10, // 13: proto.Message.content:type_name -> proto.Content
+	11, // 14: proto.ExecutionEvent.inputs:type_name -> proto.Message
+	11, // 15: proto.ExecutionEvent.outputs:type_name -> proto.Message
+	0,  // 16: proto.ExecutionEvent.state:type_name -> proto.State
+	26, // 17: proto.ExecutionEvent.timestamp:type_name -> google.protobuf.Timestamp
+	24, // 18: proto.ExecRequest.agent_config:type_name -> google.protobuf.Any
+	11, // 19: proto.ExecRequest.inputs:type_name -> proto.Message
+	11, // 20: proto.ExecResponse.outputs:type_name -> proto.Message
+	23, // 21: proto.RegisterAgentRequest.metadata:type_name -> proto.RegisterAgentRequest.MetadataEntry
+	19, // 22: proto.RegisterAgentRequest.remote:type_name -> proto.RemoteAgentConfig
+	27, // 23: proto.GeminiConfig.timeout:type_name -> google.protobuf.Duration
+	3,  // 24: proto.AgentService.Connect:input_type -> proto.AgentMessage
+	13, // 25: proto.AgentService.HealthCheck:input_type -> proto.HealthCheckRequest
+	15, // 26: proto.AXService.Exec:input_type -> proto.ExecRequest
+	17, // 27: proto.AXService.Fork:input_type -> proto.ForkRequest
+	20, // 28: proto.AXService.RegisterAgent:input_type -> proto.RegisterAgentRequest
+	3,  // 29: proto.AgentService.Connect:output_type -> proto.AgentMessage
+	14, // 30: proto.AgentService.HealthCheck:output_type -> proto.HealthCheckResponse
+	16, // 31: proto.AXService.Exec:output_type -> proto.ExecResponse
+	18, // 32: proto.AXService.Fork:output_type -> proto.ForkResponse
+	21, // 33: proto.AXService.RegisterAgent:output_type -> proto.RegisterAgentResponse
+	29, // [29:34] is the sub-list for method output_type
+	24, // [24:29] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_proto_ax_proto_init() }
@@ -1628,7 +1677,7 @@ func file_proto_ax_proto_init() {
 		(*Content_FunctionCall)(nil),
 		(*Content_FunctionResponse)(nil),
 	}
-	file_proto_ax_proto_msgTypes[18].OneofWrappers = []any{
+	file_proto_ax_proto_msgTypes[19].OneofWrappers = []any{
 		(*RegisterAgentRequest_Remote)(nil),
 	}
 	type x struct{}
@@ -1637,7 +1686,7 @@ func file_proto_ax_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_ax_proto_rawDesc), len(file_proto_ax_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   22,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

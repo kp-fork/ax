@@ -21,25 +21,27 @@ import (
 	"github.com/google/ax/proto"
 )
 
-// agentFunc adapts a simple string→string function into the agent.Agent interface.
-type agentFunc func(input []*proto.Content, tm agent.Executor, o agent.OutputHandler)
+// agentFunc adapts a simple function into the agent.Agent interface.
+type agentFunc func(input []*proto.Message, tm agent.Executor, o agent.OutputHandler)
 
 func (f agentFunc) Connect(ctx context.Context, execID string, start *proto.AgentStart, tm agent.Executor, o agent.OutputHandler) error {
-	f(start.Contents, tm, o)
+	f(start.Messages, tm, o)
 	return nil
 }
 
 func (f agentFunc) HealthCheck(_ context.Context) error { return nil }
 func (f agentFunc) Close() error                        { return nil }
 
-func AgentFunc(fn func(input []*proto.Content, tm agent.Executor, o agent.OutputHandler)) agent.Agent {
+func AgentFunc(fn func(input []*proto.Message, tm agent.Executor, o agent.OutputHandler)) agent.Agent {
 	return agentFunc(fn)
 }
 
-// text is a helper that builds a plain-text Content.
-func text(role, s string) *proto.Content {
-	return &proto.Content{
-		Content: &proto.Content_Text{Text: &proto.TextContent{Text: s}},
-		Role:    role,
+// text is a helper that builds a plain-text Message.
+func text(role, s string) *proto.Message {
+	return &proto.Message{
+		Role: role,
+		Content: &proto.Content{
+			Content: &proto.Content_Text{Text: &proto.TextContent{Text: s}},
+		},
 	}
 }

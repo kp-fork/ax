@@ -39,8 +39,8 @@ func TestSQLiteEventLog_AppendAndEvents(t *testing.T) {
 		ExecId:    "task-1",
 		State:     proto.State_STATE_PENDING,
 		Timestamp: timestamppb.Now(),
-		Inputs: []*proto.Content{
-			{Role: "user", Content: &proto.Content_Text{Text: &proto.TextContent{Text: "hello"}}},
+		Inputs: []*proto.Message{
+			{Role: "user", Content: &proto.Content{Content: &proto.Content_Text{Text: &proto.TextContent{Text: "hello"}}}},
 		},
 	}
 
@@ -48,8 +48,8 @@ func TestSQLiteEventLog_AppendAndEvents(t *testing.T) {
 		ExecId:    "task-1",
 		State:     proto.State_STATE_COMPLETED,
 		Timestamp: timestamppb.Now(),
-		Outputs: []*proto.Content{
-			{Role: "assistant", Content: &proto.Content_Text{Text: &proto.TextContent{Text: "world"}}},
+		Outputs: []*proto.Message{
+			{Role: "assistant", Content: &proto.Content{Content: &proto.Content_Text{Text: &proto.TextContent{Text: "world"}}}},
 		},
 	}
 

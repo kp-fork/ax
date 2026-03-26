@@ -26,11 +26,11 @@ option go_package = "github.com/google/ax/proto";
 message AgentStart {
   string agent_id = 1;
   google.protobuf.Any config = 2;
-  repeated Content contents = 3;
+  repeated Message messages = 3;
 }
 
 message AgentOutputs {
-  repeated Content contents = 1;
+  repeated Message messages = 1;
   string checkpoint_id = 2;
   // TODO: Add awaiting_more field.
 }
@@ -85,7 +85,7 @@ message FunctionResponseContent {
 }
 
 
-// Content represents a message with role, type, mimetype, and data fields
+// Content represents a content input or output.
 message Content {
   reserved 1 to 4, 6 to 9, 11 to 25;
 
@@ -96,10 +96,14 @@ message Content {
     FunctionResponseContent function_response = 28;
   }
 
-  string role = 1000; // The role of the content (e.g., "user", "assistant", "system")
-
   // TODO: Bring other types to the oneof to be
   // fully compatible with the Interactions Content message.
+}
+
+// Message is a message in the history.
+message Message {
+  string role = 1;     // user, assistant, or model
+  Content content = 2; // content of the message
 }
 
 // ExecutionEvent is the entry in the event log. ExecutionEvents are used
@@ -108,8 +112,8 @@ message Content {
 message ExecutionEvent {
   string exec_id = 1;
   string agent_id = 2;
-  repeated Content inputs = 3;
-  repeated Content outputs = 4;
+  repeated Message inputs = 3;
+  repeated Message outputs = 4;
   State state = 5;
   google.protobuf.Timestamp timestamp = 6;
   // string checkpoint_id = 10;
@@ -146,12 +150,12 @@ message ExecRequest {
   string id = 1;                         // Unique execution identifier
   string agent_id = 2;                   // Agent ID, if empty planner is used
   google.protobuf.Any agent_config = 3;  // Agent configuration if any
-  repeated Content inputs = 4;           // Input content to process
+  repeated Message inputs = 4;           // Input content to process
 }
 
 // ExecResponse contains the result of an execution.
 message ExecResponse {
-  repeated Content outputs = 1; // Output content
+  repeated Message outputs = 1; // Output content
 }
 
 message ForkRequest {

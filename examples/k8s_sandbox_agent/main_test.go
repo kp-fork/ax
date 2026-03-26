@@ -24,30 +24,38 @@ import (
 
 func TestExtractLatestPayload(t *testing.T) {
 	// Let's create a simulated history payload
-	history := []*proto.Content{
+	history := []*proto.Message{
 		{
 			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{Text: "old user prompt"},
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{Text: "old user prompt"},
+				},
 			},
 		},
 		{
 			Role: "agent",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{Text: "old agent response"},
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{Text: "old agent response"},
+				},
 			},
 		},
 		{
 			Role: "user",
-			Content: &proto.Content_Text{
-				Text: &proto.TextContent{Text: "find this text plz plz plz"},
+			Content: &proto.Content{
+				Content: &proto.Content_Text{
+					Text: &proto.TextContent{Text: "find this text plz plz plz"},
+				},
 			},
 		},
 		{
-			Role: "agent", // System might wrap it in something like this during delegation
-			Content: &proto.Content_FunctionCall{
-				FunctionCall: &proto.FunctionCallContent{
-					Name: "uppercase-agent",
+			Role: "agent",
+			Content: &proto.Content{
+				Content: &proto.Content_FunctionCall{
+					FunctionCall: &proto.FunctionCallContent{
+						Name: "uppercase-agent",
+					},
 				},
 			},
 		},
@@ -56,10 +64,11 @@ func TestExtractLatestPayload(t *testing.T) {
 	// 1. Emulate the agent logic exactly!
 	var targetText string
 	for i := len(history) - 1; i >= 0; i-- {
-		// As per our fix, we just grab the last raw text we can find from a user
-		if text := history[i].GetText(); text != nil && history[i].Role == "user" {
-			targetText = text.Text
-			break
+		if content := history[i].GetContent(); content != nil {
+			if text := content.GetText(); text != nil && history[i].Role == "user" {
+				targetText = text.Text
+				break
+			}
 		}
 	}
 
@@ -69,25 +78,29 @@ func TestExtractLatestPayload(t *testing.T) {
 
 	// 2. Format output
 	upper := strings.ToUpper(targetText)
-	var outputs []*proto.Content
-	outputs = append(outputs, &proto.Content{
+	var outputs []*proto.Message
+	outputs = append(outputs, &proto.Message{
 		Role: "agent",
-		Content: &proto.Content_Text{
-			Text: &proto.TextContent{
-				Text: "Hey, I'm your sandbox agent.\n",
+		Content: &proto.Content{
+			Content: &proto.Content_Text{
+				Text: &proto.TextContent{
+					Text: "Hey, I'm your sandbox agent.\n",
+				},
 			},
 		},
 	})
-	outputs = append(outputs, &proto.Content{
+	outputs = append(outputs, &proto.Message{
 		Role: "agent",
-		Content: &proto.Content_Text{
-			Text: &proto.TextContent{
-				Text: fmt.Sprintf("here is your upper case text: %s", upper),
+		Content: &proto.Content{
+			Content: &proto.Content_Text{
+				Text: &proto.TextContent{
+					Text: fmt.Sprintf("here is your upper case text: %s", upper),
+				},
 			},
 		},
 	})
 
-	if len(outputs) != 2 || !strings.Contains(outputs[1].GetText().Text, strings.ToUpper("find this text plz plz plz")) {
+	if len(outputs) != 2 || !strings.Contains(outputs[1].GetContent().GetText().Text, strings.ToUpper("find this text plz plz plz")) {
 		t.Errorf("Outputs failed! Got: %v", outputs)
 	}
 }

@@ -184,13 +184,17 @@ func buildExecTraces(rootExecID string, events []*proto.ExecutionEvent) []ExecTr
 	return execs
 }
 
-func extractContents(protoContents []*proto.Content) []Content {
+func extractMsgs(protoContents []*proto.Message) []Content {
 	var results []Content
 	for _, c := range protoContents {
 		content := Content{Role: c.Role}
-		if textC := c.GetText(); textC != nil {
+		msgContent := c.GetContent()
+		if msgContent == nil {
+			continue
+		}
+		if textC := msgContent.GetText(); textC != nil {
 			content.Text = &Text{Text: textC.Text}
-		} else if conf := c.GetConfirmation(); conf != nil {
+		} else if conf := msgContent.GetConfirmation(); conf != nil {
 			content.Confirmation = &Confirmation{
 				ID:       conf.Id,
 				Question: conf.Question,
@@ -216,8 +220,8 @@ func extractExecutionEvent(execID string, protoEv *proto.ExecutionEvent) Executi
 	}
 
 	ev.State = fmt.Sprint(protoEv.State)
-	ev.Outputs = extractContents(protoEv.Outputs)
-	ev.Inputs = extractContents(protoEv.Inputs)
+	ev.Outputs = extractMsgs(protoEv.Outputs)
+	ev.Inputs = extractMsgs(protoEv.Inputs)
 
 	return ev
 }
