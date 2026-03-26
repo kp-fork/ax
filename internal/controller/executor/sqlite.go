@@ -52,6 +52,7 @@ func OpenSQLiteEventLog(path string) (*SQLiteEventLog, error) {
 		CREATE TABLE IF NOT EXISTS event_log (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			exec_id TEXT NOT NULL,
+			checkpoint_id TEXT,
 			state INTEGER NOT NULL,
 			payload TEXT NOT NULL,
 			timestamp DATETIME NOT NULL
@@ -63,7 +64,12 @@ func OpenSQLiteEventLog(path string) (*SQLiteEventLog, error) {
 	// Create index if it doesn't exist
 	if _, err := db.Exec(`CREATE INDEX IF NOT EXISTS idx_event_log_exec_id ON event_log(exec_id)`); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("sqlite_eventlog: create index: %w", err)
+		return nil, fmt.Errorf("sqlite_eventlog: create index exec_id: %w", err)
+	}
+
+	if _, err := db.Exec(`CREATE INDEX IF NOT EXISTS idx_event_log_exec_checkpoint_id ON event_log(exec_id, checkpoint_id)`); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("sqlite_eventlog: create index exec_checkpoint_id: %w", err)
 	}
 
 	return &SQLiteEventLog{db: db}, nil
@@ -85,8 +91,8 @@ func (l *SQLiteEventLog) Append(ctx context.Context, event *proto.ExecutionEvent
 	}
 
 	_, err = l.db.ExecContext(ctx,
-		"INSERT INTO event_log (exec_id, state, payload, timestamp) VALUES (?, ?, ?, ?)",
-		event.ExecId, event.State, string(payload), timestamp)
+		"INSERT INTO event_log (exec_id, checkpoint_id, state, payload, timestamp) VALUES (?, ?, ?, ?, ?)",
+		event.ExecId, event.CheckpointId, event.State, string(payload), timestamp)
 
 	if err != nil {
 		return fmt.Errorf("sqlite_eventlog: insert: %w", err)

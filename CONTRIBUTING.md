@@ -112,3 +112,24 @@ git push origin my-feature
 ```
 
 Visit https://github.com/google-gemini/ax to open a pull request.
+
+
+## Troubleshooting
+
+### Outdated table schema
+
+AX is still under heavy development and the database schema is not yet stable. If you encounter errors related to outdated table schemas, you can reset the database by deleting the `eventlog` directory.
+
+An example:
+
+```bash
+ax exec --input "hello"
+
+Error: error creating controller: failed to create event log: sqlite_eventlog: create index exec_checkpoint_id: SQL logic error: no such column: checkpoint_id (1)
+```
+
+Delete the `eventlog` directory and try again.
+
+```bash
+rm -rf ./eventlog
+```
