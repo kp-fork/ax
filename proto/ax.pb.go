@@ -831,7 +831,8 @@ type ExecutionEvent struct {
 	Inputs        []*Message             `protobuf:"bytes,3,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	Outputs       []*Message             `protobuf:"bytes,4,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	State         State                  `protobuf:"varint,5,opt,name=state,proto3,enum=proto.State" json:"state,omitempty"`
-	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"` // string checkpoint_id = 10;
+	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	CheckpointId  string                 `protobuf:"bytes,7,opt,name=checkpoint_id,json=checkpointId,proto3" json:"checkpoint_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -906,6 +907,13 @@ func (x *ExecutionEvent) GetTimestamp() *timestamppb.Timestamp {
 		return x.Timestamp
 	}
 	return nil
+}
+
+func (x *ExecutionEvent) GetCheckpointId() string {
+	if x != nil {
+		return x.CheckpointId
+	}
+	return ""
 }
 
 // HealthCheckRequest for agent health checks
@@ -1515,14 +1523,15 @@ const file_proto_ax_proto_rawDesc = "" +
 	"J\x04\b\v\x10\x1a\"G\n" +
 	"\aMessage\x12\x12\n" +
 	"\x04role\x18\x01 \x01(\tR\x04role\x12(\n" +
-	"\acontent\x18\x02 \x01(\v2\x0e.proto.ContentR\acontent\"\xf4\x01\n" +
+	"\acontent\x18\x02 \x01(\v2\x0e.proto.ContentR\acontent\"\x99\x02\n" +
 	"\x0eExecutionEvent\x12\x17\n" +
 	"\aexec_id\x18\x01 \x01(\tR\x06execId\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12&\n" +
 	"\x06inputs\x18\x03 \x03(\v2\x0e.proto.MessageR\x06inputs\x12(\n" +
 	"\aoutputs\x18\x04 \x03(\v2\x0e.proto.MessageR\aoutputs\x12\"\n" +
 	"\x05state\x18\x05 \x01(\x0e2\f.proto.StateR\x05state\x128\n" +
-	"\ttimestamp\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\x14\n" +
+	"\ttimestamp\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12#\n" +
+	"\rcheckpoint_id\x18\a \x01(\tR\fcheckpointId\"\x14\n" +
 	"\x12HealthCheckRequest\"I\n" +
 	"\x13HealthCheckResponse\x12\x18\n" +
 	"\ahealthy\x18\x01 \x01(\bR\ahealthy\x12\x18\n" +

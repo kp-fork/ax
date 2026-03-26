@@ -116,7 +116,7 @@ message ExecutionEvent {
   repeated Message outputs = 4;
   State state = 5;
   google.protobuf.Timestamp timestamp = 6;
-  // string checkpoint_id = 10;
+  string checkpoint_id = 7;
 }
 
 // HealthCheckRequest for agent health checks
