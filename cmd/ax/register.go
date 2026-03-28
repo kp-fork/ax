@@ -59,7 +59,7 @@ func runRegister(cmd *cobra.Command, args []string) error {
 	client := proto.NewAXServiceClient(conn)
 
 	// Register remote agent
-	_, err = client.RegisterAgent(ctx, &proto.RegisterAgentRequest{
+	resp, err := client.RegisterAgent(ctx, &proto.RegisterAgentRequest{
 		AgentId:     registerAgentID,
 		Name:        registerAgentName,
 		Description: registerAgentDesc,
@@ -71,6 +71,12 @@ func runRegister(cmd *cobra.Command, args []string) error {
 	})
 	if err != nil {
 		return fmt.Errorf("error registering agent: %w", err)
+	}
+
+	if !resp.Healthy {
+		fmt.Printf("Agent registered successfully, but represents an unreachable address at %s.\nIt will be retried in the background.\n", registerAgentAddr)
+	} else {
+		fmt.Printf("Agent %s registered successfully.\n", registerAgentID)
 	}
 	return nil
 }

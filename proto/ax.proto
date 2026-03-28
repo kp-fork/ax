@@ -185,6 +185,7 @@ message RegisterAgentRequest {
 
 // RegisterAgentResponse contains registration result
 message RegisterAgentResponse {
+  bool healthy = 1;
 }
 
 // AXService defines the gRPC service for AX operations

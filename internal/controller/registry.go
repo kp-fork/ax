@@ -17,6 +17,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -106,17 +107,16 @@ func (r *Registry) RegisterLocal(cfg config.LocalAgentConfig) error {
 }
 
 // RegisterRemote registers a remote agent by creating a remote agent client.
-func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) error {
+func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if err := validateID(cfg.ID); err != nil {
-		return err
+		return false, err
 	}
 
-	// TODO(lhuan): Consider enforcing health check during registration. Only allow registration if the agent is reachable and healthy.
 	if _, ok := r.agents[cfg.ID]; ok {
-		return fmt.Errorf("agent %s already registered", cfg.ID)
+		return false, fmt.Errorf("agent %s already registered", cfg.ID)
 	}
 
 	// Create remote agent client
@@ -126,7 +126,17 @@ func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) error {
 		MaxRetries: 3,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create remote agent: %w", err)
+		return false, fmt.Errorf("failed to create remote agent: %w", err)
+	}
+
+	// Log a warning if the health check fails during registration, but don't fail the registration
+	// so that the server can still start up successfully.
+	healthy := true
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := remoteAgent.HealthCheck(ctx); err != nil {
+		log.Printf("Warning: remote agent %s is unreachable or unhealthy during registration: %v", cfg.ID, err)
+		healthy = false
 	}
 
 	r.agents[cfg.ID] = remoteAgent
@@ -135,12 +145,12 @@ func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) error {
 		Name:            cfg.Name,
 		Description:     cfg.Description,
 		Type:            AgentTypeRemote,
-		Healthy:         true, // default to healthy with an assumption that the agent is healthy when it's registered.
-		LastHealthCheck: time.Time{},
+		Healthy:         healthy,
+		LastHealthCheck: time.Now(),
 		Metadata:        cfg.Metadata,
 	}
 
-	return nil
+	return healthy, nil
 }
 
 // RegisterKubernetesSandbox registers a sandbox agent by dynamically provisioning a Sandbox on GKE.

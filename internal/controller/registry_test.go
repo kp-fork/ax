@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -147,7 +148,7 @@ func TestRegistry_HealthCheckScenarios(t *testing.T) {
 					t.Fatalf("RegisterLocal failed: %v", err)
 				}
 			} else {
-				err = r.RegisterRemote(config.RemoteAgentConfig{
+				_, err = r.RegisterRemote(config.RemoteAgentConfig{
 					ID:      id,
 					Name:    id,
 					Address: address,
@@ -210,13 +211,19 @@ func TestRegistry_GracefulShutdown(t *testing.T) {
 		t.Fatalf("NewRegistry failed: %v", regErr)
 	}
 
+	address, cleanup := startMockGRPCServer(t, true)
+	defer cleanup()
+
 	// Register multiple agents to create workload
 	for i := range 50 {
-		_ = r.RegisterRemote(config.RemoteAgentConfig{
-			ID:      "remote-shutdown-test-" + string(rune(i)),
+		_, err := r.RegisterRemote(config.RemoteAgentConfig{
+			ID:      fmt.Sprintf("remote-shutdown-test-%d", i),
 			Name:    "Shutdown Test Remote",
-			Address: "localhost:1234",
+			Address: address,
 		})
+		if err != nil {
+			t.Fatalf("Failed to register remote agent for shutdown test: %v", err)
+		}
 	}
 
 	// Let it run for a bit to ensure performChecks runs.

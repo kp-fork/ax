@@ -92,26 +92,31 @@ func (s *Server) RegisterAgent(ctx context.Context, req *proto.RegisterAgentRequ
 
 	registry := s.controller.Registry()
 
+	var healthy bool
 	switch cfg := req.Config.(type) {
 	case *proto.RegisterAgentRequest_Remote:
 		if cfg.Remote.Address == "" {
 			return nil, fmt.Errorf("address is required for remote agents")
 		}
-		// All registered agents are remote
-		if err := registry.RegisterRemote(config.RemoteAgentConfig{
+		
+		var err error
+		healthy, err = registry.RegisterRemote(config.RemoteAgentConfig{
 			ID:          req.AgentId,
 			Name:        req.Name,
 			Description: req.Description,
 			Address:     cfg.Remote.Address,
 			Metadata:    req.Metadata,
-		}); err != nil {
+		})
+		if err != nil {
 			return nil, fmt.Errorf("failed to register agent: %w", err)
 		}
 	default:
 		return nil, fmt.Errorf("unknown agent type")
 	}
 
-	return &proto.RegisterAgentResponse{}, nil
+	return &proto.RegisterAgentResponse{
+		Healthy: healthy,
+	}, nil
 }
 
 // Serve starts the gRPC server on the specified address.

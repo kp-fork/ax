@@ -63,7 +63,7 @@ func main() {
 	}
 
 	// 4. Register Remote Agent
-	if err := c.Registry().RegisterRemote(config.RemoteAgentConfig{
+	if _, err := c.Registry().RegisterRemote(config.RemoteAgentConfig{
 		ID:          "remote-text-processor",
 		Name:        "Remote Text Processor",
 		Description: "Adds the prefix 'Remote Prefix: ' to the text",
