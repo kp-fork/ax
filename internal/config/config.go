@@ -43,7 +43,6 @@ type RegistryConfig struct {
 // When enabled, the controller will perform active polling to check the health of registered agents and
 // flip the health status of agents that are not responsive. When disabled, the controller will not perform
 // any health checks and will assume all agents are healthy.
-// TODO(lhuan): Add passive health checks and discovery rules.
 type HealthCheckConfig struct {
 	Enabled  bool          `yaml:"enabled"`  // default: false (no active polling)
 	Interval time.Duration `yaml:"interval"` // default: 30s
