@@ -110,12 +110,7 @@ func (a *KubernetesSandboxAgent) Connect(ctx context.Context, execID string, sta
 	// Wait for Sandbox to bound and get the warm pool pod selector
 	selector, err := a.client.WaitForSandbox(ctx, claimName)
 	if err != nil {
-		return err
-	}
-
-	// Wait for the Sandbox to become Ready so its DNS record is populated
-	if err := a.client.WaitForSandboxReady(ctx, claimName); err != nil {
-		log.Printf("Warning: failed to wait for sandbox readiness: %v", err)
+		return fmt.Errorf("failed to wait for sandbox: %w", err)
 	}
 
 	// 2. Setup Connection (Direct or Router)
