@@ -76,15 +76,13 @@ func (s *Server) RegisterAgent(ctx context.Context, req *proto.RegisterAgentRequ
 
 	registry := s.controller.Registry()
 
-	var healthy bool
 	switch cfg := req.Config.(type) {
 	case *proto.RegisterAgentRequest_Remote:
 		if cfg.Remote.Address == "" {
 			return nil, fmt.Errorf("address is required for remote agents")
 		}
 
-		var err error
-		healthy, err = registry.RegisterRemote(config.RemoteAgentConfig{
+		err := registry.RegisterRemote(config.RemoteAgentConfig{
 			ID:          req.AgentId,
 			Name:        req.Name,
 			Description: req.Description,
@@ -99,7 +97,7 @@ func (s *Server) RegisterAgent(ctx context.Context, req *proto.RegisterAgentRequ
 	}
 
 	return &proto.RegisterAgentResponse{
-		Healthy: healthy,
+		Healthy: true,
 	}, nil
 }
 

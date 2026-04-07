@@ -43,9 +43,6 @@ func main() {
 
 	// 2. Initialize controller
 	c, err := controller.New(ctx, controller.Config{
-		HealthCheck: config.HealthCheckConfig{
-			Enabled: false, // disable to speed up
-		},
 		EventLogBuilder: func() (executor.EventLog, error) {
 			return executor.OpenSQLiteEventLog(filepath.Join(os.TempDir(), "test_multi.db"))
 		},
@@ -69,7 +66,7 @@ func main() {
 	}
 
 	// 4. Register Remote Agent
-	if _, err := c.Registry().RegisterRemote(config.RemoteAgentConfig{
+	if err := c.Registry().RegisterRemote(config.RemoteAgentConfig{
 		ID:          "remote-text-processor",
 		Name:        "Remote Text Processor",
 		Description: "Adds the prefix 'Remote Prefix: ' to the text",

@@ -17,9 +17,7 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
-	"time"
 
 	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/internal/config"
@@ -36,13 +34,11 @@ const (
 
 // AgentInfo contains metadata about a registered agent.
 type AgentInfo struct {
-	ID              string
-	Name            string
-	Description     string
-	Type            AgentType
-	Healthy         bool
-	LastHealthCheck time.Time
-	Metadata        map[string]string
+	ID          string
+	Name        string
+	Description string
+	Type        AgentType
+	Metadata    map[string]string
 }
 
 // Registry manages a collection of local and remote agents.
@@ -51,25 +47,14 @@ type Registry struct {
 	mu        sync.RWMutex
 	agents    map[string]agent.Agent
 	agentInfo map[string]*AgentInfo
-	monitor   *HealthMonitor
 }
 
 // NewRegistry creates a new agent registry.
-func NewRegistry(healthCheckConfig config.HealthCheckConfig) (*Registry, error) {
-	if healthCheckConfig.Enabled && healthCheckConfig.Interval <= 0 {
-		return nil, fmt.Errorf("invalid health check interval: %v", healthCheckConfig.Interval)
-	}
-
-	r := &Registry{
+func NewRegistry() *Registry {
+	return &Registry{
 		agents:    make(map[string]agent.Agent),
 		agentInfo: make(map[string]*AgentInfo),
 	}
-	if healthCheckConfig.Enabled {
-		r.monitor = NewHealthMonitor(healthCheckConfig, r)
-		r.monitor.Start()
-	}
-
-	return r, nil
 }
 
 func (r *Registry) Map() map[string]agent.Agent {
@@ -94,29 +79,27 @@ func (r *Registry) RegisterLocal(cfg config.LocalAgentConfig) error {
 
 	r.agents[cfg.ID] = cfg.Agent
 	r.agentInfo[cfg.ID] = &AgentInfo{
-		ID:              cfg.ID,
-		Name:            cfg.Name,
-		Description:     cfg.Description,
-		Type:            AgentTypeLocal,
-		Healthy:         true,
-		LastHealthCheck: time.Now(),
-		Metadata:        cfg.Metadata,
+		ID:          cfg.ID,
+		Name:        cfg.Name,
+		Description: cfg.Description,
+		Type:        AgentTypeLocal,
+		Metadata:    cfg.Metadata,
 	}
 
 	return nil
 }
 
 // RegisterRemote registers a remote agent by creating a remote agent client.
-func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) (bool, error) {
+func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if err := validateID(cfg.ID); err != nil {
-		return false, err
+		return err
 	}
 
 	if _, ok := r.agents[cfg.ID]; ok {
-		return false, fmt.Errorf("agent %s already registered", cfg.ID)
+		return fmt.Errorf("agent %s already registered", cfg.ID)
 	}
 
 	// Create remote agent client
@@ -126,31 +109,19 @@ func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) (bool, error) {
 		MaxRetries: 3,
 	})
 	if err != nil {
-		return false, fmt.Errorf("failed to create remote agent: %w", err)
-	}
-
-	// Log a warning if the health check fails during registration, but don't fail the registration
-	// so that the server can still start up successfully.
-	healthy := true
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := remoteAgent.HealthCheck(ctx); err != nil {
-		log.Printf("Warning: remote agent %s is unreachable or unhealthy during registration: %v", cfg.ID, err)
-		healthy = false
+		return fmt.Errorf("failed to create remote agent: %w", err)
 	}
 
 	r.agents[cfg.ID] = remoteAgent
 	r.agentInfo[cfg.ID] = &AgentInfo{
-		ID:              cfg.ID,
-		Name:            cfg.Name,
-		Description:     cfg.Description,
-		Type:            AgentTypeRemote,
-		Healthy:         healthy,
-		LastHealthCheck: time.Now(),
-		Metadata:        cfg.Metadata,
+		ID:          cfg.ID,
+		Name:        cfg.Name,
+		Description: cfg.Description,
+		Type:        AgentTypeRemote,
+		Metadata:    cfg.Metadata,
 	}
 
-	return healthy, nil
+	return nil
 }
 
 // RegisterKubernetesSandbox registers a sandbox agent by dynamically provisioning a Sandbox on GKE.
@@ -178,13 +149,11 @@ func (r *Registry) RegisterKubernetesSandbox(ctx context.Context, cfg config.San
 
 	r.agents[cfg.ID] = sandboxAgent
 	r.agentInfo[cfg.ID] = &AgentInfo{
-		ID:              cfg.ID,
-		Name:            cfg.Name,
-		Description:     cfg.Description,
-		Type:            AgentTypeKubernetesSandbox,
-		Healthy:         true,
-		LastHealthCheck: time.Time{},
-		Metadata:        cfg.Metadata,
+		ID:          cfg.ID,
+		Name:        cfg.Name,
+		Description: cfg.Description,
+		Type:        AgentTypeKubernetesSandbox,
+		Metadata:    cfg.Metadata,
 	}
 
 	return nil
@@ -229,52 +198,8 @@ func (r *Registry) List() []string {
 	return ids
 }
 
-// ListHealthy returns all healthy agent IDs.
-func (r *Registry) ListHealthy() []string {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	ids := make([]string, 0)
-	for id, info := range r.agentInfo {
-		if info.Healthy {
-			ids = append(ids, id)
-		}
-	}
-
-	return ids
-}
-
-// healthCheck performs a health check on a specific agent.
-func (r *Registry) healthCheck(id string) error {
-	a, err := r.Get(id)
-	if err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	err = a.HealthCheck(ctx)
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	info, exists := r.agentInfo[id]
-	if exists {
-		info.Healthy = (err == nil)
-		info.LastHealthCheck = time.Now()
-	}
-
-	return err
-}
-
 // Close stops the registry and closes all agents.
 func (r *Registry) Close() error {
-	// Stop health checks before acquiring the lock to avoid deadlock
-	// (monitor.Stop waits for background routines that might need the lock)
-	if r.monitor != nil {
-		r.monitor.Stop()
-	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()

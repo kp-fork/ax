@@ -164,7 +164,6 @@ func TestController_Exec_ResumptionAndIDGeneration(t *testing.T) {
 	}
 }
 
-
 func TestController_Exec_LastSeenSeq_Empty(t *testing.T) {
 	ctx := context.Background()
 	cid := "test-conv-seq"

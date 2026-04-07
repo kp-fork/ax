@@ -294,11 +294,11 @@ func (p *geminiPlannerAgent) handleConfirmationAnswer(inputs []*proto.Message) (
 
 // agentsToTools converts registry agents to Gemini function declarations.
 func agentsToTools(registry *Registry, nativeTools ...Tool) ([]*genai.Tool, error) {
-	healthyAgents := registry.ListHealthy()
+	agents := registry.List()
 
 	var tools []*genai.Tool
 	// TODO(lhuan): Check if agentsToTools returns an error or empty list and return a friendly "no agent available, try later" error.
-	for _, id := range healthyAgents {
+	for _, id := range agents {
 		info, err := registry.GetInfo(id)
 		if err != nil {
 			continue // Skip agents we can't get info for

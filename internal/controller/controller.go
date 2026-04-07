@@ -24,7 +24,6 @@ import (
 	"sync"
 
 	"github.com/google/ax/internal/agent"
-	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/controller/executor"
 	"github.com/google/ax/internal/testagent"
 	"github.com/google/ax/proto"
@@ -55,16 +54,12 @@ type PlannerBuilder func(ctx context.Context, r *Registry) (agent.Agent, error)
 type Config struct {
 	EventLogBuilder executor.EventLogBuilder
 	PlannerBuilder  PlannerBuilder
-	HealthCheck     config.HealthCheckConfig
 }
 
 // New creates a new controller instance.
 func New(ctx context.Context, config Config) (*Controller, error) {
 	// Initialize agent registry
-	registry, err := NewRegistry(config.HealthCheck)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create registry: %w", err)
-	}
+	registry := NewRegistry()
 
 	// Determine plan function
 	// If no planner builder is provided, use the default Gemini planner.

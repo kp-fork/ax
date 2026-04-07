@@ -18,7 +18,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/google/ax/internal/agent"
 	"gopkg.in/yaml.v3"
@@ -26,26 +25,16 @@ import (
 
 // Config represents the main configuration for AX server.
 type Config struct {
-	Server      ServerConfig      `yaml:"server"`
-	EventLog    EventLogConfig    `yaml:"eventlog"`
-	HealthCheck HealthCheckConfig `yaml:"health_check"`
-	Planner     PlannerConfig     `yaml:"planner,omitempty"`
-	Registry    RegistryConfig    `yaml:"registry,omitempty"`
+	Server   ServerConfig   `yaml:"server"`
+	EventLog EventLogConfig `yaml:"eventlog"`
+	Planner  PlannerConfig  `yaml:"planner,omitempty"`
+	Registry RegistryConfig `yaml:"registry,omitempty"`
 }
 
 // RegistryConfig allows registring agents.
 type RegistryConfig struct {
 	RemoteAgents            []RemoteAgentConfig  `yaml:"remote_agents,omitempty"`
 	KubernetesSandboxAgents []SandboxAgentConfig `yaml:"k8s_sandbox_agents,omitempty"`
-}
-
-// HealthCheckConfig defines the configuration for agent health checks.
-// When enabled, the controller will perform active polling to check the health of registered agents and
-// flip the health status of agents that are not responsive. When disabled, the controller will not perform
-// any health checks and will assume all agents are healthy.
-type HealthCheckConfig struct {
-	Enabled  bool          `yaml:"enabled"`  // default: false (no active polling)
-	Interval time.Duration `yaml:"interval"` // default: 30s
 }
 
 // ServerConfig configures the gRPC server.
@@ -138,10 +127,6 @@ func (c *Config) setDefaults() {
 		c.EventLog.SQLiteConfig.Filename = "eventlog/log.sqlite"
 	}
 
-	// HealthCheck defaults
-	if c.HealthCheck.Enabled && c.HealthCheck.Interval == 0 {
-		c.HealthCheck.Interval = 30 * time.Second
-	}
 }
 
 // Validate validates the configuration.
@@ -151,12 +136,6 @@ func (c *Config) Validate() error {
 	}
 	if c.EventLog.SQLiteConfig.Filename == "" {
 		return fmt.Errorf("eventlog.sqlite.filename is required")
-	}
-	// Validate health check
-	if c.HealthCheck.Enabled {
-		if c.HealthCheck.Interval <= 0 {
-			return fmt.Errorf("health_check.interval must be positive when enabled")
-		}
 	}
 
 	return nil

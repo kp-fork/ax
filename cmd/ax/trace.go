@@ -69,7 +69,7 @@ type TraceData struct {
 }
 
 var (
-	conversationID string
+	conversationID  string
 	traceServerAddr string
 	traceConfigFile string
 )
@@ -123,8 +123,6 @@ func loadTraceData(ctx context.Context, convID string) (*TraceData, error) {
 
 	return data, nil
 }
-
-
 
 func fetchEventsByConversation(ctx context.Context, configPath string, convID string) ([]*proto.ExecutionEvent, string, error) {
 	cfg, err := config.LoadFromFile(configPath)

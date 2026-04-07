@@ -11,7 +11,7 @@ AX, a short for Agent eXecutor, is a single-writer agent orchestrator system bui
 - **Local & Remote Agents**: Support for both in-process and remote agent deployment
 - **Streaming**: gRPC bidirectional streaming for agent communication
 - **Tools and Skills**: Built-in bash tool and agent skills support
-- **Registry**: Agent discovery and automatic health monitoring
+- **Registry**: Agent discovery
 
 Built-in consistency and resumability features:
 - **Single-Writer Architecture**: Centralized controller ensures consistent state management
@@ -268,9 +268,6 @@ eventlog:
   sqlite:
     filename: "eventlog/log.sqlite"
 
-health_check:
-  enabled: true
-  interval: 30s
 
 planner:
   gemini:

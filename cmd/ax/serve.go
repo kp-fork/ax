@@ -121,7 +121,6 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 	controllerConfig := controller.Config{
 		EventLogBuilder: eventLogBuilder,
 		PlannerBuilder:  plannerBuilder,
-		HealthCheck:     cfg.HealthCheck,
 	}
 
 	// Create controller
@@ -131,7 +130,7 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 	}
 
 	for _, agentCfg := range cfg.Registry.RemoteAgents {
-		if _, err := c.Registry().RegisterRemote(agentCfg); err != nil {
+		if err := c.Registry().RegisterRemote(agentCfg); err != nil {
 			return nil, fmt.Errorf("failed to register remote agent %s: %w", agentCfg.ID, err)
 		}
 	}
