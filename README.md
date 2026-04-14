@@ -3,15 +3,18 @@
 > [!WARNING]
 > 🚧 This project is in active development and may introduce breaking changes.
 
-AX, a short for Agent eXecutor, is a single-writer agent orchestrator system built in Go. It provides a minimal runtime that coordinates agentic loops, manages executions with event logging, and communicates with both local and remote agents via streaming protocols.
+AX, short for Agent eXecutor, is a distributed agent runtime. It provides a
+runtime that coordinates agentic loops, manages executions with event logging,
+and communicates with both local and remote agents via streaming protocols.
+AX knows how to resume and recover from failures, even in distributed fashion.
 
 ## Features
 
-- **Session Management**: Builtin event log management for starting, resuming, forking, and inspecting agentic loop executions
+- **Distributed Runtime**: Controller, skills, tools, and agents can execute in isolation
+- **Resumption**: Automatic recovery from failures or interruptions
 - **Local & Remote Agents**: Support for both in-process and remote agent deployment
-- **Streaming**: gRPC bidirectional streaming for agent communication
 - **Tools and Skills**: Built-in bash tool and agent skills support
-- **Registry**: Agent discovery
+- **Registry**: Agent discovery and selection
 
 Built-in consistency and resumability features:
 - **Single-Writer Architecture**: Centralized controller ensures consistent state management
@@ -30,14 +33,15 @@ Built-in consistency and resumability features:
 └────────────────────────┘
 ```
 
-As agents move from simple interactions to "autonomous workers," most developers
-will need what AX provides: a way to manage state, ensure reliability, and audit
-the process through a structured event log. It is a "runtime" for agents in the same way 
-Kubernetes is a runtime for containers. AX is compute agnostic but aims to provide
-the most comprehensive experience on Kubernetes.
+As agents evolve from simple assistants to autonomous workers,
+developers need a robust runtime to manage state, ensure reliability,
+and audit execution. As we are moving away from monolithic agents towards
+distributed harnesses where tools, skills and agents are deployed as
+isolated actors, a distributed runtime with dynamically spawned isolated
+workers becomes a necessity. AX provides the foundational layer to fill these gaps.
 
-AX provides the plumbing so developers can focus on building agentic applications instead
-of rebuilding the same infrastructure over and over again.
+While compute-agnostic, AX is optimized to provide the best
+experience on Kubernetes.
 
 ## Installation
 
@@ -68,33 +72,45 @@ agents and built-in tools already linked into the AX binary.
 # Using default ax.yaml
 ax exec --input "Can you list me this directory?"
 
-# Using a custom configuration
-ax exec --input "Can you list me this directory?" --config my-config.yaml
+# Using exec with an AX server
+ax exec --input "Can you list me this directory?" --server localhost:8494
 ```
 
-You can continue a conversation any time:
+Conversations can be continued any time:
 
 ```bash
-ax exec --conversation d85a4b4e-c53b-4c84-b879-f10d905bce40 --input "Show me the contents of README.md"
+ax exec \
+  --conversation d85a4b4e-c53b-4c84-b879-f10d905bce40 \
+  --input "Show me the contents of README.md"
 ```
 
 You can continue from a previous sequence if client got disconnected
-during an conversation. In this example, we skip seeing the events after 
+during a conversation. In this example, we skip seeing the events up to 
 sequence number 12:
+
 ```bash
-ax exec --conversation d85a4b4e-c53b-4c84-b879-f10d905bce40 --resume --last-seen-seq 12
+ax exec \
+  --conversation d85a4b4e-c53b-4c84-b879-f10d905bce40 \
+  --last-seen-seq 12 \
+  --resume
 ```
 
-Instead of running the default planner agent, you can run any registered agent:
+Instead of running the default planning step, you can start executing
+from any registered agent:
 
 ```bash
-ax exec --agent coding --input "Can you write me a simple HTTP server in Python?"
+ax exec \
+  --agent coding \
+  --input "Can you write me a simple HTTP server in Python?"
 ```
 
 If anything goes wrong during the execution of an agent,
 you can resume an incomplete execution in a conversation:
 ```bash
-ax exec --resume --agent "coding" --conversation "edf98ef5-4bb1-4a9e-a091-3a77e03727e6"
+ax exec \
+  --conversation edf98ef5-4bb1-4a9e-a091-3a77e03727e6 \
+  --agent "coding" \
+  --resume
 ```
 
 ### 2. Run exec with Custom Agents
@@ -129,7 +145,6 @@ The server exposes the `AXService` on port `:8494` by default.
 ```bash
 ax exec \
     --server localhost:8494 \
-    --conversation 550e8400-e29b-41d4-a716-446655440000 \
     --input "HELLO, CAN YOU LOWERCASE WHAT I JUST SAID?"
 ```
 
@@ -205,7 +220,6 @@ ax fork --src-id 38460323-9a78-41cb-8991-022b0ff2c19c --src-checkpoint "550e..."
 ax fork --src-id 38460323-9a78-41cb-8991-022b0ff2c19c --src-checkpoint "550e..." --dest-id e5e26e38-53a2-4f22-b1cb-ae867357df83
 ```
 
-
 ### Trace
 
 Visualize the trace of an agentic execution in a Web UI, directly fetching from the SQLite event log.
@@ -268,7 +282,6 @@ eventlog:
   sqlite:
     filename: "eventlog/log.sqlite"
 
-
 planner:
   gemini:
     model: "gemini-3-flash-preview"
@@ -308,19 +321,7 @@ ax serve --config my-config.yaml
 Event logs use `ConversationEvent` and `ExecutionEvent` messages available in the proto file
 to keep a log of conversations and executions.
 
-## Built-in Capabilities
-
-### Skills
-
-AX includes built-in support for Agent Skills. See [Skills](docs/skills.md) for more.
-
-### Bash Tool
-
-The built-in planner is equipped with a `bash` tool that enables it to execute general-purpose shell commands. The tool automatically adapts to the user's operating system.
-
-For safety and control, any execution initiated by the bash tool requires explicit user approval via a confirmation flow before running.
-
-### Gemini Agent
+## Gemini Agent
 
 AX includes a built-in Gemini agent that can be used to generate text based on a given prompt. The agent is registered as `gemini` and can be triggered as a standalone agent or used from custom agent implementations.
 
@@ -344,13 +345,33 @@ export GCLOUD_LOCATION="us-central1"
 export GOOGLE_GENAI_USE_VERTEXAI=True
 ```
 
-## Building Custom Agents
+## Extensions
+
+### Skills
+
+AX includes built-in support for Agent Skills. See [Skills](docs/skills.md) for more.
+
+### Bash Tool
+
+The built-in planner is equipped with a `bash` tool that enables
+it to execute general-purpose shell commands. The tool automatically
+adapts to the user's operating system.
+
+For safety and control, any execution initiated by the bash tool
+requires explicit user approval via a confirmation flow before running.
+
+### Custom Agents
 
 There are several ways to register custom agents in AX by implementing
 the `AXAgentService` interface defined in `proto/ax.proto`:
+
 - [Remote Agent](docs/remote-agent.md)
 - [Kubernetes Sandbox Agents](docs/k8s-sandbox-agent.md)
 
+## What AX is NOT?
+* An agentic framework, AX is agnostic of the framework used to build agents.
+* A container or job scheduler, we delegate it to the new capabilities in Kubernetes.
+* A specific harness like a coding agent, we allow bringing any harness as an agent.
 
 ## License
 
