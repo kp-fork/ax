@@ -329,8 +329,7 @@ func promptUser(d *internal.Display, input string) (string, bool, error) {
 
 	d.DisplayInput(input)
 	if strings.ToLower(strings.TrimSpace(input)) == "q" {
-		fmt.Println("Goodbye!")
-		fmt.Printf("To resume this conversation, ax exec --conversation %s\n", execConversationID)
+		d.ShowResumption(execConversationID)
 		return "", true, nil
 	}
 	return input, false, nil
