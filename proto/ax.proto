@@ -144,8 +144,8 @@ message HealthCheckResponse {
   string message = 2;
 }
 
-// AgentService defines the gRPC service for agent communication
-service AgentService {
+// AXAgentService defines the gRPC service for agent communication
+service AXAgentService {
   // Connect is used by agents to connect to the controller.
   rpc Connect(stream AgentMessage) returns (stream AgentMessage);
 

@@ -31,7 +31,7 @@ import (
 )
 
 type server struct {
-	proto.UnimplementedAgentServiceServer
+	proto.UnimplementedAXAgentServiceServer
 }
 
 func (s *server) HealthCheck(ctx context.Context, req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
@@ -122,7 +122,7 @@ func main() {
 
 	// 2. Create gRPC server
 	s := grpc.NewServer()
-	proto.RegisterAgentServiceServer(s, &server{})
+	proto.RegisterAXAgentServiceServer(s, &server{})
 	reflection.Register(s)
 
 	// 3. Graceful shutdown handler

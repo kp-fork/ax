@@ -101,13 +101,13 @@ ax exec --resume --agent "coding" --conversation "edf98ef5-4bb1-4a9e-a091-3a77e0
 
 Most developers want to build their own agents. AX allows running custom agents as remote
 or sandbox agents. This example demonstrates how the AX server executes remote agents
-through the `AgentService.Process` RPC.
+through the `AXAgentService.Connect` RPC.
 
 **Terminal 1** - Start the remote agent server:
 ```bash
 go run examples/remote_agent/main.go
 ```
-The remote agent runs as a gRPC server implementing `AgentService` on port `:50051`.
+The remote agent runs as a gRPC server implementing `AXAgentService` on port `:50051`.
 
 **Terminal 2** - Start the AX controller server:
 ```bash
@@ -347,7 +347,7 @@ export GOOGLE_GENAI_USE_VERTEXAI=True
 ## Building Custom Agents
 
 There are several ways to register custom agents in AX by implementing
-the `AgentService` interface defined in `proto/ax.proto`:
+the `AXAgentService` interface defined in `proto/ax.proto`:
 - [Remote Agent](docs/remote-agent.md)
 - [Kubernetes Sandbox Agents](docs/k8s-sandbox-agent.md)
 - [Remote Python Agent](docs/python-agent.md)
