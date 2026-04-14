@@ -889,7 +889,6 @@ func (*RegisterAgentRequest_Remote) isRegisterAgentRequest_Config() {}
 // RegisterAgentResponse contains registration result
 type RegisterAgentResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Healthy       bool                   `protobuf:"varint,1,opt,name=healthy,proto3" json:"healthy,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -922,13 +921,6 @@ func (x *RegisterAgentResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RegisterAgentResponse.ProtoReflect.Descriptor instead.
 func (*RegisterAgentResponse) Descriptor() ([]byte, []int) {
 	return file_proto_ax_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *RegisterAgentResponse) GetHealthy() bool {
-	if x != nil {
-		return x.Healthy
-	}
-	return false
 }
 
 type ListRequest struct {
@@ -1307,9 +1299,8 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\b\n" +
-	"\x06config\"1\n" +
-	"\x15RegisterAgentResponse\x12\x18\n" +
-	"\ahealthy\x18\x01 \x01(\bR\ahealthy\"6\n" +
+	"\x06config\"\x17\n" +
+	"\x15RegisterAgentResponse\"6\n" +
 	"\vListRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"@\n" +
 	"\fListResponse\x120\n" +

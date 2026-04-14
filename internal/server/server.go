@@ -111,9 +111,7 @@ func (s *Server) RegisterAgent(ctx context.Context, req *proto.RegisterAgentRequ
 		return nil, fmt.Errorf("unknown agent type")
 	}
 
-	return &proto.RegisterAgentResponse{
-		Healthy: true,
-	}, nil
+	return &proto.RegisterAgentResponse{}, nil
 }
 
 // Serve starts the gRPC server on the specified address.
