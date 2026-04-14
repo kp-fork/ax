@@ -1660,8 +1660,8 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTATE_PENDING\x10\x01\x12\x10\n" +
 	"\fSTATE_FAILED\x10\x02\x12\x13\n" +
-	"\x0fSTATE_COMPLETED\x10\x032\x8d\x01\n" +
-	"\fAgentService\x127\n" +
+	"\x0fSTATE_COMPLETED\x10\x032\x8f\x01\n" +
+	"\x0eAXAgentService\x127\n" +
 	"\aConnect\x12\x13.proto.AgentMessage\x1a\x13.proto.AgentMessage(\x010\x01\x12D\n" +
 	"\vHealthCheck\x12\x19.proto.HealthCheckRequest\x1a\x1a.proto.HealthCheckResponse2\xbb\x01\n" +
 	"\tAXService\x121\n" +
@@ -1742,13 +1742,13 @@ var file_proto_ax_proto_depIdxs = []int32{
 	24, // 24: proto.RegisterAgentRequest.metadata:type_name -> proto.RegisterAgentRequest.MetadataEntry
 	20, // 25: proto.RegisterAgentRequest.remote:type_name -> proto.RemoteAgentConfig
 	28, // 26: proto.GeminiConfig.timeout:type_name -> google.protobuf.Duration
-	3,  // 27: proto.AgentService.Connect:input_type -> proto.AgentMessage
-	14, // 28: proto.AgentService.HealthCheck:input_type -> proto.HealthCheckRequest
+	3,  // 27: proto.AXAgentService.Connect:input_type -> proto.AgentMessage
+	14, // 28: proto.AXAgentService.HealthCheck:input_type -> proto.HealthCheckRequest
 	16, // 29: proto.AXService.Exec:input_type -> proto.ExecRequest
 	18, // 30: proto.AXService.Fork:input_type -> proto.ForkRequest
 	21, // 31: proto.AXService.RegisterAgent:input_type -> proto.RegisterAgentRequest
-	3,  // 32: proto.AgentService.Connect:output_type -> proto.AgentMessage
-	15, // 33: proto.AgentService.HealthCheck:output_type -> proto.HealthCheckResponse
+	3,  // 32: proto.AXAgentService.Connect:output_type -> proto.AgentMessage
+	15, // 33: proto.AXAgentService.HealthCheck:output_type -> proto.HealthCheckResponse
 	17, // 34: proto.AXService.Exec:output_type -> proto.ExecResponse
 	19, // 35: proto.AXService.Fork:output_type -> proto.ForkResponse
 	22, // 36: proto.AXService.RegisterAgent:output_type -> proto.RegisterAgentResponse

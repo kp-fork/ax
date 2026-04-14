@@ -33,33 +33,33 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AgentService_Connect_FullMethodName     = "/proto.AgentService/Connect"
-	AgentService_HealthCheck_FullMethodName = "/proto.AgentService/HealthCheck"
+	AXAgentService_Connect_FullMethodName     = "/proto.AXAgentService/Connect"
+	AXAgentService_HealthCheck_FullMethodName = "/proto.AXAgentService/HealthCheck"
 )
 
-// AgentServiceClient is the client API for AgentService service.
+// AXAgentServiceClient is the client API for AXAgentService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// AgentService defines the gRPC service for agent communication
-type AgentServiceClient interface {
+// AXAgentService defines the gRPC service for agent communication
+type AXAgentServiceClient interface {
 	// Connect is used by agents to connect to the controller.
 	Connect(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, AgentMessage], error)
 	// HealthCheck checks if the agent is healthy and responsive
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
-type agentServiceClient struct {
+type aXAgentServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAgentServiceClient(cc grpc.ClientConnInterface) AgentServiceClient {
-	return &agentServiceClient{cc}
+func NewAXAgentServiceClient(cc grpc.ClientConnInterface) AXAgentServiceClient {
+	return &aXAgentServiceClient{cc}
 }
 
-func (c *agentServiceClient) Connect(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, AgentMessage], error) {
+func (c *aXAgentServiceClient) Connect(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, AgentMessage], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &AgentService_ServiceDesc.Streams[0], AgentService_Connect_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &AXAgentService_ServiceDesc.Streams[0], AXAgentService_Connect_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -68,106 +68,106 @@ func (c *agentServiceClient) Connect(ctx context.Context, opts ...grpc.CallOptio
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AgentService_ConnectClient = grpc.BidiStreamingClient[AgentMessage, AgentMessage]
+type AXAgentService_ConnectClient = grpc.BidiStreamingClient[AgentMessage, AgentMessage]
 
-func (c *agentServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+func (c *aXAgentServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthCheckResponse)
-	err := c.cc.Invoke(ctx, AgentService_HealthCheck_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AXAgentService_HealthCheck_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AgentServiceServer is the server API for AgentService service.
-// All implementations must embed UnimplementedAgentServiceServer
+// AXAgentServiceServer is the server API for AXAgentService service.
+// All implementations must embed UnimplementedAXAgentServiceServer
 // for forward compatibility.
 //
-// AgentService defines the gRPC service for agent communication
-type AgentServiceServer interface {
+// AXAgentService defines the gRPC service for agent communication
+type AXAgentServiceServer interface {
 	// Connect is used by agents to connect to the controller.
 	Connect(grpc.BidiStreamingServer[AgentMessage, AgentMessage]) error
 	// HealthCheck checks if the agent is healthy and responsive
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
-	mustEmbedUnimplementedAgentServiceServer()
+	mustEmbedUnimplementedAXAgentServiceServer()
 }
 
-// UnimplementedAgentServiceServer must be embedded to have
+// UnimplementedAXAgentServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedAgentServiceServer struct{}
+type UnimplementedAXAgentServiceServer struct{}
 
-func (UnimplementedAgentServiceServer) Connect(grpc.BidiStreamingServer[AgentMessage, AgentMessage]) error {
+func (UnimplementedAXAgentServiceServer) Connect(grpc.BidiStreamingServer[AgentMessage, AgentMessage]) error {
 	return status.Errorf(codes.Unimplemented, "method Connect not implemented")
 }
-func (UnimplementedAgentServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+func (UnimplementedAXAgentServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
-func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
-func (UnimplementedAgentServiceServer) testEmbeddedByValue()                      {}
+func (UnimplementedAXAgentServiceServer) mustEmbedUnimplementedAXAgentServiceServer() {}
+func (UnimplementedAXAgentServiceServer) testEmbeddedByValue()                        {}
 
-// UnsafeAgentServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AgentServiceServer will
+// UnsafeAXAgentServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AXAgentServiceServer will
 // result in compilation errors.
-type UnsafeAgentServiceServer interface {
-	mustEmbedUnimplementedAgentServiceServer()
+type UnsafeAXAgentServiceServer interface {
+	mustEmbedUnimplementedAXAgentServiceServer()
 }
 
-func RegisterAgentServiceServer(s grpc.ServiceRegistrar, srv AgentServiceServer) {
-	// If the following call pancis, it indicates UnimplementedAgentServiceServer was
+func RegisterAXAgentServiceServer(s grpc.ServiceRegistrar, srv AXAgentServiceServer) {
+	// If the following call pancis, it indicates UnimplementedAXAgentServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&AgentService_ServiceDesc, srv)
+	s.RegisterService(&AXAgentService_ServiceDesc, srv)
 }
 
-func _AgentService_Connect_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(AgentServiceServer).Connect(&grpc.GenericServerStream[AgentMessage, AgentMessage]{ServerStream: stream})
+func _AXAgentService_Connect_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(AXAgentServiceServer).Connect(&grpc.GenericServerStream[AgentMessage, AgentMessage]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AgentService_ConnectServer = grpc.BidiStreamingServer[AgentMessage, AgentMessage]
+type AXAgentService_ConnectServer = grpc.BidiStreamingServer[AgentMessage, AgentMessage]
 
-func _AgentService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AXAgentService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthCheckRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AgentServiceServer).HealthCheck(ctx, in)
+		return srv.(AXAgentServiceServer).HealthCheck(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AgentService_HealthCheck_FullMethodName,
+		FullMethod: AXAgentService_HealthCheck_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+		return srv.(AXAgentServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AgentService_ServiceDesc is the grpc.ServiceDesc for AgentService service.
+// AXAgentService_ServiceDesc is the grpc.ServiceDesc for AXAgentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AgentService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.AgentService",
-	HandlerType: (*AgentServiceServer)(nil),
+var AXAgentService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.AXAgentService",
+	HandlerType: (*AXAgentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "HealthCheck",
-			Handler:    _AgentService_HealthCheck_Handler,
+			Handler:    _AXAgentService_HealthCheck_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Connect",
-			Handler:       _AgentService_Connect_Handler,
+			Handler:       _AXAgentService_Connect_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
