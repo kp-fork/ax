@@ -43,10 +43,12 @@ register agents, and run the controller server.`,
 
 func init() {
 	rootCmd.AddCommand(execCmd)
-	rootCmd.AddCommand(forkCmd)
 	rootCmd.AddCommand(registerCmd)
 	rootCmd.AddCommand(serveCmd)
-	rootCmd.AddCommand(traceCmd)
+
+	rootCmd.AddCommand(eventlogCmd)
+	eventlogCmd.AddCommand(forkCmd)
+	eventlogCmd.AddCommand(traceCmd)
 }
 
 func connect(server string) (*grpc.ClientConn, error) {

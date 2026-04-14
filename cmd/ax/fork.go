@@ -19,27 +19,27 @@ import (
 )
 
 var (
-	forkSourceID     string
-	forkCheckpointID string
-	forkDestID       string
-	forkServerAddr   string
+	forkSourceConversation string
+	forkSourceSeq         int32
+	forkDestConversation   string
+	forkServerAddr         string
 )
 
 var forkCmd = &cobra.Command{
 	Use:   "fork",
 	Short: "Fork an event log from a specific checkpoint",
 	Long: `Fork an existing agentic event log from a specific checkpoint.
-If --dest-id is not provided, a new UUID will be generated.`,
+If --dest-conversation is not provided, a new UUID will be generated.`,
 	RunE: runFork,
 }
 
 func init() {
-	forkCmd.Flags().StringVar(&forkSourceID, "src-id", "", "Source ID to fork from (required)")
-	forkCmd.Flags().StringVar(&forkCheckpointID, "src-checkpoint", "", "Checkpoint ID to fork from (optional, defaults to latest)")
-	forkCmd.Flags().StringVar(&forkDestID, "dest-id", "", "Destination ID (optional, generates UUID if not provided)")
+	forkCmd.Flags().StringVar(&forkSourceConversation, "src-conversation", "", "Source conversation ID to fork from (required)")
+	forkCmd.Flags().Int32Var(&forkSourceSeq, "src-seq", 0, "Sequence number to fork from (optional, defaults to latest)")
+	forkCmd.Flags().StringVar(&forkDestConversation, "dest-conversation", "", "Destination conversation ID (optional, generates UUID if not provided)")
 	forkCmd.Flags().StringVar(&forkServerAddr, "server", "localhost:8494", "gRPC controller server address (default: localhost:8494)")
 
-	forkCmd.MarkFlagRequired("src-id")
+	forkCmd.MarkFlagRequired("src-conversation")
 }
 
 func runFork(cmd *cobra.Command, args []string) error {

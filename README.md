@@ -194,30 +194,30 @@ Fork an existing agentic event log from a specific checkpoint (or the latest sta
 into a new event log.
 
 ```bash
-ax fork \
-    --src-id <id> \
-    [--src-checkpoint <id>] \
-    [--dest-id <id>] \
+ax eventlog fork \
+    --src-conversation <id> \
+    [--src-seq <number>] \
+    [--dest-conversation <id>] \
     [--server <address>]
 ```
 
 Options:
-- `--src-id`: Source ID to fork from (required)
-- `--src-checkpoint`: Checkpoint ID to fork from (optional, defaults to latest)
-- `--dest-id`: Destination ID (optional, generates UUID if not provided)
+- `--src-conversation`: Source conversation ID to fork from (required)
+- `--src-seq`: Sequence number to fork from (optional, defaults to latest)
+- `--dest-conversation`: Destination conversation ID (optional, generates UUID if not provided)
 - `--server`: gRPC controller server address (default: "localhost:8494")
 
 **Example:**
 
 ```bash
 # Fork from the latest state
-ax fork --src-id 38460323-9a78-41cb-8991-022b0ff2c19c
+ax eventlog fork --src-conversation 38460323-9a78-41cb-8991-022b0ff2c19c
 
 # Fork from a specific checkpoint
-ax fork --src-id 38460323-9a78-41cb-8991-022b0ff2c19c --src-checkpoint "550e..."
+ax eventlog fork --src-conversation 38460323-9a78-41cb-8991-022b0ff2c19c --src-seq 12
 
 # Fork from a specific checkpoint to a new event log with a specific new ID
-ax fork --src-id 38460323-9a78-41cb-8991-022b0ff2c19c --src-checkpoint "550e..." --dest-id e5e26e38-53a2-4f22-b1cb-ae867357df83
+ax eventlog fork --src-conversation 38460323-9a78-41cb-8991-022b0ff2c19c --src-seq 12 --dest-conversation e5e26e38-53a2-4f22-b1cb-ae867357df83
 ```
 
 ### Trace
@@ -225,23 +225,23 @@ ax fork --src-id 38460323-9a78-41cb-8991-022b0ff2c19c --src-checkpoint "550e..."
 Visualize the trace of an agentic execution in a Web UI, directly fetching from the SQLite event log.
 
 ```bash
-ax trace --conversation <id> [--addr <address>] [--config <file>]
+ax eventlog trace --conversation <id> [--addr <address>] [--config <file>]
 ```
 
 This will parse the execution logs and spin up a local web server (defaulting to e.g. `http://localhost:8080`), automatically opening it in your browser.
 
 Options:
-- `--server`: Server address to listen on (optional, defaults to "localhost:8080")
+- `--addr`: Server address to listen on (optional, defaults to "localhost:8080")
 - `--config`: Path to YAML configuration file (optional, defaults to "ax.yaml")
 
 **Examples:**
 
 ```bash
 # Trace on default server localhost:8080
-ax trace --conversation 1a6e0b29-87c2-4af0-81ac-0c73bf8fa293
+ax eventlog trace --conversation 1a6e0b29-87c2-4af0-81ac-0c73bf8fa293
 
 # Trace on a custom server address and port
-ax trace --conversation 1a6e0b29-87c2-4af0-81ac-0c73bf8fa293 --addr 0.0.0.0:9090
+ax eventlog trace --conversation 1a6e0b29-87c2-4af0-81ac-0c73bf8fa293 --addr 0.0.0.0:9090
 ```
 
 ### Register
