@@ -37,6 +37,7 @@ type Display struct {
 	userStyle       lipgloss.Style
 	checkpointStyle lipgloss.Style
 	idStyle         lipgloss.Style
+	resumeStyle     lipgloss.Style
 
 	loadingVisible atomic.Bool
 	loadingStopCh  chan bool
@@ -45,12 +46,10 @@ type Display struct {
 func NewDisplay(id string) *Display {
 	return &Display{
 		id: id,
-		userStyle: lipgloss.NewStyle().
-			Foreground(purple),
-		checkpointStyle: lipgloss.NewStyle().
-			Foreground(comment),
-		idStyle: lipgloss.NewStyle().
-			Foreground(comment),
+		userStyle: lipgloss.NewStyle().Foreground(purple),
+		checkpointStyle: lipgloss.NewStyle().Foreground(comment),
+		idStyle: lipgloss.NewStyle().Foreground(comment),
+		resumeStyle: lipgloss.NewStyle().Foreground(comment),
 		loadingStopCh: make(chan bool),
 	}
 }
@@ -119,4 +118,9 @@ func (d *Display) PromptForInput() (string, error) {
 		return "", err
 	}
 	return userInput, nil
+}
+
+func (d *Display) ShowResumption(id string) {
+	fmt.Println(d.resumeStyle.Render("To resume the conversation,"))
+	fmt.Println(d.resumeStyle.Render(fmt.Sprintf("ax exec --conversation %s", id)))
 }
