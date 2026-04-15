@@ -358,7 +358,7 @@ type ConversationEvent struct {
 	Seq            int32                  `protobuf:"varint,2,opt,name=seq,proto3" json:"seq,omitempty"`
 	ExecId         string                 `protobuf:"bytes,3,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	Messages       []*Message             `protobuf:"bytes,4,rep,name=messages,proto3" json:"messages,omitempty"`
-	State          State                  `protobuf:"varint,5,opt,name=state,proto3,enum=proto.State" json:"state,omitempty"`
+	State          State                  `protobuf:"varint,5,opt,name=state,proto3,enum=ax.State" json:"state,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -438,7 +438,7 @@ type ExecutionEvent struct {
 	AgentConfig   *anypb.Any             `protobuf:"bytes,3,opt,name=agent_config,json=agentConfig,proto3" json:"agent_config,omitempty"`
 	Inputs        []*Message             `protobuf:"bytes,4,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	Outputs       []*Message             `protobuf:"bytes,5,rep,name=outputs,proto3" json:"outputs,omitempty"`
-	State         State                  `protobuf:"varint,6,opt,name=state,proto3,enum=proto.State" json:"state,omitempty"`
+	State         State                  `protobuf:"varint,6,opt,name=state,proto3,enum=ax.State" json:"state,omitempty"`
 	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1244,67 +1244,67 @@ var File_proto_ax_proto protoreflect.FileDescriptor
 
 const file_proto_ax_proto_rawDesc = "" +
 	"\n" +
-	"\x0eproto/ax.proto\x12\x05proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19google/protobuf/any.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x13proto/content.proto\"\x81\x01\n" +
+	"\x0eproto/ax.proto\x12\x02ax\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19google/protobuf/any.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x13proto/content.proto\"~\n" +
 	"\n" +
 	"AgentStart\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12,\n" +
-	"\x06config\x18\x02 \x01(\v2\x14.google.protobuf.AnyR\x06config\x12*\n" +
-	"\bmessages\x18\x03 \x03(\v2\x0e.proto.MessageR\bmessages\"_\n" +
-	"\fAgentOutputs\x12*\n" +
-	"\bmessages\x18\x01 \x03(\v2\x0e.proto.MessageR\bmessages\x12#\n" +
-	"\rinternal_only\x18\x02 \x01(\bR\finternalOnly\"\x8a\x01\n" +
+	"\x06config\x18\x02 \x01(\v2\x14.google.protobuf.AnyR\x06config\x12'\n" +
+	"\bmessages\x18\x03 \x03(\v2\v.ax.MessageR\bmessages\"\\\n" +
+	"\fAgentOutputs\x12'\n" +
+	"\bmessages\x18\x01 \x03(\v2\v.ax.MessageR\bmessages\x12#\n" +
+	"\rinternal_only\x18\x02 \x01(\bR\finternalOnly\"\x84\x01\n" +
 	"\fAgentMessage\x12\x17\n" +
-	"\aexec_id\x18\x01 \x01(\tR\x06execId\x12)\n" +
-	"\x05start\x18\x02 \x01(\v2\x11.proto.AgentStartH\x00R\x05start\x12/\n" +
-	"\aoutputs\x18\x03 \x01(\v2\x13.proto.AgentOutputsH\x00R\aoutputsB\x05\n" +
-	"\x03msg\"G\n" +
+	"\aexec_id\x18\x01 \x01(\tR\x06execId\x12&\n" +
+	"\x05start\x18\x02 \x01(\v2\x0e.ax.AgentStartH\x00R\x05start\x12,\n" +
+	"\aoutputs\x18\x03 \x01(\v2\x10.ax.AgentOutputsH\x00R\aoutputsB\x05\n" +
+	"\x03msg\"D\n" +
 	"\aMessage\x12\x12\n" +
-	"\x04role\x18\x01 \x01(\tR\x04role\x12(\n" +
-	"\acontent\x18\x02 \x01(\v2\x0e.proto.ContentR\acontent\"\xb7\x01\n" +
+	"\x04role\x18\x01 \x01(\tR\x04role\x12%\n" +
+	"\acontent\x18\x02 \x01(\v2\v.ax.ContentR\acontent\"\xb1\x01\n" +
 	"\x11ConversationEvent\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x10\n" +
 	"\x03seq\x18\x02 \x01(\x05R\x03seq\x12\x17\n" +
-	"\aexec_id\x18\x03 \x01(\tR\x06execId\x12*\n" +
-	"\bmessages\x18\x04 \x03(\v2\x0e.proto.MessageR\bmessages\x12\"\n" +
-	"\x05state\x18\x05 \x01(\x0e2\f.proto.StateR\x05state\"\xad\x02\n" +
+	"\aexec_id\x18\x03 \x01(\tR\x06execId\x12'\n" +
+	"\bmessages\x18\x04 \x03(\v2\v.ax.MessageR\bmessages\x12\x1f\n" +
+	"\x05state\x18\x05 \x01(\x0e2\t.ax.StateR\x05state\"\xa4\x02\n" +
 	"\x0eExecutionEvent\x12\x17\n" +
 	"\aexec_id\x18\x01 \x01(\tR\x06execId\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x127\n" +
-	"\fagent_config\x18\x03 \x01(\v2\x14.google.protobuf.AnyR\vagentConfig\x12&\n" +
-	"\x06inputs\x18\x04 \x03(\v2\x0e.proto.MessageR\x06inputs\x12(\n" +
-	"\aoutputs\x18\x05 \x03(\v2\x0e.proto.MessageR\aoutputs\x12\"\n" +
-	"\x05state\x18\x06 \x01(\x0e2\f.proto.StateR\x05state\x128\n" +
+	"\fagent_config\x18\x03 \x01(\v2\x14.google.protobuf.AnyR\vagentConfig\x12#\n" +
+	"\x06inputs\x18\x04 \x03(\v2\v.ax.MessageR\x06inputs\x12%\n" +
+	"\aoutputs\x18\x05 \x03(\v2\v.ax.MessageR\aoutputs\x12\x1f\n" +
+	"\x05state\x18\x06 \x01(\x0e2\t.ax.StateR\x05state\x128\n" +
 	"\ttimestamp\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\x14\n" +
 	"\x12HealthCheckRequest\"I\n" +
 	"\x13HealthCheckResponse\x12\x18\n" +
 	"\ahealthy\x18\x01 \x01(\bR\ahealthy\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xcd\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xca\x01\n" +
 	"\vExecRequest\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12&\n" +
-	"\x06inputs\x18\x02 \x03(\v2\x0e.proto.MessageR\x06inputs\x12\x19\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12#\n" +
+	"\x06inputs\x18\x02 \x03(\v2\v.ax.MessageR\x06inputs\x12\x19\n" +
 	"\blast_seq\x18\x03 \x01(\x05R\alastSeq\x12\x19\n" +
 	"\bagent_id\x18\x04 \x01(\tR\aagentId\x127\n" +
-	"\fagent_config\x18\x05 \x01(\v2\x14.google.protobuf.AnyR\vagentConfig\"J\n" +
-	"\fExecResponse\x12(\n" +
-	"\aoutputs\x18\x01 \x03(\v2\x0e.proto.MessageR\aoutputs\x12\x10\n" +
+	"\fagent_config\x18\x05 \x01(\v2\x14.google.protobuf.AnyR\vagentConfig\"G\n" +
+	"\fExecResponse\x12%\n" +
+	"\aoutputs\x18\x01 \x03(\v2\v.ax.MessageR\aoutputs\x12\x10\n" +
 	"\x03seq\x18\x02 \x01(\x05R\x03seq\"-\n" +
 	"\x11RemoteAgentConfig\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"\xa9\x02\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"\xa3\x02\n" +
 	"\x14RegisterAgentRequest\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12E\n" +
-	"\bmetadata\x18\x04 \x03(\v2).proto.RegisterAgentRequest.MetadataEntryR\bmetadata\x122\n" +
-	"\x06remote\x18\x05 \x01(\v2\x18.proto.RemoteAgentConfigH\x00R\x06remote\x1a;\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12B\n" +
+	"\bmetadata\x18\x04 \x03(\v2&.ax.RegisterAgentRequest.MetadataEntryR\bmetadata\x12/\n" +
+	"\x06remote\x18\x05 \x01(\v2\x15.ax.RemoteAgentConfigH\x00R\x06remote\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\b\n" +
 	"\x06config\"\x17\n" +
 	"\x15RegisterAgentResponse\"6\n" +
 	"\vListRequest\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"@\n" +
-	"\fListResponse\x120\n" +
-	"\x06events\x18\x01 \x03(\v2\x18.proto.ConversationEventR\x06events\"8\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"=\n" +
+	"\fListResponse\x12-\n" +
+	"\x06events\x18\x01 \x03(\v2\x15.ax.ConversationEventR\x06events\"8\n" +
 	"\rDeleteRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"\x10\n" +
 	"\x0eDeleteResponse\"\r\n" +
@@ -1321,17 +1321,17 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTATE_PENDING\x10\x01\x12\x10\n" +
 	"\fSTATE_FAILED\x10\x02\x12\x13\n" +
-	"\x0fSTATE_COMPLETED\x10\x032\x8f\x01\n" +
-	"\x0eAXAgentService\x127\n" +
-	"\aConnect\x12\x13.proto.AgentMessage\x1a\x13.proto.AgentMessage(\x010\x01\x12D\n" +
-	"\vHealthCheck\x12\x19.proto.HealthCheckRequest\x1a\x1a.proto.HealthCheckResponse2\x8a\x01\n" +
-	"\tAXService\x121\n" +
-	"\x04Exec\x12\x12.proto.ExecRequest\x1a\x13.proto.ExecResponse0\x01\x12J\n" +
-	"\rRegisterAgent\x12\x1b.proto.RegisterAgentRequest\x1a\x1c.proto.RegisterAgentResponse2\xac\x01\n" +
-	"\x11AXEventLogService\x12/\n" +
-	"\x04List\x12\x12.proto.ListRequest\x1a\x13.proto.ListResponse\x125\n" +
-	"\x06Delete\x12\x14.proto.DeleteRequest\x1a\x15.proto.DeleteResponse\x12/\n" +
-	"\x04Fork\x12\x12.proto.ForkRequest\x1a\x13.proto.ForkResponseB\x1cZ\x1agithub.com/google/ax/protob\x06proto3"
+	"\x0fSTATE_COMPLETED\x10\x032\x81\x01\n" +
+	"\fAgentService\x121\n" +
+	"\aConnect\x12\x10.ax.AgentMessage\x1a\x10.ax.AgentMessage(\x010\x01\x12>\n" +
+	"\vHealthCheck\x12\x16.ax.HealthCheckRequest\x1a\x17.ax.HealthCheckResponse2\x86\x01\n" +
+	"\x11ControllerService\x12+\n" +
+	"\x04Exec\x12\x0f.ax.ExecRequest\x1a\x10.ax.ExecResponse0\x01\x12D\n" +
+	"\rRegisterAgent\x12\x18.ax.RegisterAgentRequest\x1a\x19.ax.RegisterAgentResponse2\x98\x01\n" +
+	"\x0fEventLogService\x12)\n" +
+	"\x04List\x12\x0f.ax.ListRequest\x1a\x10.ax.ListResponse\x12/\n" +
+	"\x06Delete\x12\x11.ax.DeleteRequest\x1a\x12.ax.DeleteResponse\x12)\n" +
+	"\x04Fork\x12\x0f.ax.ForkRequest\x1a\x10.ax.ForkResponseB\x1cZ\x1agithub.com/google/ax/protob\x06proto3"
 
 var (
 	file_proto_ax_proto_rawDescOnce sync.Once
@@ -1348,68 +1348,68 @@ func file_proto_ax_proto_rawDescGZIP() []byte {
 var file_proto_ax_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_proto_ax_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_proto_ax_proto_goTypes = []any{
-	(State)(0),                    // 0: proto.State
-	(*AgentStart)(nil),            // 1: proto.AgentStart
-	(*AgentOutputs)(nil),          // 2: proto.AgentOutputs
-	(*AgentMessage)(nil),          // 3: proto.AgentMessage
-	(*Message)(nil),               // 4: proto.Message
-	(*ConversationEvent)(nil),     // 5: proto.ConversationEvent
-	(*ExecutionEvent)(nil),        // 6: proto.ExecutionEvent
-	(*HealthCheckRequest)(nil),    // 7: proto.HealthCheckRequest
-	(*HealthCheckResponse)(nil),   // 8: proto.HealthCheckResponse
-	(*ExecRequest)(nil),           // 9: proto.ExecRequest
-	(*ExecResponse)(nil),          // 10: proto.ExecResponse
-	(*RemoteAgentConfig)(nil),     // 11: proto.RemoteAgentConfig
-	(*RegisterAgentRequest)(nil),  // 12: proto.RegisterAgentRequest
-	(*RegisterAgentResponse)(nil), // 13: proto.RegisterAgentResponse
-	(*ListRequest)(nil),           // 14: proto.ListRequest
-	(*ListResponse)(nil),          // 15: proto.ListResponse
-	(*DeleteRequest)(nil),         // 16: proto.DeleteRequest
-	(*DeleteResponse)(nil),        // 17: proto.DeleteResponse
-	(*ForkRequest)(nil),           // 18: proto.ForkRequest
-	(*ForkResponse)(nil),          // 19: proto.ForkResponse
-	(*GeminiConfig)(nil),          // 20: proto.GeminiConfig
-	nil,                           // 21: proto.RegisterAgentRequest.MetadataEntry
+	(State)(0),                    // 0: ax.State
+	(*AgentStart)(nil),            // 1: ax.AgentStart
+	(*AgentOutputs)(nil),          // 2: ax.AgentOutputs
+	(*AgentMessage)(nil),          // 3: ax.AgentMessage
+	(*Message)(nil),               // 4: ax.Message
+	(*ConversationEvent)(nil),     // 5: ax.ConversationEvent
+	(*ExecutionEvent)(nil),        // 6: ax.ExecutionEvent
+	(*HealthCheckRequest)(nil),    // 7: ax.HealthCheckRequest
+	(*HealthCheckResponse)(nil),   // 8: ax.HealthCheckResponse
+	(*ExecRequest)(nil),           // 9: ax.ExecRequest
+	(*ExecResponse)(nil),          // 10: ax.ExecResponse
+	(*RemoteAgentConfig)(nil),     // 11: ax.RemoteAgentConfig
+	(*RegisterAgentRequest)(nil),  // 12: ax.RegisterAgentRequest
+	(*RegisterAgentResponse)(nil), // 13: ax.RegisterAgentResponse
+	(*ListRequest)(nil),           // 14: ax.ListRequest
+	(*ListResponse)(nil),          // 15: ax.ListResponse
+	(*DeleteRequest)(nil),         // 16: ax.DeleteRequest
+	(*DeleteResponse)(nil),        // 17: ax.DeleteResponse
+	(*ForkRequest)(nil),           // 18: ax.ForkRequest
+	(*ForkResponse)(nil),          // 19: ax.ForkResponse
+	(*GeminiConfig)(nil),          // 20: ax.GeminiConfig
+	nil,                           // 21: ax.RegisterAgentRequest.MetadataEntry
 	(*anypb.Any)(nil),             // 22: google.protobuf.Any
-	(*Content)(nil),               // 23: proto.Content
+	(*Content)(nil),               // 23: ax.Content
 	(*timestamppb.Timestamp)(nil), // 24: google.protobuf.Timestamp
 	(*durationpb.Duration)(nil),   // 25: google.protobuf.Duration
 }
 var file_proto_ax_proto_depIdxs = []int32{
-	22, // 0: proto.AgentStart.config:type_name -> google.protobuf.Any
-	4,  // 1: proto.AgentStart.messages:type_name -> proto.Message
-	4,  // 2: proto.AgentOutputs.messages:type_name -> proto.Message
-	1,  // 3: proto.AgentMessage.start:type_name -> proto.AgentStart
-	2,  // 4: proto.AgentMessage.outputs:type_name -> proto.AgentOutputs
-	23, // 5: proto.Message.content:type_name -> proto.Content
-	4,  // 6: proto.ConversationEvent.messages:type_name -> proto.Message
-	0,  // 7: proto.ConversationEvent.state:type_name -> proto.State
-	22, // 8: proto.ExecutionEvent.agent_config:type_name -> google.protobuf.Any
-	4,  // 9: proto.ExecutionEvent.inputs:type_name -> proto.Message
-	4,  // 10: proto.ExecutionEvent.outputs:type_name -> proto.Message
-	0,  // 11: proto.ExecutionEvent.state:type_name -> proto.State
-	24, // 12: proto.ExecutionEvent.timestamp:type_name -> google.protobuf.Timestamp
-	4,  // 13: proto.ExecRequest.inputs:type_name -> proto.Message
-	22, // 14: proto.ExecRequest.agent_config:type_name -> google.protobuf.Any
-	4,  // 15: proto.ExecResponse.outputs:type_name -> proto.Message
-	21, // 16: proto.RegisterAgentRequest.metadata:type_name -> proto.RegisterAgentRequest.MetadataEntry
-	11, // 17: proto.RegisterAgentRequest.remote:type_name -> proto.RemoteAgentConfig
-	5,  // 18: proto.ListResponse.events:type_name -> proto.ConversationEvent
-	25, // 19: proto.GeminiConfig.timeout:type_name -> google.protobuf.Duration
-	3,  // 20: proto.AXAgentService.Connect:input_type -> proto.AgentMessage
-	7,  // 21: proto.AXAgentService.HealthCheck:input_type -> proto.HealthCheckRequest
-	9,  // 22: proto.AXService.Exec:input_type -> proto.ExecRequest
-	12, // 23: proto.AXService.RegisterAgent:input_type -> proto.RegisterAgentRequest
-	14, // 24: proto.AXEventLogService.List:input_type -> proto.ListRequest
-	16, // 25: proto.AXEventLogService.Delete:input_type -> proto.DeleteRequest
-	18, // 26: proto.AXEventLogService.Fork:input_type -> proto.ForkRequest
-	3,  // 27: proto.AXAgentService.Connect:output_type -> proto.AgentMessage
-	8,  // 28: proto.AXAgentService.HealthCheck:output_type -> proto.HealthCheckResponse
-	10, // 29: proto.AXService.Exec:output_type -> proto.ExecResponse
-	13, // 30: proto.AXService.RegisterAgent:output_type -> proto.RegisterAgentResponse
-	15, // 31: proto.AXEventLogService.List:output_type -> proto.ListResponse
-	17, // 32: proto.AXEventLogService.Delete:output_type -> proto.DeleteResponse
-	19, // 33: proto.AXEventLogService.Fork:output_type -> proto.ForkResponse
+	22, // 0: ax.AgentStart.config:type_name -> google.protobuf.Any
+	4,  // 1: ax.AgentStart.messages:type_name -> ax.Message
+	4,  // 2: ax.AgentOutputs.messages:type_name -> ax.Message
+	1,  // 3: ax.AgentMessage.start:type_name -> ax.AgentStart
+	2,  // 4: ax.AgentMessage.outputs:type_name -> ax.AgentOutputs
+	23, // 5: ax.Message.content:type_name -> ax.Content
+	4,  // 6: ax.ConversationEvent.messages:type_name -> ax.Message
+	0,  // 7: ax.ConversationEvent.state:type_name -> ax.State
+	22, // 8: ax.ExecutionEvent.agent_config:type_name -> google.protobuf.Any
+	4,  // 9: ax.ExecutionEvent.inputs:type_name -> ax.Message
+	4,  // 10: ax.ExecutionEvent.outputs:type_name -> ax.Message
+	0,  // 11: ax.ExecutionEvent.state:type_name -> ax.State
+	24, // 12: ax.ExecutionEvent.timestamp:type_name -> google.protobuf.Timestamp
+	4,  // 13: ax.ExecRequest.inputs:type_name -> ax.Message
+	22, // 14: ax.ExecRequest.agent_config:type_name -> google.protobuf.Any
+	4,  // 15: ax.ExecResponse.outputs:type_name -> ax.Message
+	21, // 16: ax.RegisterAgentRequest.metadata:type_name -> ax.RegisterAgentRequest.MetadataEntry
+	11, // 17: ax.RegisterAgentRequest.remote:type_name -> ax.RemoteAgentConfig
+	5,  // 18: ax.ListResponse.events:type_name -> ax.ConversationEvent
+	25, // 19: ax.GeminiConfig.timeout:type_name -> google.protobuf.Duration
+	3,  // 20: ax.AgentService.Connect:input_type -> ax.AgentMessage
+	7,  // 21: ax.AgentService.HealthCheck:input_type -> ax.HealthCheckRequest
+	9,  // 22: ax.ControllerService.Exec:input_type -> ax.ExecRequest
+	12, // 23: ax.ControllerService.RegisterAgent:input_type -> ax.RegisterAgentRequest
+	14, // 24: ax.EventLogService.List:input_type -> ax.ListRequest
+	16, // 25: ax.EventLogService.Delete:input_type -> ax.DeleteRequest
+	18, // 26: ax.EventLogService.Fork:input_type -> ax.ForkRequest
+	3,  // 27: ax.AgentService.Connect:output_type -> ax.AgentMessage
+	8,  // 28: ax.AgentService.HealthCheck:output_type -> ax.HealthCheckResponse
+	10, // 29: ax.ControllerService.Exec:output_type -> ax.ExecResponse
+	13, // 30: ax.ControllerService.RegisterAgent:output_type -> ax.RegisterAgentResponse
+	15, // 31: ax.EventLogService.List:output_type -> ax.ListResponse
+	17, // 32: ax.EventLogService.Delete:output_type -> ax.DeleteResponse
+	19, // 33: ax.EventLogService.Fork:output_type -> ax.ForkResponse
 	27, // [27:34] is the sub-list for method output_type
 	20, // [20:27] is the sub-list for method input_type
 	20, // [20:20] is the sub-list for extension type_name

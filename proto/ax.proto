@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package proto;
+package ax;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
@@ -90,8 +90,8 @@ message HealthCheckResponse {
   string message = 2;
 }
 
-// AXAgentService defines the gRPC service for agent communication
-service AXAgentService {
+// AgentService defines the gRPC service for agent communication
+service AgentService {
   // Connect is used by agents to connect to the controller.
   rpc Connect(stream AgentMessage) returns (stream AgentMessage);
 
@@ -141,8 +141,7 @@ message RegisterAgentRequest {
 // RegisterAgentResponse contains registration result
 message RegisterAgentResponse {}
 
-// AXService defines the gRPC service for AX operations
-service AXService {
+service ControllerService {
   // Exec executes an agentic task or resumes an existing one with streaming responses
   // If the conversation_id already exists, it will be resumed.
   rpc Exec(ExecRequest) returns (stream ExecResponse);
@@ -170,7 +169,7 @@ message ForkRequest {}
 
 message ForkResponse {}
 
-service AXEventLogService {
+service EventLogService {
   // List conversational events.
   rpc List(ListRequest) returns (ListResponse);
 

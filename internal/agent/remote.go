@@ -73,7 +73,7 @@ func (a *RemoteAgent) Connect(ctx context.Context, execID string, start *proto.A
 	}
 	defer conn.Close()
 
-	client := proto.NewAXAgentServiceClient(conn)
+	client := proto.NewAgentServiceClient(conn)
 	stream, err := client.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create stream: %w", err)
@@ -134,7 +134,7 @@ func (a *RemoteAgent) HealthCheck(ctx context.Context) error {
 	}
 	defer conn.Close()
 
-	client := proto.NewAXAgentServiceClient(conn)
+	client := proto.NewAgentServiceClient(conn)
 	resp, err := client.HealthCheck(ctx, &proto.HealthCheckRequest{})
 	if err != nil {
 		return fmt.Errorf("health check failed: %w", err)

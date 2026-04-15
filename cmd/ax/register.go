@@ -56,7 +56,7 @@ func runRegister(cmd *cobra.Command, args []string) error {
 	}
 	defer conn.Close()
 
-	client := proto.NewAXServiceClient(conn)
+	client := proto.NewControllerServiceClient(conn)
 
 	// Register remote agent
 	_, err = client.RegisterAgent(ctx, &proto.RegisterAgentRequest{

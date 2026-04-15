@@ -33,33 +33,33 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AXAgentService_Connect_FullMethodName     = "/proto.AXAgentService/Connect"
-	AXAgentService_HealthCheck_FullMethodName = "/proto.AXAgentService/HealthCheck"
+	AgentService_Connect_FullMethodName     = "/ax.AgentService/Connect"
+	AgentService_HealthCheck_FullMethodName = "/ax.AgentService/HealthCheck"
 )
 
-// AXAgentServiceClient is the client API for AXAgentService service.
+// AgentServiceClient is the client API for AgentService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// AXAgentService defines the gRPC service for agent communication
-type AXAgentServiceClient interface {
+// AgentService defines the gRPC service for agent communication
+type AgentServiceClient interface {
 	// Connect is used by agents to connect to the controller.
 	Connect(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, AgentMessage], error)
 	// HealthCheck checks if the agent is healthy and responsive
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
-type aXAgentServiceClient struct {
+type agentServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAXAgentServiceClient(cc grpc.ClientConnInterface) AXAgentServiceClient {
-	return &aXAgentServiceClient{cc}
+func NewAgentServiceClient(cc grpc.ClientConnInterface) AgentServiceClient {
+	return &agentServiceClient{cc}
 }
 
-func (c *aXAgentServiceClient) Connect(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, AgentMessage], error) {
+func (c *agentServiceClient) Connect(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, AgentMessage], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &AXAgentService_ServiceDesc.Streams[0], AXAgentService_Connect_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &AgentService_ServiceDesc.Streams[0], AgentService_Connect_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -68,106 +68,106 @@ func (c *aXAgentServiceClient) Connect(ctx context.Context, opts ...grpc.CallOpt
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AXAgentService_ConnectClient = grpc.BidiStreamingClient[AgentMessage, AgentMessage]
+type AgentService_ConnectClient = grpc.BidiStreamingClient[AgentMessage, AgentMessage]
 
-func (c *aXAgentServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+func (c *agentServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthCheckResponse)
-	err := c.cc.Invoke(ctx, AXAgentService_HealthCheck_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AgentService_HealthCheck_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AXAgentServiceServer is the server API for AXAgentService service.
-// All implementations must embed UnimplementedAXAgentServiceServer
+// AgentServiceServer is the server API for AgentService service.
+// All implementations must embed UnimplementedAgentServiceServer
 // for forward compatibility.
 //
-// AXAgentService defines the gRPC service for agent communication
-type AXAgentServiceServer interface {
+// AgentService defines the gRPC service for agent communication
+type AgentServiceServer interface {
 	// Connect is used by agents to connect to the controller.
 	Connect(grpc.BidiStreamingServer[AgentMessage, AgentMessage]) error
 	// HealthCheck checks if the agent is healthy and responsive
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
-	mustEmbedUnimplementedAXAgentServiceServer()
+	mustEmbedUnimplementedAgentServiceServer()
 }
 
-// UnimplementedAXAgentServiceServer must be embedded to have
+// UnimplementedAgentServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedAXAgentServiceServer struct{}
+type UnimplementedAgentServiceServer struct{}
 
-func (UnimplementedAXAgentServiceServer) Connect(grpc.BidiStreamingServer[AgentMessage, AgentMessage]) error {
+func (UnimplementedAgentServiceServer) Connect(grpc.BidiStreamingServer[AgentMessage, AgentMessage]) error {
 	return status.Errorf(codes.Unimplemented, "method Connect not implemented")
 }
-func (UnimplementedAXAgentServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+func (UnimplementedAgentServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
-func (UnimplementedAXAgentServiceServer) mustEmbedUnimplementedAXAgentServiceServer() {}
-func (UnimplementedAXAgentServiceServer) testEmbeddedByValue()                        {}
+func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
+func (UnimplementedAgentServiceServer) testEmbeddedByValue()                      {}
 
-// UnsafeAXAgentServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AXAgentServiceServer will
+// UnsafeAgentServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AgentServiceServer will
 // result in compilation errors.
-type UnsafeAXAgentServiceServer interface {
-	mustEmbedUnimplementedAXAgentServiceServer()
+type UnsafeAgentServiceServer interface {
+	mustEmbedUnimplementedAgentServiceServer()
 }
 
-func RegisterAXAgentServiceServer(s grpc.ServiceRegistrar, srv AXAgentServiceServer) {
-	// If the following call pancis, it indicates UnimplementedAXAgentServiceServer was
+func RegisterAgentServiceServer(s grpc.ServiceRegistrar, srv AgentServiceServer) {
+	// If the following call pancis, it indicates UnimplementedAgentServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&AXAgentService_ServiceDesc, srv)
+	s.RegisterService(&AgentService_ServiceDesc, srv)
 }
 
-func _AXAgentService_Connect_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(AXAgentServiceServer).Connect(&grpc.GenericServerStream[AgentMessage, AgentMessage]{ServerStream: stream})
+func _AgentService_Connect_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(AgentServiceServer).Connect(&grpc.GenericServerStream[AgentMessage, AgentMessage]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AXAgentService_ConnectServer = grpc.BidiStreamingServer[AgentMessage, AgentMessage]
+type AgentService_ConnectServer = grpc.BidiStreamingServer[AgentMessage, AgentMessage]
 
-func _AXAgentService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AgentService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthCheckRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AXAgentServiceServer).HealthCheck(ctx, in)
+		return srv.(AgentServiceServer).HealthCheck(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AXAgentService_HealthCheck_FullMethodName,
+		FullMethod: AgentService_HealthCheck_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AXAgentServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+		return srv.(AgentServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AXAgentService_ServiceDesc is the grpc.ServiceDesc for AXAgentService service.
+// AgentService_ServiceDesc is the grpc.ServiceDesc for AgentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AXAgentService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.AXAgentService",
-	HandlerType: (*AXAgentServiceServer)(nil),
+var AgentService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ax.AgentService",
+	HandlerType: (*AgentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "HealthCheck",
-			Handler:    _AXAgentService_HealthCheck_Handler,
+			Handler:    _AgentService_HealthCheck_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Connect",
-			Handler:       _AXAgentService_Connect_Handler,
+			Handler:       _AgentService_Connect_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
@@ -176,16 +176,14 @@ var AXAgentService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	AXService_Exec_FullMethodName          = "/proto.AXService/Exec"
-	AXService_RegisterAgent_FullMethodName = "/proto.AXService/RegisterAgent"
+	ControllerService_Exec_FullMethodName          = "/ax.ControllerService/Exec"
+	ControllerService_RegisterAgent_FullMethodName = "/ax.ControllerService/RegisterAgent"
 )
 
-// AXServiceClient is the client API for AXService service.
+// ControllerServiceClient is the client API for ControllerService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// AXService defines the gRPC service for AX operations
-type AXServiceClient interface {
+type ControllerServiceClient interface {
 	// Exec executes an agentic task or resumes an existing one with streaming responses
 	// If the conversation_id already exists, it will be resumed.
 	Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ExecResponse], error)
@@ -193,17 +191,17 @@ type AXServiceClient interface {
 	RegisterAgent(ctx context.Context, in *RegisterAgentRequest, opts ...grpc.CallOption) (*RegisterAgentResponse, error)
 }
 
-type aXServiceClient struct {
+type controllerServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAXServiceClient(cc grpc.ClientConnInterface) AXServiceClient {
-	return &aXServiceClient{cc}
+func NewControllerServiceClient(cc grpc.ClientConnInterface) ControllerServiceClient {
+	return &controllerServiceClient{cc}
 }
 
-func (c *aXServiceClient) Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ExecResponse], error) {
+func (c *controllerServiceClient) Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ExecResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &AXService_ServiceDesc.Streams[0], AXService_Exec_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ControllerService_ServiceDesc.Streams[0], ControllerService_Exec_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -218,111 +216,109 @@ func (c *aXServiceClient) Exec(ctx context.Context, in *ExecRequest, opts ...grp
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AXService_ExecClient = grpc.ServerStreamingClient[ExecResponse]
+type ControllerService_ExecClient = grpc.ServerStreamingClient[ExecResponse]
 
-func (c *aXServiceClient) RegisterAgent(ctx context.Context, in *RegisterAgentRequest, opts ...grpc.CallOption) (*RegisterAgentResponse, error) {
+func (c *controllerServiceClient) RegisterAgent(ctx context.Context, in *RegisterAgentRequest, opts ...grpc.CallOption) (*RegisterAgentResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RegisterAgentResponse)
-	err := c.cc.Invoke(ctx, AXService_RegisterAgent_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, ControllerService_RegisterAgent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AXServiceServer is the server API for AXService service.
-// All implementations must embed UnimplementedAXServiceServer
+// ControllerServiceServer is the server API for ControllerService service.
+// All implementations must embed UnimplementedControllerServiceServer
 // for forward compatibility.
-//
-// AXService defines the gRPC service for AX operations
-type AXServiceServer interface {
+type ControllerServiceServer interface {
 	// Exec executes an agentic task or resumes an existing one with streaming responses
 	// If the conversation_id already exists, it will be resumed.
 	Exec(*ExecRequest, grpc.ServerStreamingServer[ExecResponse]) error
 	// RegisterAgent registers a new agent with the controller
 	RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error)
-	mustEmbedUnimplementedAXServiceServer()
+	mustEmbedUnimplementedControllerServiceServer()
 }
 
-// UnimplementedAXServiceServer must be embedded to have
+// UnimplementedControllerServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedAXServiceServer struct{}
+type UnimplementedControllerServiceServer struct{}
 
-func (UnimplementedAXServiceServer) Exec(*ExecRequest, grpc.ServerStreamingServer[ExecResponse]) error {
+func (UnimplementedControllerServiceServer) Exec(*ExecRequest, grpc.ServerStreamingServer[ExecResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method Exec not implemented")
 }
-func (UnimplementedAXServiceServer) RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error) {
+func (UnimplementedControllerServiceServer) RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
 }
-func (UnimplementedAXServiceServer) mustEmbedUnimplementedAXServiceServer() {}
-func (UnimplementedAXServiceServer) testEmbeddedByValue()                   {}
+func (UnimplementedControllerServiceServer) mustEmbedUnimplementedControllerServiceServer() {}
+func (UnimplementedControllerServiceServer) testEmbeddedByValue()                           {}
 
-// UnsafeAXServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AXServiceServer will
+// UnsafeControllerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ControllerServiceServer will
 // result in compilation errors.
-type UnsafeAXServiceServer interface {
-	mustEmbedUnimplementedAXServiceServer()
+type UnsafeControllerServiceServer interface {
+	mustEmbedUnimplementedControllerServiceServer()
 }
 
-func RegisterAXServiceServer(s grpc.ServiceRegistrar, srv AXServiceServer) {
-	// If the following call pancis, it indicates UnimplementedAXServiceServer was
+func RegisterControllerServiceServer(s grpc.ServiceRegistrar, srv ControllerServiceServer) {
+	// If the following call pancis, it indicates UnimplementedControllerServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&AXService_ServiceDesc, srv)
+	s.RegisterService(&ControllerService_ServiceDesc, srv)
 }
 
-func _AXService_Exec_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _ControllerService_Exec_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ExecRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(AXServiceServer).Exec(m, &grpc.GenericServerStream[ExecRequest, ExecResponse]{ServerStream: stream})
+	return srv.(ControllerServiceServer).Exec(m, &grpc.GenericServerStream[ExecRequest, ExecResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AXService_ExecServer = grpc.ServerStreamingServer[ExecResponse]
+type ControllerService_ExecServer = grpc.ServerStreamingServer[ExecResponse]
 
-func _AXService_RegisterAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ControllerService_RegisterAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterAgentRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AXServiceServer).RegisterAgent(ctx, in)
+		return srv.(ControllerServiceServer).RegisterAgent(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AXService_RegisterAgent_FullMethodName,
+		FullMethod: ControllerService_RegisterAgent_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AXServiceServer).RegisterAgent(ctx, req.(*RegisterAgentRequest))
+		return srv.(ControllerServiceServer).RegisterAgent(ctx, req.(*RegisterAgentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AXService_ServiceDesc is the grpc.ServiceDesc for AXService service.
+// ControllerService_ServiceDesc is the grpc.ServiceDesc for ControllerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AXService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.AXService",
-	HandlerType: (*AXServiceServer)(nil),
+var ControllerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ax.ControllerService",
+	HandlerType: (*ControllerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "RegisterAgent",
-			Handler:    _AXService_RegisterAgent_Handler,
+			Handler:    _ControllerService_RegisterAgent_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Exec",
-			Handler:       _AXService_Exec_Handler,
+			Handler:       _ControllerService_Exec_Handler,
 			ServerStreams: true,
 		},
 	},
@@ -330,15 +326,15 @@ var AXService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	AXEventLogService_List_FullMethodName   = "/proto.AXEventLogService/List"
-	AXEventLogService_Delete_FullMethodName = "/proto.AXEventLogService/Delete"
-	AXEventLogService_Fork_FullMethodName   = "/proto.AXEventLogService/Fork"
+	EventLogService_List_FullMethodName   = "/ax.EventLogService/List"
+	EventLogService_Delete_FullMethodName = "/ax.EventLogService/Delete"
+	EventLogService_Fork_FullMethodName   = "/ax.EventLogService/Fork"
 )
 
-// AXEventLogServiceClient is the client API for AXEventLogService service.
+// EventLogServiceClient is the client API for EventLogService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AXEventLogServiceClient interface {
+type EventLogServiceClient interface {
 	// List conversational events.
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	// Deletes conversational events and all event log resources
@@ -348,48 +344,48 @@ type AXEventLogServiceClient interface {
 	Fork(ctx context.Context, in *ForkRequest, opts ...grpc.CallOption) (*ForkResponse, error)
 }
 
-type aXEventLogServiceClient struct {
+type eventLogServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAXEventLogServiceClient(cc grpc.ClientConnInterface) AXEventLogServiceClient {
-	return &aXEventLogServiceClient{cc}
+func NewEventLogServiceClient(cc grpc.ClientConnInterface) EventLogServiceClient {
+	return &eventLogServiceClient{cc}
 }
 
-func (c *aXEventLogServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+func (c *eventLogServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, AXEventLogService_List_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, EventLogService_List_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aXEventLogServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+func (c *eventLogServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, AXEventLogService_Delete_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, EventLogService_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aXEventLogServiceClient) Fork(ctx context.Context, in *ForkRequest, opts ...grpc.CallOption) (*ForkResponse, error) {
+func (c *eventLogServiceClient) Fork(ctx context.Context, in *ForkRequest, opts ...grpc.CallOption) (*ForkResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ForkResponse)
-	err := c.cc.Invoke(ctx, AXEventLogService_Fork_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, EventLogService_Fork_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AXEventLogServiceServer is the server API for AXEventLogService service.
-// All implementations must embed UnimplementedAXEventLogServiceServer
+// EventLogServiceServer is the server API for EventLogService service.
+// All implementations must embed UnimplementedEventLogServiceServer
 // for forward compatibility.
-type AXEventLogServiceServer interface {
+type EventLogServiceServer interface {
 	// List conversational events.
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	// Deletes conversational events and all event log resources
@@ -397,118 +393,118 @@ type AXEventLogServiceServer interface {
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// Fork forks an event log from a specific conversation.
 	Fork(context.Context, *ForkRequest) (*ForkResponse, error)
-	mustEmbedUnimplementedAXEventLogServiceServer()
+	mustEmbedUnimplementedEventLogServiceServer()
 }
 
-// UnimplementedAXEventLogServiceServer must be embedded to have
+// UnimplementedEventLogServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedAXEventLogServiceServer struct{}
+type UnimplementedEventLogServiceServer struct{}
 
-func (UnimplementedAXEventLogServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
+func (UnimplementedEventLogServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
-func (UnimplementedAXEventLogServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+func (UnimplementedEventLogServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedAXEventLogServiceServer) Fork(context.Context, *ForkRequest) (*ForkResponse, error) {
+func (UnimplementedEventLogServiceServer) Fork(context.Context, *ForkRequest) (*ForkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Fork not implemented")
 }
-func (UnimplementedAXEventLogServiceServer) mustEmbedUnimplementedAXEventLogServiceServer() {}
-func (UnimplementedAXEventLogServiceServer) testEmbeddedByValue()                           {}
+func (UnimplementedEventLogServiceServer) mustEmbedUnimplementedEventLogServiceServer() {}
+func (UnimplementedEventLogServiceServer) testEmbeddedByValue()                         {}
 
-// UnsafeAXEventLogServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AXEventLogServiceServer will
+// UnsafeEventLogServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to EventLogServiceServer will
 // result in compilation errors.
-type UnsafeAXEventLogServiceServer interface {
-	mustEmbedUnimplementedAXEventLogServiceServer()
+type UnsafeEventLogServiceServer interface {
+	mustEmbedUnimplementedEventLogServiceServer()
 }
 
-func RegisterAXEventLogServiceServer(s grpc.ServiceRegistrar, srv AXEventLogServiceServer) {
-	// If the following call pancis, it indicates UnimplementedAXEventLogServiceServer was
+func RegisterEventLogServiceServer(s grpc.ServiceRegistrar, srv EventLogServiceServer) {
+	// If the following call pancis, it indicates UnimplementedEventLogServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&AXEventLogService_ServiceDesc, srv)
+	s.RegisterService(&EventLogService_ServiceDesc, srv)
 }
 
-func _AXEventLogService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EventLogService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AXEventLogServiceServer).List(ctx, in)
+		return srv.(EventLogServiceServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AXEventLogService_List_FullMethodName,
+		FullMethod: EventLogService_List_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AXEventLogServiceServer).List(ctx, req.(*ListRequest))
+		return srv.(EventLogServiceServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AXEventLogService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EventLogService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AXEventLogServiceServer).Delete(ctx, in)
+		return srv.(EventLogServiceServer).Delete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AXEventLogService_Delete_FullMethodName,
+		FullMethod: EventLogService_Delete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AXEventLogServiceServer).Delete(ctx, req.(*DeleteRequest))
+		return srv.(EventLogServiceServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AXEventLogService_Fork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EventLogService_Fork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ForkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AXEventLogServiceServer).Fork(ctx, in)
+		return srv.(EventLogServiceServer).Fork(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AXEventLogService_Fork_FullMethodName,
+		FullMethod: EventLogService_Fork_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AXEventLogServiceServer).Fork(ctx, req.(*ForkRequest))
+		return srv.(EventLogServiceServer).Fork(ctx, req.(*ForkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AXEventLogService_ServiceDesc is the grpc.ServiceDesc for AXEventLogService service.
+// EventLogService_ServiceDesc is the grpc.ServiceDesc for EventLogService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AXEventLogService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.AXEventLogService",
-	HandlerType: (*AXEventLogServiceServer)(nil),
+var EventLogService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ax.EventLogService",
+	HandlerType: (*EventLogServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "List",
-			Handler:    _AXEventLogService_List_Handler,
+			Handler:    _EventLogService_List_Handler,
 		},
 		{
 			MethodName: "Delete",
-			Handler:    _AXEventLogService_Delete_Handler,
+			Handler:    _EventLogService_Delete_Handler,
 		},
 		{
 			MethodName: "Fork",
-			Handler:    _AXEventLogService_Fork_Handler,
+			Handler:    _EventLogService_Fork_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

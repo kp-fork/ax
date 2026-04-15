@@ -676,29 +676,29 @@ var File_proto_content_proto protoreflect.FileDescriptor
 
 const file_proto_content_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/content.proto\x12\x05proto\x1a\x1cgoogle/protobuf/struct.proto\"3\n" +
+	"\x13proto/content.proto\x12\x02ax\x1a\x1cgoogle/protobuf/struct.proto\"3\n" +
 	"\vTextContent\x12\x12\n" +
 	"\x04text\x18\x03 \x01(\tR\x04textJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\x04type\".\n" +
 	"\x10ApprovalDecision\x12\x1a\n" +
 	"\bapproved\x18\x01 \x01(\bR\bapproved\";\n" +
 	"\x0fDeclineDecision\x12\x1a\n" +
-	"\bdeclined\x18\x01 \x01(\bR\bdeclinedJ\x04\b\x02\x10\x03R\x06reason\"\xca\x01\n" +
+	"\bdeclined\x18\x01 \x01(\bR\bdeclinedJ\x04\b\x02\x10\x03R\x06reason\"\xc4\x01\n" +
 	"\x13ConfirmationContent\x12\x0e\n" +
 	"\x02id\x18\x03 \x01(\tR\x02id\x12\x1a\n" +
-	"\bquestion\x18\x04 \x01(\tR\bquestion\x125\n" +
-	"\bapproval\x18\x05 \x01(\v2\x17.proto.ApprovalDecisionH\x00R\bapproval\x122\n" +
-	"\adecline\x18\x06 \x01(\v2\x16.proto.DeclineDecisionH\x00R\adeclineB\n" +
+	"\bquestion\x18\x04 \x01(\tR\bquestion\x122\n" +
+	"\bapproval\x18\x05 \x01(\v2\x14.ax.ApprovalDecisionH\x00R\bapproval\x12/\n" +
+	"\adecline\x18\x06 \x01(\v2\x13.ax.DeclineDecisionH\x00R\adeclineB\n" +
 	"\n" +
-	"\bdecisionJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\x04type\"\x8a\x01\n" +
+	"\bdecisionJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\x04type\"\x87\x01\n" +
 	"\x0fToolCallContent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
-	"\tsignature\x18\t \x01(\fR\tsignature\x12A\n" +
-	"\rfunction_call\x18\x02 \x01(\v2\x1a.proto.FunctionCallContentH\x00R\ffunctionCallB\x06\n" +
-	"\x04type\"\xa1\x01\n" +
+	"\tsignature\x18\t \x01(\fR\tsignature\x12>\n" +
+	"\rfunction_call\x18\x02 \x01(\v2\x17.ax.FunctionCallContentH\x00R\ffunctionCallB\x06\n" +
+	"\x04type\"\x9e\x01\n" +
 	"\x11ToolResultContent\x12\x17\n" +
 	"\acall_id\x18\b \x01(\tR\x06callId\x12\x1c\n" +
-	"\tsignature\x18\t \x01(\fR\tsignature\x12G\n" +
-	"\x0ffunction_result\x18\x02 \x01(\v2\x1c.proto.FunctionResultContentH\x00R\x0efunctionResultB\x06\n" +
+	"\tsignature\x18\t \x01(\fR\tsignature\x12D\n" +
+	"\x0ffunction_result\x18\x02 \x01(\v2\x19.ax.FunctionResultContentH\x00R\x0efunctionResultB\x06\n" +
 	"\x04typeJ\x04\b\x01\x10\x02\"l\n" +
 	"\x13FunctionCallContent\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x125\n" +
@@ -706,13 +706,13 @@ const file_proto_content_proto_rawDesc = "" +
 	"\x15FunctionResultContent\x12\x12\n" +
 	"\x04name\x18\b \x01(\tR\x04name\x125\n" +
 	"\bresponse\x18\x03 \x01(\v2\x17.google.protobuf.StructH\x00R\bresponseB\b\n" +
-	"\x06resultJ\x04\b\x01\x10\x02J\x04\b\x04\x10\x05R\x04type\"\x83\x02\n" +
-	"\aContent\x12(\n" +
+	"\x06resultJ\x04\b\x01\x10\x02J\x04\b\x04\x10\x05R\x04type\"\xf7\x01\n" +
+	"\aContent\x12%\n" +
 	"\x04text\x18\n" +
-	" \x01(\v2\x12.proto.TextContentH\x00R\x04text\x12@\n" +
-	"\fconfirmation\x18\x1a \x01(\v2\x1a.proto.ConfirmationContentH\x00R\fconfirmation\x125\n" +
-	"\ttool_call\x18\x18 \x01(\v2\x16.proto.ToolCallContentH\x00R\btoolCall\x12;\n" +
-	"\vtool_result\x18\x19 \x01(\v2\x18.proto.ToolResultContentH\x00R\n" +
+	" \x01(\v2\x0f.ax.TextContentH\x00R\x04text\x12=\n" +
+	"\fconfirmation\x18\x1a \x01(\v2\x17.ax.ConfirmationContentH\x00R\fconfirmation\x122\n" +
+	"\ttool_call\x18\x18 \x01(\v2\x13.ax.ToolCallContentH\x00R\btoolCall\x128\n" +
+	"\vtool_result\x18\x19 \x01(\v2\x15.ax.ToolResultContentH\x00R\n" +
 	"toolResultB\x06\n" +
 	"\x04typeJ\x04\b\x01\x10\x05J\x04\b\x06\x10\n" +
 	"J\x04\b\v\x10\x18B\x1cZ\x1agithub.com/google/ax/protob\x06proto3"
@@ -731,28 +731,28 @@ func file_proto_content_proto_rawDescGZIP() []byte {
 
 var file_proto_content_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_proto_content_proto_goTypes = []any{
-	(*TextContent)(nil),           // 0: proto.TextContent
-	(*ApprovalDecision)(nil),      // 1: proto.ApprovalDecision
-	(*DeclineDecision)(nil),       // 2: proto.DeclineDecision
-	(*ConfirmationContent)(nil),   // 3: proto.ConfirmationContent
-	(*ToolCallContent)(nil),       // 4: proto.ToolCallContent
-	(*ToolResultContent)(nil),     // 5: proto.ToolResultContent
-	(*FunctionCallContent)(nil),   // 6: proto.FunctionCallContent
-	(*FunctionResultContent)(nil), // 7: proto.FunctionResultContent
-	(*Content)(nil),               // 8: proto.Content
+	(*TextContent)(nil),           // 0: ax.TextContent
+	(*ApprovalDecision)(nil),      // 1: ax.ApprovalDecision
+	(*DeclineDecision)(nil),       // 2: ax.DeclineDecision
+	(*ConfirmationContent)(nil),   // 3: ax.ConfirmationContent
+	(*ToolCallContent)(nil),       // 4: ax.ToolCallContent
+	(*ToolResultContent)(nil),     // 5: ax.ToolResultContent
+	(*FunctionCallContent)(nil),   // 6: ax.FunctionCallContent
+	(*FunctionResultContent)(nil), // 7: ax.FunctionResultContent
+	(*Content)(nil),               // 8: ax.Content
 	(*structpb.Struct)(nil),       // 9: google.protobuf.Struct
 }
 var file_proto_content_proto_depIdxs = []int32{
-	1,  // 0: proto.ConfirmationContent.approval:type_name -> proto.ApprovalDecision
-	2,  // 1: proto.ConfirmationContent.decline:type_name -> proto.DeclineDecision
-	6,  // 2: proto.ToolCallContent.function_call:type_name -> proto.FunctionCallContent
-	7,  // 3: proto.ToolResultContent.function_result:type_name -> proto.FunctionResultContent
-	9,  // 4: proto.FunctionCallContent.arguments:type_name -> google.protobuf.Struct
-	9,  // 5: proto.FunctionResultContent.response:type_name -> google.protobuf.Struct
-	0,  // 6: proto.Content.text:type_name -> proto.TextContent
-	3,  // 7: proto.Content.confirmation:type_name -> proto.ConfirmationContent
-	4,  // 8: proto.Content.tool_call:type_name -> proto.ToolCallContent
-	5,  // 9: proto.Content.tool_result:type_name -> proto.ToolResultContent
+	1,  // 0: ax.ConfirmationContent.approval:type_name -> ax.ApprovalDecision
+	2,  // 1: ax.ConfirmationContent.decline:type_name -> ax.DeclineDecision
+	6,  // 2: ax.ToolCallContent.function_call:type_name -> ax.FunctionCallContent
+	7,  // 3: ax.ToolResultContent.function_result:type_name -> ax.FunctionResultContent
+	9,  // 4: ax.FunctionCallContent.arguments:type_name -> google.protobuf.Struct
+	9,  // 5: ax.FunctionResultContent.response:type_name -> google.protobuf.Struct
+	0,  // 6: ax.Content.text:type_name -> ax.TextContent
+	3,  // 7: ax.Content.confirmation:type_name -> ax.ConfirmationContent
+	4,  // 8: ax.Content.tool_call:type_name -> ax.ToolCallContent
+	5,  // 9: ax.Content.tool_result:type_name -> ax.ToolResultContent
 	10, // [10:10] is the sub-list for method output_type
 	10, // [10:10] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name

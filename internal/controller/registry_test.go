@@ -29,7 +29,7 @@ import (
 )
 
 type mockAgentServer struct {
-	proto.UnimplementedAXAgentServiceServer
+	proto.UnimplementedAgentServiceServer
 	healthy bool
 }
 
@@ -43,7 +43,7 @@ func startMockGRPCServer(t *testing.T, healthy bool) (string, func()) {
 		t.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	proto.RegisterAXAgentServiceServer(s, &mockAgentServer{healthy: healthy})
+	proto.RegisterAgentServiceServer(s, &mockAgentServer{healthy: healthy})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			// server might be closed

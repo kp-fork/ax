@@ -33,8 +33,8 @@ import (
 
 // Server implements the AXService gRPC service.
 type Server struct {
-	proto.UnimplementedAXServiceServer
-	proto.UnimplementedAXEventLogServiceServer
+	proto.UnimplementedControllerServiceServer
+	proto.UnimplementedEventLogServiceServer
 
 	controller *controller.Controller
 	grpcServer *grpc.Server
@@ -122,8 +122,8 @@ func (s *Server) Serve(address string, opts ...grpc.ServerOption) error {
 	}
 
 	s.grpcServer = grpc.NewServer(opts...)
-	proto.RegisterAXServiceServer(s.grpcServer, s)
-	proto.RegisterAXEventLogServiceServer(s.grpcServer, s)
+	proto.RegisterControllerServiceServer(s.grpcServer, s)
+	proto.RegisterEventLogServiceServer(s.grpcServer, s)
 
 	if err := s.grpcServer.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)

@@ -32,7 +32,7 @@ const port = ":50051"
 
 // server implements the AgentService gRPC server.
 type server struct {
-	proto.UnimplementedAXAgentServiceServer
+	proto.UnimplementedAgentServiceServer
 }
 
 // Connect implements bidirectional streaming for agent processing.
@@ -112,7 +112,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterAXAgentServiceServer(grpcServer, &server{})
+	proto.RegisterAgentServiceServer(grpcServer, &server{})
 
 	fmt.Println("\nAgent server is running...")
 	if err := grpcServer.Serve(lis); err != nil {
