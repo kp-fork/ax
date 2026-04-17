@@ -13,12 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This Dockerfile builds the container image for the 'uppercase' Sandbox Agent.
-# The resulting image is pushed to Artifact Registry and referenced by the 
-# SandboxTemplate manifest to be executed dynamically via GKE Agent Sandbox.
-#
-# For more details on GKE Agent Sandbox container requirements, see:
-# https://docs.cloud.google.com/kubernetes-engine/docs/how-to/agent-sandbox
+# This Dockerfile builds the container image for the AX system.
+# It builds the 'ax' binary which can be used as a server or CLI.
 
 # Build stage
 # TODO: consider other options instead of Alpine
@@ -36,8 +32,8 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the uppercase agent
-RUN go build -o /app/bin/uppercase ./examples/k8s_sandbox_agent
+# Build the ax binary
+RUN go build -o /app/bin/ax ./cmd/ax
 
 # Runtime stage
 # TODO: consider other options instead of Alpine
@@ -48,15 +44,11 @@ RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 
-# Copy the built binary
-COPY --from=builder /app/bin/uppercase /usr/local/bin/uppercase
+COPY --from=builder /app/bin/ax /usr/local/bin/ax
 
-# Create a non-root user matching expected Kubernetes security context best practices
 RUN addgroup -S ax && adduser -S ax -G ax
 USER ax
 
-# Expose standard remote agent port
 EXPOSE 8494
-
-# Set default command
-ENTRYPOINT ["/usr/local/bin/uppercase"]
+ENTRYPOINT ["/usr/local/bin/ax"]
+CMD ["serve"]

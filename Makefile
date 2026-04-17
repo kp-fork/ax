@@ -1,5 +1,8 @@
 .PHONY: all build proto test clean install install-ate
 
+# Default container registry for ko
+export KO_DOCKER_REPO ?= gcr.io/ax-container-images
+
 # Build all binaries
 all: proto build
 
@@ -74,3 +77,7 @@ clean-logs:
 	@echo "Cleaning the event logs..."
 	rm -rf ./eventlog
 	mkdir ./eventlog
+
+build-container:
+	@echo "Building container image with ko..."
+	ko build ./cmd/ax
