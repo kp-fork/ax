@@ -1,7 +1,7 @@
 .PHONY: all build proto test clean install install-ate
 
-# Default container registry for ko
-export KO_DOCKER_REPO ?= gcr.io/ax-container-images
+# Default container registry for docker
+export DOCKER_REPO ?= gcr.io/ax-container-images
 
 # Build all binaries
 all: proto build
@@ -78,6 +78,7 @@ clean-logs:
 	rm -rf ./eventlog
 	mkdir ./eventlog
 
-build-container:
-	@echo "Building container image with ko..."
-	ko build ./cmd/ax
+ax-image:
+	@echo "Building and pushing container image with docker..."
+	docker build -t $(DOCKER_REPO)/ax:latest .
+	docker push $(DOCKER_REPO)/ax:latest
