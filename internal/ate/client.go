@@ -22,6 +22,7 @@ import (
 
 	"github.com/ai-on-gke/SubstrATE/proto/ateapipb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Client struct {
@@ -40,6 +41,9 @@ func NewClient(ns, template, target string, opts ...grpc.DialOption) (*Client, e
 	}
 	if target == "" {
 		target = "api.ate-system.svc:443"
+	}
+	if len(opts) == 0 {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 	conn, err := grpc.NewClient(target, opts...)
 	if err != nil {

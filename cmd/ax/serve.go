@@ -146,5 +146,12 @@ func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 			return nil, fmt.Errorf("failed to register colab agent %s: %w", agentCfg.ID, err)
 		}
 	}
+
+	for _, agentCfg := range cfg.Registry.ATEAgents {
+		if err := c.Registry().RegisterATE(ctx, cfg.ATE.Endpoint, agentCfg); err != nil {
+			return nil, fmt.Errorf("failed to register ATE agent %s: %w", agentCfg.ID, err)
+		}
+	}
+
 	return c, nil
 }

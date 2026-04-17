@@ -29,6 +29,7 @@ type Config struct {
 	EventLog EventLogConfig `yaml:"eventlog"`
 	Planner  PlannerConfig  `yaml:"planner,omitempty"`
 	Registry RegistryConfig `yaml:"registry,omitempty"`
+	ATE      ATEConfig      `yaml:"ate,omitempty"`
 }
 
 // RegistryConfig allows registring agents.
@@ -36,6 +37,12 @@ type RegistryConfig struct {
 	RemoteAgents            []RemoteAgentConfig  `yaml:"remote_agents,omitempty"`
 	KubernetesSandboxAgents []SandboxAgentConfig `yaml:"k8s_sandbox_agents,omitempty"`
 	ColabAgents             []ColabAgentConfig   `yaml:"colab_agents,omitempty"`
+	ATEAgents               []ATEAgentConfig     `yaml:"ate_agents,omitempty"`
+}
+
+// ATEConfig configures the ATE integration.
+type ATEConfig struct {
+	Endpoint string `yaml:"endpoint"`
 }
 
 // ServerConfig configures the gRPC server.
@@ -69,10 +76,16 @@ type GeminiPlannerConfig struct {
 	SkillsDir    string  `yaml:"skills_dir,omitempty"` // Directory to discover skills from
 }
 
-// ActorConfig represents actor configuration.
-type ActorConfig struct {
-	Namespace string `yaml:"namespace"` // Actor namespace
-	Template  string `yaml:"template"`  // Actor template name
+// ATEAgentConfig allows registering a new agent with an ATE actor template.
+type ATEAgentConfig struct {
+	ID          string            `yaml:"id"`                 // Unique agent identifier
+	Name        string            `yaml:"name"`               // Human-readable name
+	Description string            `yaml:"description"`        // Description of agent capabilities
+	Port        int               `yaml:"port"`               // Port the agent is listening on
+	Namespace   string            `yaml:"namespace"`          // Namespace for actor
+	Template    string            `yaml:"template"`           // Template for actor
+	Metadata    map[string]string `yaml:"metadata,omitempty"` // Optional metadata
+	// TODO(jbd): Rename this struct before releasing.
 }
 
 // RemoteAgentConfig configures a remote agent to register on startup.
@@ -82,7 +95,6 @@ type RemoteAgentConfig struct {
 	Description string            `yaml:"description"`        // Description of agent capabilities
 	Address     string            `yaml:"address"`            // gRPC address (e.g., "localhost:50051")
 	Metadata    map[string]string `yaml:"metadata,omitempty"` // Optional metadata
-	Actor       ActorConfig       `yaml:"actor,omitempty"`
 }
 
 // SandboxAgentConfig configures a Kubernetes Sandbox agent to register on startup.

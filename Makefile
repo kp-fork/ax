@@ -1,4 +1,4 @@
-.PHONY: all build proto test clean install
+.PHONY: all build proto test clean install install-ate
 
 # Build all binaries
 all: proto build
@@ -44,6 +44,12 @@ clean:
 install:
 	@echo "Installing ax..."
 	@go install ./cmd/ax
+	@echo "Install complete!"
+
+# Install ax with ATE support to GOPATH/bin
+install-ate:
+	@echo "Installing ax with ATE support..."
+	@go install -tags ate ./cmd/ax
 	@echo "Install complete!"
 
 

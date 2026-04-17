@@ -23,22 +23,13 @@ import (
 	"github.com/google/ax/internal/config"
 )
 
-// AgentType represents the type of agent (local or remote).
-type AgentType string
 
-const (
-	AgentTypeLocal             AgentType = "local"
-	AgentTypeRemote            AgentType = "remote"
-	AgentTypeKubernetesSandbox AgentType = "k8s_sandbox"
-	AgentTypeColab             AgentType = "colab"
-)
 
 // AgentInfo contains metadata about a registered agent.
 type AgentInfo struct {
 	ID          string
 	Name        string
 	Description string
-	Type        AgentType
 	Metadata    map[string]string
 }
 
@@ -83,7 +74,6 @@ func (r *Registry) RegisterLocal(cfg config.LocalAgentConfig) error {
 		ID:          cfg.ID,
 		Name:        cfg.Name,
 		Description: cfg.Description,
-		Type:        AgentTypeLocal,
 		Metadata:    cfg.Metadata,
 	}
 
@@ -118,7 +108,6 @@ func (r *Registry) RegisterRemote(cfg config.RemoteAgentConfig) error {
 		ID:          cfg.ID,
 		Name:        cfg.Name,
 		Description: cfg.Description,
-		Type:        AgentTypeRemote,
 		Metadata:    cfg.Metadata,
 	}
 
@@ -153,7 +142,6 @@ func (r *Registry) RegisterKubernetesSandbox(ctx context.Context, cfg config.San
 		ID:          cfg.ID,
 		Name:        cfg.Name,
 		Description: cfg.Description,
-		Type:        AgentTypeKubernetesSandbox,
 		Metadata:    cfg.Metadata,
 	}
 
@@ -194,7 +182,6 @@ func (r *Registry) RegisterColab(cfg config.ColabAgentConfig) error {
 		ID:          cfg.ID,
 		Name:        cfg.Name,
 		Description: cfg.Description,
-		Type:        AgentTypeColab,
 		Metadata:    cfg.Metadata,
 	}
 
