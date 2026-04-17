@@ -79,6 +79,17 @@ clean-logs:
 	mkdir ./eventlog
 
 ax-image:
-	@echo "Building and pushing container image with docker..."
-	docker build -t $(DOCKER_REPO)/ax:latest .
-	docker push $(DOCKER_REPO)/ax:latest
+	@echo "Building container image with ko..."
+	@if [ -z "$$KO_DOCKER_REPO" ]; then \
+		echo "Error: KO_DOCKER_REPO is not set. Please set it to your container registry (e.g., gcr.io/my-project)."; \
+		exit 1; \
+	fi
+	GOFLAGS="-tags=ate" ko build --base-import-paths ./cmd/ax
+
+ate-agent-image:
+	@echo "Building ATE agent container image with ko..."
+	@if [ -z "$$KO_DOCKER_REPO" ]; then \
+		echo "Error: KO_DOCKER_REPO is not set. Please set it to your container registry (e.g., gcr.io/my-project)."; \
+		exit 1; \
+	fi
+	GOFLAGS="-tags=ate" ko build --base-import-paths ./internal/examples/ate_agent
