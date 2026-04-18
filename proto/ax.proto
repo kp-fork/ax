@@ -41,14 +41,14 @@ message AgentOutputs {
   bool internal_only = 2;
 }
 
-message AgentComplete {}
+message AgentEnd {}
 
 message AgentMessage {
   string exec_id = 1;
   oneof type {
     AgentStart start = 2;
     AgentOutputs outputs = 3;
-    AgentComplete complete = 4;
+    AgentEnd end = 4;
   }
 }
 
