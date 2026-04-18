@@ -118,7 +118,7 @@ func (a *RemoteAgent) Connect(ctx context.Context, execID string, start *proto.A
 			if err := o(msg.Outputs); err != nil {
 				return fmt.Errorf("handler error: %w", err)
 			}
-		case *proto.AgentMessage_Complete:
+		case *proto.AgentMessage_End:
 			// Agent signaled completion
 			return nil
 		default:

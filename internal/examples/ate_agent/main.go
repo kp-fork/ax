@@ -71,11 +71,11 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 			return err
 		}
 
-		// Send AgentComplete to signal end of outputs.
+		// Send AgentEnd to signal end of outputs.
 		if err := stream.Send(&proto.AgentMessage{
 			ExecId: incoming.ExecId,
-			Type: &proto.AgentMessage_Complete{
-				Complete: &proto.AgentComplete{},
+			Type: &proto.AgentMessage_End{
+				End: &proto.AgentEnd{},
 			},
 		}); err != nil {
 			return err
