@@ -68,9 +68,7 @@ func (a *DockerBuilderAgent) Connect(ctx context.Context, execID string, start *
 	return nil
 }
 
-func (a *DockerBuilderAgent) HealthCheck(ctx context.Context) error {
-	return nil
-}
+
 
 // Close gracefully shuts down the agent.
 func (a *DockerBuilderAgent) Close() error {
@@ -106,10 +104,6 @@ func (a *DockerMirrorAgent) Connect(ctx context.Context, execID string, start *p
 			},
 		}},
 	})
-	return nil
-}
-
-func (a *DockerMirrorAgent) HealthCheck(ctx context.Context) error {
 	return nil
 }
 

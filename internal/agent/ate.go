@@ -100,11 +100,6 @@ func (a *ATEAgent) Connect(ctx context.Context, execID string, start *proto.Agen
 	return remoteAgent.Connect(ctx, execID, start, e, o)
 }
 
-// HealthCheck checks if the ATE agent is healthy.
-func (a *ATEAgent) HealthCheck(ctx context.Context) error {
-	return nil
-}
-
 // Close gracefully shuts down the ATE agent connection.
 func (a *ATEAgent) Close() error {
 	if a.ateClient != nil {

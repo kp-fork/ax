@@ -17,7 +17,6 @@ package controller
 // TODO(lhuan): Setup a better automated testing framework
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -31,10 +30,6 @@ import (
 type mockAgentServer struct {
 	proto.UnimplementedAgentServiceServer
 	healthy bool
-}
-
-func (s *mockAgentServer) HealthCheck(ctx context.Context, req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
-	return &proto.HealthCheckResponse{Healthy: s.healthy}, nil
 }
 
 func startMockGRPCServer(t *testing.T, healthy bool) (string, func()) {

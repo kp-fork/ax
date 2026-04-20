@@ -76,12 +76,6 @@ func newKubernetesSandboxAgentWithClient(ctx context.Context, client *sandboxcli
 	return agent, nil
 }
 
-// HealthCheck always returns nil for ephemeral agents since health is checked during Process.
-func (a *KubernetesSandboxAgent) HealthCheck(ctx context.Context) error {
-	// TODO: implement proper health check logic for sandbox agents.
-	return nil
-}
-
 func (a *KubernetesSandboxAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

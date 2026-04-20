@@ -15,7 +15,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -83,14 +82,7 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 	}
 }
 
-// HealthCheck checks if the agent is healthy.
-func (s *server) HealthCheck(ctx context.Context, req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
-	log.Println("Health check requested")
-	return &proto.HealthCheckResponse{
-		Healthy: true,
-		Message: "ATE Agent is healthy",
-	}, nil
-}
+
 
 func main() {
 	fmt.Printf("Listening on port: %s\n", port)

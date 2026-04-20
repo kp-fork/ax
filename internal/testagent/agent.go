@@ -167,11 +167,6 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 	return nil
 }
 
-// HealthCheck checks if the agent is healthy.
-func (a *CodingAgent) HealthCheck(ctx context.Context) error {
-	return nil
-}
-
 // Close gracefully shuts down the agent.
 func (a *CodingAgent) Close() error {
 	return nil
@@ -304,9 +299,7 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 	})
 }
 
-func (a *KubernetesDeployAgent) HealthCheck(ctx context.Context) error {
-	return nil
-}
+
 
 // Close gracefully shuts down the agent.
 func (a *KubernetesDeployAgent) Close() error {

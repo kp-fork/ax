@@ -29,7 +29,7 @@ type dummyAgent struct{}
 func (a *dummyAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	return nil
 }
-func (a *dummyAgent) HealthCheck(ctx context.Context) error { return nil }
+
 func (a *dummyAgent) Close() error                          { return nil }
 
 func TestController_Exec_ResumptionAndIDGeneration(t *testing.T) {
@@ -453,6 +453,6 @@ type mockAgentFunc struct {
 func (m *mockAgentFunc) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	return m.connectFunc(ctx, execID, start, e, o)
 }
-func (m *mockAgentFunc) HealthCheck(ctx context.Context) error { return nil }
+
 func (m *mockAgentFunc) Close() error                          { return nil }
 

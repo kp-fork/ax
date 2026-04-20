@@ -38,10 +38,6 @@ type Agent interface {
 	// The handler may be called multiple times during processing.
 	Connect(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error
 
-	// HealthCheck checks if the agent is healthy and responsive.
-	// Returns an error if the agent is unhealthy or unreachable.
-	HealthCheck(ctx context.Context) error
-
 	// Close gracefully shuts down the agent and releases resources.
 	Close() error
 }

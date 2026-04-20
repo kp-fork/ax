@@ -35,7 +35,7 @@ type server struct {
 }
 
 func (s *server) HealthCheck(ctx context.Context, req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
-	return &proto.HealthCheckResponse{Healthy: true, Message: "upper_case_agent is running"}, nil
+	return &proto.HealthCheckResponse{Healthy: true, Message: "k8s sandbox agent is running"}, nil
 }
 
 func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, proto.AgentMessage]) error {

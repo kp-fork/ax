@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -125,30 +124,6 @@ func (a *RemoteAgent) Connect(ctx context.Context, execID string, start *proto.A
 			return fmt.Errorf("unknown message type: %T", msg)
 		}
 	}
-}
-
-// HealthCheck checks if the remote agent is healthy.
-func (a *RemoteAgent) HealthCheck(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	conn, err := a.connect()
-	if err != nil {
-		return fmt.Errorf("failed to connect: %w", err)
-	}
-	defer conn.Close()
-
-	client := proto.NewAgentServiceClient(conn)
-	resp, err := client.HealthCheck(ctx, &proto.HealthCheckRequest{})
-	if err != nil {
-		return fmt.Errorf("health check failed: %w", err)
-	}
-
-	if !resp.Healthy {
-		return fmt.Errorf("agent unhealthy: %s", resp.Message)
-	}
-
-	return nil
 }
 
 // Close gracefully shuts down the remote agent connection.

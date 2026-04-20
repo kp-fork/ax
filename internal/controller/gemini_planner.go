@@ -108,10 +108,6 @@ func (p *geminiPlannerAgent) Connect(ctx context.Context, execID string, start *
 	return p.loop(ctx, start, e, handler)
 }
 
-func (p *geminiPlannerAgent) HealthCheck(ctx context.Context) error {
-	return nil
-}
-
 func (p *geminiPlannerAgent) Close() error {
 	return nil
 }

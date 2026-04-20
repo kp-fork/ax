@@ -177,7 +177,6 @@ func createLocalAgent(transform func(string) string) (*agent.LocalAgent, error) 
 
 	return agent.NewLocalAgent(agent.LocalAgentConfig{
 		ProcessFunc:     processFunc,
-		HealthCheckFunc: func(ctx context.Context) error { return nil },
 	})
 }
 
@@ -185,7 +184,7 @@ type mockPlanner struct{}
 
 func (m *mockPlanner) ID() string                            { return "__planner" }
 func (m *mockPlanner) Name() string                          { return "Mock Planner" }
-func (m *mockPlanner) HealthCheck(ctx context.Context) error { return nil }
+
 func (m *mockPlanner) Close() error                          { return nil }
 func (m *mockPlanner) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
 	var lastText string

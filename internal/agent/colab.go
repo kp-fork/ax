@@ -342,12 +342,7 @@ func (a *ColabAgent) isSessionAlive(ctx context.Context, sessionName string) boo
 	return err == nil
 }
 
-// HealthCheck returns nil for Colab agents. Sessions are ephemeral and created
-// on demand, so there is no persistent state to check. The colab CLI binary
-// was already validated at registration time.
-func (a *ColabAgent) HealthCheck(ctx context.Context) error {
-	return nil
-}
+
 
 // Close stops all currently active Colab sessions. This handles the case where
 // Close() is called (e.g. via SIGINT) while one or more Connect() calls are

@@ -135,10 +135,6 @@ func (a *GeminiAgent) Connect(ctx context.Context, execID string, start *proto.A
 	return nil
 }
 
-func (a *GeminiAgent) HealthCheck(ctx context.Context) error {
-	return nil
-}
-
 func (a *GeminiAgent) Close() error {
 	return nil
 }

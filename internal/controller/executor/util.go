@@ -29,7 +29,6 @@ func (f agentFunc) Connect(ctx context.Context, execID string, start *proto.Agen
 	return nil
 }
 
-func (f agentFunc) HealthCheck(_ context.Context) error { return nil }
 func (f agentFunc) Close() error                        { return nil }
 
 func AgentFunc(fn func(input []*proto.Message, tm agent.Executor, o agent.OutputHandler)) agent.Agent {
