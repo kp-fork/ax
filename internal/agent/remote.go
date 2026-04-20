@@ -16,6 +16,7 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -107,19 +108,18 @@ func (a *RemoteAgent) Connect(ctx context.Context, execID string, start *proto.A
 
 		switch msg := resp.Type.(type) {
 		case *proto.AgentMessage_Start:
-			// Start a new agent call
-			if _, err := e.Exec(stream.Context(), resp.ExecId, msg.Start, o); err != nil {
-				return fmt.Errorf("failed to execute: %w", err)
-			}
+			return errors.New("starting new executions from remote agents is not supported yet")
 		case *proto.AgentMessage_Outputs:
 			if resp.ExecId != execID {
-				return fmt.Errorf("received content for different execution id: %s != %s", resp.ExecId, execID)
+				return fmt.Errorf("received outputs for different execution id: %s != %s", resp.ExecId, execID)
 			}
 			if err := o(msg.Outputs); err != nil {
 				return fmt.Errorf("handler error: %w", err)
 			}
 		case *proto.AgentMessage_End:
-			// Agent signaled completion
+			if resp.ExecId != execID {
+				return fmt.Errorf("received end for different execution id: %s != %s", resp.ExecId, execID)
+			}
 			return nil
 		default:
 			return fmt.Errorf("unknown message type: %T", msg)
