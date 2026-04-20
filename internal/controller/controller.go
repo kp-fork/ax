@@ -262,6 +262,51 @@ func (d *Controller) Delete(ctx context.Context, conversationID string) error {
 	return d.eventLog.DeleteEvents(ctx, conversationID)
 }
 
+// Fork forks an event log from a specific conversation up to a checkpoint.
+func (d *Controller) Fork(ctx context.Context, srcConversationID string, srcSeq int32, destConversationID string) (string, error) {
+	if srcConversationID == "" {
+		return "", fmt.Errorf("src_conversation_id is required")
+	}
+	// TODO(anj-s): Check whether destination ID already exists and reject collisions.
+	if destConversationID == "" {
+		destConversationID = uuid.NewString()
+	}
+
+	inFlight, cleanup := d.markInFlight(destConversationID)
+	defer cleanup()
+
+	if inFlight {
+		return "", fmt.Errorf("conversation %q is already in flight", destConversationID)
+	}
+
+	events, err := d.eventLog.Events(ctx, srcConversationID)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve source events: %w", err)
+	}
+	if len(events) == 0 {
+		return "", fmt.Errorf("source conversation %s not found or has no events", srcConversationID)
+	}
+
+	for _, ev := range events {
+		if srcSeq > 0 && ev.Seq > srcSeq {
+			break // Optimization: events are ordered by seq, so we can stop iterating
+		}
+		// Clone the event to update the conversation ID
+		newEvent := &proto.ConversationEvent{
+			ConversationId: destConversationID,
+			Seq:            ev.Seq,
+			ExecId:         ev.ExecId,
+			Messages:       ev.Messages,
+			State:          ev.State,
+		}
+		if _, err := d.eventLog.Append(ctx, newEvent); err != nil {
+			return "", fmt.Errorf("failed to append forked event: %w", err)
+		}
+	}
+
+	return destConversationID, nil
+}
+
 // Registry returns the agent registry.
 func (d *Controller) Registry() *Registry {
 	return d.registry

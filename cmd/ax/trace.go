@@ -113,34 +113,36 @@ type ExecTrace struct {
 }
 
 type TraceData struct {
-	RootExecID string      `json:"root_exec_id"`
-	Execs      []ExecTrace `json:"execs"`
+	ConversationID string      `json:"conversation_id"`
+	RootExecID     string      `json:"root_exec_id"`
+	Execs          []ExecTrace `json:"execs"`
 }
 
 func loadTraceData(ctx context.Context, cfg *config.Config, convID string) (*TraceData, error) {
-	events, rootExecID, err := fetchEventsByConversation(ctx, cfg, convID)
+	events, rootExecID, execIDs, err := fetchEventsByConversation(ctx, cfg, convID)
 	if err != nil {
 		return nil, err
 	}
 
 	data := &TraceData{
-		RootExecID: rootExecID,
-		Execs:      buildExecTraces(rootExecID, events),
+		ConversationID: convID,
+		RootExecID:     rootExecID,
+		Execs:          buildExecTraces(rootExecID, execIDs, events),
 	}
 
 	return data, nil
 }
 
-func fetchEventsByConversation(ctx context.Context, cfg *config.Config, convID string) ([]*proto.ExecutionEvent, string, error) {
+func fetchEventsByConversation(ctx context.Context, cfg *config.Config, convID string) ([]*proto.ExecutionEvent, string, []string, error) {
 	evLog, err := executor.OpenSQLiteEventLog(cfg.EventLog.SQLiteConfig.Filename)
 	if err != nil {
-		return nil, "", fmt.Errorf("could not open sqlite eventlog: %w", err)
+		return nil, "", nil, fmt.Errorf("could not open sqlite eventlog: %w", err)
 	}
 	defer evLog.Close()
 
 	convEvents, err := evLog.Events(ctx, convID)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to query conversation events: %w", err)
+		return nil, "", nil, fmt.Errorf("failed to query conversation events: %w", err)
 	}
 
 	var execIDs []string
@@ -153,14 +155,14 @@ func fetchEventsByConversation(ctx context.Context, cfg *config.Config, convID s
 	}
 
 	if len(execIDs) == 0 {
-		return nil, "", fmt.Errorf("no executions found for conversation: %s", convID)
+		return nil, "", nil, fmt.Errorf("no executions found for conversation: %s", convID)
 	}
 
 	var allEvents []*proto.ExecutionEvent
 	for _, eID := range execIDs {
 		events, err := evLog.ExecEvents(ctx, eID)
 		if err != nil {
-			return nil, "", fmt.Errorf("failed to query events for exec %s: %w", eID, err)
+			return nil, "", nil, fmt.Errorf("failed to query events for exec %s: %w", eID, err)
 		}
 		allEvents = append(allEvents, events...)
 	}
@@ -168,10 +170,10 @@ func fetchEventsByConversation(ctx context.Context, cfg *config.Config, convID s
 	// Use the first execID as the rootExecID as requested by user
 	rootExecID := execIDs[0]
 
-	return allEvents, rootExecID, nil
+	return allEvents, rootExecID, execIDs, nil
 }
 
-func buildExecTraces(rootExecID string, events []*proto.ExecutionEvent) []ExecTrace {
+func buildExecTraces(rootExecID string, execIDs []string, events []*proto.ExecutionEvent) []ExecTrace {
 	execsMap := make(map[string][]ExecutionEvent)
 
 	for _, protoEv := range events {
@@ -196,15 +198,18 @@ func buildExecTraces(rootExecID string, events []*proto.ExecutionEvent) []ExecTr
 		})
 	}
 
-	// Root exec first, then sub-execs sorted by name.
+	// Sort execs by the order they appeared in execIDs (chronological)
+	getIndex := func(execID string) int {
+		for idx, id := range execIDs {
+			if id == execID {
+				return idx
+			}
+		}
+		return len(execIDs)
+	}
+
 	sort.Slice(execs, func(i, j int) bool {
-		if execs[i].ExecID == rootExecID {
-			return true
-		}
-		if execs[j].ExecID == rootExecID {
-			return false
-		}
-		return execs[i].ExecID < execs[j].ExecID
+		return getIndex(execs[i].ExecID) < getIndex(execs[j].ExecID)
 	})
 
 	return execs
@@ -277,7 +282,7 @@ func serveTraceUI(listener net.Listener, data *TraceData, rawHTML string) error 
 	}
 	url := fmt.Sprintf("http://%s", addr)
 
-	fmt.Printf("Starting trace viewer for %s...\n", data.RootExecID)
+	fmt.Printf("Starting trace viewer for conversation %s...\n", data.ConversationID)
 	fmt.Printf("Opening browser to %s\n", url)
 	fmt.Printf("Press Ctrl+C to exit.\n")
 
@@ -505,7 +510,7 @@ function renderTrace(data){
   });
   const span=maxT-minT||1;
 
-  let html='<div class="trace-hdr"><div class="label">Trace</div><div class="exec-id">'+esc(data.root_exec_id)+'</div></div>';
+  let html='<div class="trace-hdr"><div class="label">Conversation</div><div class="exec-id">'+esc(data.conversation_id)+'</div></div>';
 
   html+='<div class="timeline-card"><div class="card-title">Timeline</div><div class="tl-rows">';
   execTimes.forEach(({execID,start,end},i)=>{

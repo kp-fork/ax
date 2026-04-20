@@ -166,9 +166,20 @@ message DeleteRequest {
 
 message DeleteResponse {}
 
-message ForkRequest {}
+message ForkRequest {
+  // Required: The source conversation ID to fork from.
+  string src_conversation_id = 1;
+  // Optional: The sequence number to fork from.
+  // Defaults to the latest sequence if not set or set to 0.
+  int32 src_seq = 2;
+  // Optional: The destination conversation ID.
+  // Generates a new UUID if not provided.
+  string dest_conversation_id = 3;
+}
 
-message ForkResponse {}
+message ForkResponse {
+  string conversation_id = 1; // The ID of the new conversation
+}
 
 service EventLogService {
   // List conversational events.

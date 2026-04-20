@@ -49,7 +49,7 @@ func init() {
 	rootCmd.AddCommand(serveCmd)
 
 	rootCmd.AddCommand(eventlogCmd)
-	eventlogCmd.AddCommand(forkCmd)
+	rootCmd.AddCommand(forkCmd)
 	eventlogCmd.AddCommand(traceCmd)
 }
 

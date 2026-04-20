@@ -15,14 +15,19 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/google/ax/internal/config"
+	"github.com/google/ax/proto"
 	"github.com/spf13/cobra"
 )
 
 var (
 	forkSourceConversation string
-	forkSourceSeq         int32
+	forkSourceSeq          int32
 	forkDestConversation   string
 	forkServerAddr         string
+	forkConfigFile         string
 )
 
 var forkCmd = &cobra.Command{
@@ -37,11 +42,55 @@ func init() {
 	forkCmd.Flags().StringVar(&forkSourceConversation, "src-conversation", "", "Source conversation ID to fork from (required)")
 	forkCmd.Flags().Int32Var(&forkSourceSeq, "src-seq", 0, "Sequence number to fork from (optional, defaults to latest)")
 	forkCmd.Flags().StringVar(&forkDestConversation, "dest-conversation", "", "Destination conversation ID (optional, generates UUID if not provided)")
-	forkCmd.Flags().StringVar(&forkServerAddr, "server", "localhost:8494", "gRPC controller server address (default: localhost:8494)")
+	forkCmd.Flags().StringVar(&forkServerAddr, "server", "", "gRPC controller server address (if specified, connects to remote server; otherwise runs with a local built-in AX server)")
+	forkCmd.Flags().StringVar(&forkConfigFile, "config", "ax.yaml", "Path to YAML configuration file (only used with a local built-in AX server)")
 
 	forkCmd.MarkFlagRequired("src-conversation")
 }
 
 func runFork(cmd *cobra.Command, args []string) error {
-	panic("forking not implemented")
+	ctx := cmd.Context()
+
+	if forkServerAddr == "" {
+		// Headless mode
+		cfg, err := config.LoadFromFile(forkConfigFile)
+		if err != nil {
+			return fmt.Errorf("error loading config file '%s': %w", forkConfigFile, err)
+		}
+
+		c, err := newControllerFromConfig(ctx, cfg)
+		if err != nil {
+			return fmt.Errorf("error creating controller: %w", err)
+		}
+		defer c.Close()
+
+		destID, err := c.Fork(ctx, forkSourceConversation, forkSourceSeq, forkDestConversation)
+		if err != nil {
+			return fmt.Errorf("error forking conversation: %w", err)
+		}
+
+		fmt.Printf("Conversation forked successfully. New conversation ID: %s\n", destID)
+		return nil
+	}
+
+	// Remote mode
+	conn, err := connect(forkServerAddr)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := proto.NewEventLogServiceClient(conn)
+
+	resp, err := client.Fork(ctx, &proto.ForkRequest{
+		SrcConversationId:  forkSourceConversation,
+		SrcSeq:             forkSourceSeq,
+		DestConversationId: forkDestConversation,
+	})
+	if err != nil {
+		return fmt.Errorf("error forking conversation: %w", err)
+	}
+
+	fmt.Printf("Conversation forked successfully. New conversation ID: %s\n", resp.ConversationId)
+	return nil
 }
