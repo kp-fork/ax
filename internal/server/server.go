@@ -57,7 +57,14 @@ func (s *Server) Exec(req *proto.ExecRequest, stream grpc.ServerStreamingServer[
 }
 
 func (s *Server) Fork(ctx context.Context, req *proto.ForkRequest) (*proto.ForkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "not implemented")
+	if req.SrcConversationId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "src_conversation_id is required")
+	}
+	destID, err := s.controller.Fork(ctx, req.SrcConversationId, req.SrcSeq, req.DestConversationId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to fork conversation: %v", err)
+	}
+	return &proto.ForkResponse{ConversationId: destID}, nil
 }
 
 func (s *Server) List(ctx context.Context, req *proto.ListRequest) (*proto.ListResponse, error) {
