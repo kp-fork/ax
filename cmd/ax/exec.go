@@ -24,7 +24,6 @@ import (
 	"syscall"
 
 	"github.com/google/ax/cmd/ax/internal"
-	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/controller"
 	"github.com/google/ax/proto"
 	"github.com/google/uuid"
@@ -88,6 +87,18 @@ func runExec(cmd *cobra.Command, args []string) error {
 		}
 		cancel()
 	}()
+
+	if execServerAddr == "" {
+		cfg, err := newConfig(cmd, execConfigFile)
+		if err != nil {
+			return err
+		}
+		c, err := newControllerFromConfig(ctx, cfg)
+		if err != nil {
+			return fmt.Errorf("error creating controller: %w", err)
+		}
+		execController = c
+	}
 
 	return execLoop(ctx, execConversationID, execAgentID, execInput, execLastSeq)
 }
@@ -218,19 +229,6 @@ func runAutoExec(ctx context.Context, d *internal.Display, req *proto.ExecReques
 }
 
 func runExecHeadless(ctx context.Context, d *internal.Display, req *proto.ExecRequest) (*proto.ConfirmationContent, error) {
-	if execController == nil {
-		cfg, err := config.LoadFromFile(execConfigFile)
-		if err != nil {
-			return nil, fmt.Errorf("error loading config file '%s': %w", execConfigFile, err)
-		}
-
-		c, err := newControllerFromConfig(ctx, cfg)
-		if err != nil {
-			return nil, fmt.Errorf("error creating controller: %w", err)
-		}
-		execController = c
-	}
-
 	var confirmation *proto.ConfirmationContent
 	var lastSeq int32
 	outputHandler := controller.ExecHandler(func(resp *proto.ExecResponse) error {

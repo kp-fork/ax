@@ -16,7 +16,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -53,7 +52,7 @@ func init() {
 func runServe(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
-	cfg, err := newConfig(cmd)
+	cfg, err := newConfig(cmd, serveConfigFile)
 	if err != nil {
 		return err
 	}
@@ -90,16 +89,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func newConfig(cmd *cobra.Command) (*config.Config, error) {
-	cfg, err := config.LoadFromFile(serveConfigFile)
-	if errors.Is(err, os.ErrNotExist) && !cmd.Flags().Changed("config") {
-		return config.DefaultConfig(), nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("error loading config file '%s': %w", serveConfigFile, err)
-	}
-	return cfg, nil
-}
 
 func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controller.Controller, error) {
 	// Create event log builder

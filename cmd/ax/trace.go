@@ -52,8 +52,13 @@ func init() {
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {
+	cfg, err := newConfig(cmd, traceConfigFile)
+	if err != nil {
+		return err
+	}
+
 	// Load trace data
-	data, err := loadTraceData(cmd.Context(), conversationID)
+	data, err := loadTraceData(cmd.Context(), cfg, conversationID)
 	if err != nil {
 		return fmt.Errorf("error loading trace data: %w", err)
 	}
@@ -112,11 +117,8 @@ type TraceData struct {
 	Execs      []ExecTrace `json:"execs"`
 }
 
-func loadTraceData(ctx context.Context, convID string) (*TraceData, error) {
-	// The trace command uses the config provided by --config flag
-	configPath := traceConfigFile
-
-	events, rootExecID, err := fetchEventsByConversation(ctx, configPath, convID)
+func loadTraceData(ctx context.Context, cfg *config.Config, convID string) (*TraceData, error) {
+	events, rootExecID, err := fetchEventsByConversation(ctx, cfg, convID)
 	if err != nil {
 		return nil, err
 	}
@@ -129,12 +131,7 @@ func loadTraceData(ctx context.Context, convID string) (*TraceData, error) {
 	return data, nil
 }
 
-func fetchEventsByConversation(ctx context.Context, configPath string, convID string) ([]*proto.ExecutionEvent, string, error) {
-	cfg, err := config.LoadFromFile(configPath)
-	if err != nil {
-		return nil, "", fmt.Errorf("error loading config: %w", err)
-	}
-
+func fetchEventsByConversation(ctx context.Context, cfg *config.Config, convID string) ([]*proto.ExecutionEvent, string, error) {
 	evLog, err := executor.OpenSQLiteEventLog(cfg.EventLog.SQLiteConfig.Filename)
 	if err != nil {
 		return nil, "", fmt.Errorf("could not open sqlite eventlog: %w", err)

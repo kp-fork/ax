@@ -18,9 +18,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/google/ax/internal/config"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -57,4 +59,15 @@ func connect(server string) (*grpc.ClientConn, error) {
 		return nil, fmt.Errorf("failed to connect to server: %w", err)
 	}
 	return conn, nil
+}
+
+func newConfig(cmd *cobra.Command, configFile string) (*config.Config, error) {
+	cfg, err := config.LoadFromFile(configFile)
+	if errors.Is(err, os.ErrNotExist) && !cmd.Flags().Changed("config") {
+		return config.DefaultConfig(), nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error loading config file '%s': %w", configFile, err)
+	}
+	return cfg, nil
 }
