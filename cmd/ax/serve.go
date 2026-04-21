@@ -15,22 +15,15 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	"github.com/google/ax/internal/agent"
-	"github.com/google/ax/internal/config"
-	"github.com/google/ax/internal/controller"
-	"github.com/google/ax/internal/controller/executor"
+	"github.com/google/ax/internal/cliutil"
 	"github.com/google/ax/internal/server"
-	"github.com/google/ax/proto"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 var (
@@ -62,7 +55,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	c, err := newControllerFromConfig(ctx, cfg)
+	c, err := cliutil.NewControllerFromConfig(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("error creating controller: %w", err)
 	}
@@ -88,74 +81,3 @@ func runServe(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-
-func newControllerFromConfig(ctx context.Context, cfg *config.Config) (*controller.Controller, error) {
-	// Create event log builder
-	eventLogBuilder := func() (executor.EventLog, error) {
-		return executor.OpenSQLiteEventLog(cfg.EventLog.SQLiteConfig.Filename)
-	}
-
-	// Create planner builder
-	plannerBuilder := func(ctx context.Context, r *controller.Registry) (agent.Agent, error) {
-		switch cfg.Planner.Type {
-		case "antigravity":
-			return controller.NewAntigravityPlannerAgent(ctx, r, controller.AntigravityPlannerConfig{
-				Endpoint: cfg.Planner.Antigravity.Endpoint,
-			})
-		case "gemini":
-			timeout, err := time.ParseDuration(cfg.Planner.Gemini.Timeout)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse duration: %v", err)
-			}
-			return controller.NewGeminiPlannerAgent(ctx, r, controller.GeminiPlannerConfig{
-				GeminiConfig: &proto.GeminiConfig{
-					Model:        cfg.Planner.Gemini.Model,
-					MaxTokens:    cfg.Planner.Gemini.MaxTokens,
-					Timeout:      durationpb.New(timeout),
-					SystemPrompt: cfg.Planner.Gemini.SystemPrompt,
-				},
-				SkillsDir: cfg.Planner.Gemini.SkillsDir,
-			})
-		default:
-			return nil, fmt.Errorf("unknown planner type: %s", cfg.Planner.Type)
-		}
-	}
-
-	// Build controller config
-	controllerConfig := controller.Config{
-		EventLogBuilder: eventLogBuilder,
-		PlannerBuilder:  plannerBuilder,
-	}
-
-	// Create controller
-	c, err := controller.New(ctx, controllerConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, agentCfg := range cfg.Registry.RemoteAgents {
-		if err := c.Registry().RegisterRemote(agentCfg); err != nil {
-			return nil, fmt.Errorf("failed to register remote agent %s: %w", agentCfg.ID, err)
-		}
-	}
-
-	for _, agentCfg := range cfg.Registry.KubernetesSandboxAgents {
-		if err := c.Registry().RegisterKubernetesSandbox(ctx, agentCfg); err != nil {
-			return nil, fmt.Errorf("failed to register kubernetes sandbox agent %s: %w", agentCfg.ID, err)
-		}
-	}
-
-	for _, agentCfg := range cfg.Registry.ColabAgents {
-		if err := c.Registry().RegisterColab(agentCfg); err != nil {
-			return nil, fmt.Errorf("failed to register colab agent %s: %w", agentCfg.ID, err)
-		}
-	}
-
-	for _, agentCfg := range cfg.Registry.ATEAgents {
-		if err := c.Registry().RegisterATE(ctx, cfg.ATE.Endpoint, agentCfg); err != nil {
-			return nil, fmt.Errorf("failed to register ATE agent %s: %w", agentCfg.ID, err)
-		}
-	}
-
-	return c, nil
-}

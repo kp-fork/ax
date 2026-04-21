@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/google/ax/internal/cliutil"
 	"github.com/google/ax/internal/config"
 	"github.com/google/ax/proto"
 	"github.com/spf13/cobra"
@@ -58,7 +59,7 @@ func runFork(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("error loading config file '%s': %w", forkConfigFile, err)
 		}
 
-		c, err := newControllerFromConfig(ctx, cfg)
+		c, err := cliutil.NewControllerFromConfig(ctx, cfg)
 		if err != nil {
 			return fmt.Errorf("error creating controller: %w", err)
 		}

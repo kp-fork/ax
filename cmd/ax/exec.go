@@ -24,6 +24,7 @@ import (
 	"syscall"
 
 	"github.com/google/ax/cmd/ax/internal"
+	"github.com/google/ax/internal/cliutil"
 	"github.com/google/ax/internal/controller"
 	"github.com/google/ax/proto"
 	"github.com/google/uuid"
@@ -93,7 +94,7 @@ func runExec(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		c, err := newControllerFromConfig(ctx, cfg)
+		c, err := cliutil.NewControllerFromConfig(ctx, cfg)
 		if err != nil {
 			return fmt.Errorf("error creating controller: %w", err)
 		}
