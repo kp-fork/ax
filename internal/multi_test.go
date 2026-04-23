@@ -145,7 +145,7 @@ func TestMulti(t *testing.T) {
 }
 
 func createLocalAgent(transform func(string) string) (*agent.LocalAgent, error) {
-	processFunc := func(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
+	processFunc := func(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
 		for _, msg := range start.Messages {
 			content := msg.GetContent()
 			if content == nil {
@@ -176,17 +176,17 @@ func createLocalAgent(transform func(string) string) (*agent.LocalAgent, error) 
 	}
 
 	return agent.NewLocalAgent(agent.LocalAgentConfig{
-		ProcessFunc:     processFunc,
+		ProcessFunc: processFunc,
 	})
 }
 
 type mockPlanner struct{}
 
-func (m *mockPlanner) ID() string                            { return "__planner" }
-func (m *mockPlanner) Name() string                          { return "Mock Planner" }
+func (m *mockPlanner) ID() string   { return "__planner" }
+func (m *mockPlanner) Name() string { return "Mock Planner" }
 
-func (m *mockPlanner) Close() error                          { return nil }
-func (m *mockPlanner) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
+func (m *mockPlanner) Close() error { return nil }
+func (m *mockPlanner) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
 	var lastText string
 	for _, m := range start.Messages {
 		if textMsg := m.GetContent().GetText(); textMsg != nil {
@@ -204,7 +204,7 @@ func (m *mockPlanner) Connect(ctx context.Context, execID string, start *proto.A
 				},
 			},
 		})
-		_, err := e.Exec(ctx, "local-echo", &proto.AgentStart{
+		_, err := e.Exec(ctx, conversationID, "local-echo", &proto.AgentStart{
 			AgentId:  "local-echo-agent",
 			Messages: inputs,
 		}, handler)
@@ -221,7 +221,7 @@ func (m *mockPlanner) Connect(ctx context.Context, execID string, start *proto.A
 				},
 			},
 		})
-		_, err := e.Exec(ctx, "remote-text", &proto.AgentStart{
+		_, err := e.Exec(ctx, conversationID, "remote-text", &proto.AgentStart{
 			AgentId:  "remote-text-processor",
 			Messages: inputs,
 		}, handler)
@@ -238,7 +238,7 @@ func (m *mockPlanner) Connect(ctx context.Context, execID string, start *proto.A
 				},
 			},
 		})
-		_, err := e.Exec(ctx, "uppercase-task", &proto.AgentStart{
+		_, err := e.Exec(ctx, conversationID, "uppercase-task", &proto.AgentStart{
 			AgentId:  "uppercase",
 			Messages: inputs,
 		}, handler)

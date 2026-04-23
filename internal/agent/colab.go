@@ -157,7 +157,7 @@ const (
 // the agent code, and tears the session down. If the session is terminated
 // due to idle timeout (e.g. while the user is authorizing Drive access),
 // it automatically recreates the session and retries once.
-func (a *ColabAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
+func (a *ColabAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
 	sessionName := colabSessionName(a.config.ID, execID)
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
@@ -341,8 +341,6 @@ func (a *ColabAgent) isSessionAlive(ctx context.Context, sessionName string) boo
 	_, err := a.runColab(ctx, "status", "-s", sessionName)
 	return err == nil
 }
-
-
 
 // Close stops all currently active Colab sessions. This handles the case where
 // Close() is called (e.g. via SIGINT) while one or more Connect() calls are

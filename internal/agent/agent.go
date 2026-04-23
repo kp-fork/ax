@@ -27,7 +27,7 @@ import (
 type OutputHandler func(outgoing *proto.AgentOutputs) error
 
 type Executor interface {
-	Exec(ctx context.Context, execID string, start *proto.AgentStart, o OutputHandler) (proto.State, error)
+	Exec(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, o OutputHandler) (proto.State, error)
 }
 
 // Agent defines the common interface for both local and remote agents.
@@ -36,7 +36,7 @@ type Agent interface {
 	// Connect handles processing of input content.
 	// It calls the output handler for each piece of content generated.
 	// The handler may be called multiple times during processing.
-	Connect(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error
+	Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error
 
 	// Close gracefully shuts down the agent and releases resources.
 	Close() error

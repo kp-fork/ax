@@ -26,11 +26,11 @@ import (
 
 type dummyAgent struct{}
 
-func (a *dummyAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
+func (a *dummyAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	return nil
 }
 
-func (a *dummyAgent) Close() error                          { return nil }
+func (a *dummyAgent) Close() error { return nil }
 
 func TestController_Exec_ResumptionAndIDGeneration(t *testing.T) {
 	ctx := context.Background()
@@ -221,7 +221,7 @@ func TestController_Exec_LastSeq(t *testing.T) {
 
 	err = c.Exec(ctx, &proto.ExecRequest{
 		ConversationId: cid,
-		LastSeq:    1,
+		LastSeq:        1,
 	}, handler)
 	if err != nil {
 		t.Fatal(err)
@@ -320,7 +320,7 @@ func TestController_Exec_InternalOnly(t *testing.T) {
 
 	// Create an agent that emits one internal-only message and one regular message.
 	a := &mockAgentFunc{
-		connectFunc: func(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
+		connectFunc: func(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 			// If we already have the public message in history, don't emit anything.
 			for _, m := range start.Messages {
 				if m.GetContent().GetText().GetText() == "public message" {
@@ -386,7 +386,7 @@ func TestController_Exec_InternalOnly(t *testing.T) {
 	if len(log.AllEvents) != 3 {
 		t.Fatalf("expected 3 events in log.AllEvents, got %d", len(log.AllEvents))
 	}
-	
+
 	// Event 0: Inputs
 	// Event 1: Public message
 	if log.AllEvents[1].Messages[0].GetContent().GetText().GetText() != "public message" {
@@ -397,7 +397,7 @@ func TestController_Exec_InternalOnly(t *testing.T) {
 	if len(log.AllExecEvents) != 3 {
 		t.Fatalf("expected 3 events in log.AllExecEvents, got %d", len(log.AllExecEvents))
 	}
-	
+
 	// Event 1 in execEvents should contain both outputs.
 	outputs := log.AllExecEvents[1].Outputs
 	if len(outputs) != 2 {
@@ -432,7 +432,7 @@ func TestController_Exec_InternalOnly(t *testing.T) {
 
 	err = c2.Exec(ctx, &proto.ExecRequest{
 		ConversationId: cid,
-		LastSeq:    1,
+		LastSeq:        1,
 	}, resumedHandler)
 	if err != nil {
 		t.Fatal(err)
@@ -447,12 +447,11 @@ func TestController_Exec_InternalOnly(t *testing.T) {
 }
 
 type mockAgentFunc struct {
-	connectFunc func(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error
+	connectFunc func(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error
 }
 
-func (m *mockAgentFunc) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
-	return m.connectFunc(ctx, execID, start, e, o)
+func (m *mockAgentFunc) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
+	return m.connectFunc(ctx, conversationID, execID, start, e, o)
 }
 
-func (m *mockAgentFunc) Close() error                          { return nil }
-
+func (m *mockAgentFunc) Close() error { return nil }

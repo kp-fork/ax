@@ -55,7 +55,7 @@ func NewATEAgent(endpoint string, config ATEAgentConfig) (*ATEAgent, error) {
 }
 
 // Connect handles processing of input content by creating an actor and delegating to RemoteAgent.
-func (a *ATEAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
+func (a *ATEAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
 	// 1. Create Actor
 	resp, err := a.ateClient.CreateActor(ctx, execID)
 	if err != nil {
@@ -97,7 +97,7 @@ func (a *ATEAgent) Connect(ctx context.Context, execID string, start *proto.Agen
 		}
 	}()
 
-	return remoteAgent.Connect(ctx, execID, start, e, o)
+	return remoteAgent.Connect(ctx, conversationID, execID, start, e, o)
 }
 
 // Close gracefully shuts down the ATE agent connection.

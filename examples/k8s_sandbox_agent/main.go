@@ -95,7 +95,8 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 		if len(outputs) > 0 {
 			// Send response back via gRPC
 			if err := stream.Send(&proto.AgentMessage{
-				ExecId: req.ExecId,
+				ConversationId: req.ConversationId,
+				ExecId:         req.ExecId,
 				Type: &proto.AgentMessage_Outputs{
 					Outputs: &proto.AgentOutputs{
 						Messages: outputs,
@@ -108,7 +109,8 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 
 		// Send AgentEnd to signal end of outputs.
 		if err := stream.Send(&proto.AgentMessage{
-			ExecId: req.ExecId,
+			ConversationId: req.ConversationId,
+			ExecId:         req.ExecId,
 			Type: &proto.AgentMessage_End{
 				End: &proto.AgentEnd{},
 			},

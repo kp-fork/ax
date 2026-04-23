@@ -24,12 +24,12 @@ import (
 // agentFunc adapts a simple function into the agent.Agent interface.
 type agentFunc func(input []*proto.Message, tm agent.Executor, o agent.OutputHandler)
 
-func (f agentFunc) Connect(ctx context.Context, execID string, start *proto.AgentStart, tm agent.Executor, o agent.OutputHandler) error {
+func (f agentFunc) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, tm agent.Executor, o agent.OutputHandler) error {
 	f(start.Messages, tm, o)
 	return nil
 }
 
-func (f agentFunc) Close() error                        { return nil }
+func (f agentFunc) Close() error { return nil }
 
 func AgentFunc(fn func(input []*proto.Message, tm agent.Executor, o agent.OutputHandler)) agent.Agent {
 	return agentFunc(fn)

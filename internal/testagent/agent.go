@@ -46,7 +46,7 @@ func Agents() map[string]agent.Agent {
 type CodingAgent struct{}
 
 // Connect handles processing of input content with callback handler.
-func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
+func (a *CodingAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	exec := NewExecutor(e, o)
 
 	var history []*proto.Message
@@ -64,7 +64,7 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 			},
 		}
 		inputs = append(inputs, start.Messages...)
-		outputs, err := exec.Exec(ctx, "code", &proto.AgentStart{
+		outputs, err := exec.Exec(ctx, conversationID, "code", &proto.AgentStart{
 			AgentId:  "gemini",
 			Messages: inputs,
 		})
@@ -75,7 +75,7 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 	}
 
 	{
-		outputs, err := exec.Exec(ctx, "docker", &proto.AgentStart{
+		outputs, err := exec.Exec(ctx, conversationID, "docker", &proto.AgentStart{
 			AgentId:  "docker-build",
 			Messages: history,
 		})
@@ -92,7 +92,7 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 		if err != nil {
 			return err
 		}
-		outputs, err := exec.Exec(ctx, "deploy", &proto.AgentStart{
+		outputs, err := exec.Exec(ctx, conversationID, "deploy", &proto.AgentStart{
 			AgentId:  "kubernetes-deploy",
 			Messages: history,
 			Config:   config,
@@ -115,7 +115,7 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 		if err != nil {
 			return err
 		}
-		outputs, err := exec.Exec(ctx, "deploy-more", &proto.AgentStart{
+		outputs, err := exec.Exec(ctx, conversationID, "deploy-more", &proto.AgentStart{
 			AgentId:  "kubernetes-deploy",
 			Messages: history,
 			Config:   config,
@@ -156,7 +156,7 @@ func (a *CodingAgent) Connect(ctx context.Context, execID string, start *proto.A
 				},
 			},
 		})
-		_, err := exec.Exec(ctx, "summarize", &proto.AgentStart{
+		_, err := exec.Exec(ctx, conversationID, "summarize", &proto.AgentStart{
 			AgentId:  "gemini",
 			Messages: history,
 		})
@@ -176,7 +176,7 @@ var pendingRegions = make(map[string][]string) // not for production
 
 type KubernetesDeployAgent struct{}
 
-func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
+func (a *KubernetesDeployAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	exec := NewExecutor(e, o)
 
 	approved, conf := historyutil.HasConfirmationAnswer(start.Messages)
@@ -203,7 +203,7 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 
 		for _, region := range regions {
 			if region != "us-central1" {
-				_, err := exec.Exec(ctx, "mirror-"+region, &proto.AgentStart{
+				_, err := exec.Exec(ctx, conversationID, "mirror-"+region, &proto.AgentStart{
 					AgentId: "docker-mirror",
 					Messages: []*proto.Message{
 						{
@@ -299,8 +299,6 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, execID string, star
 	})
 }
 
-
-
 // Close gracefully shuts down the agent.
 func (a *KubernetesDeployAgent) Close() error {
 	return nil
@@ -318,7 +316,7 @@ func NewExecutor(e agent.Executor, o agent.OutputHandler) *Executor {
 	}
 }
 
-func (e *Executor) Exec(ctx context.Context, execID string, start *proto.AgentStart) ([]*proto.Message, error) {
+func (e *Executor) Exec(ctx context.Context, conversationID string, execID string, start *proto.AgentStart) ([]*proto.Message, error) {
 	var outputs []*proto.Message
 	if execID == "" {
 		var err error
@@ -327,7 +325,7 @@ func (e *Executor) Exec(ctx context.Context, execID string, start *proto.AgentSt
 			return nil, err
 		}
 	}
-	if _, err := e.exec.Exec(ctx, execID, start, func(resp *proto.AgentOutputs) error {
+	if _, err := e.exec.Exec(ctx, conversationID, execID, start, func(resp *proto.AgentOutputs) error {
 		outputs = append(outputs, resp.Messages...)
 		return e.handler(resp)
 	}); err != nil {

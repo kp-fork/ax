@@ -214,7 +214,7 @@ func TestConnect_FullSequence(t *testing.T) {
 		Messages: []*proto.Message{userText("hello world")},
 	}
 
-	if err := setup.agent.Connect(context.Background(), "exec-123", start, nil, handler); err != nil {
+	if err := setup.agent.Connect(context.Background(), "test-conv", "exec-123", start, nil, handler); err != nil {
 		t.Fatalf("Connect: %v", err)
 	}
 
@@ -255,7 +255,7 @@ func TestConnect_SessionCreationFails(t *testing.T) {
 	t.Setenv("COLAB_FAIL_CMD", "new")
 
 	start := &proto.AgentStart{Messages: []*proto.Message{userText("test")}}
-	err := setup.agent.Connect(context.Background(), "e1", start, nil, noopHandler)
+	err := setup.agent.Connect(context.Background(), "test-conv", "e1", start, nil, noopHandler)
 	if err == nil || !strings.Contains(err.Error(), "failed to create colab session") {
 		t.Fatalf("want session creation error, got: %v", err)
 	}
@@ -273,7 +273,7 @@ func TestConnect_ExecFailure(t *testing.T) {
 	t.Setenv("COLAB_FAIL_CMD", "exec")
 
 	start := &proto.AgentStart{Messages: []*proto.Message{userText("test")}}
-	err := setup.agent.Connect(context.Background(), "e1", start, nil, noopHandler)
+	err := setup.agent.Connect(context.Background(), "test-conv", "e1", start, nil, noopHandler)
 	if err == nil {
 		t.Fatal("expected error when exec fails")
 	}
@@ -293,7 +293,7 @@ func TestConnect_NotebookLocalFile(t *testing.T) {
 	t.Setenv("COLAB_EXEC_STDOUT", "analysis complete")
 
 	start := &proto.AgentStart{Messages: []*proto.Message{userText("analyze data")}}
-	if err := setup.agent.Connect(context.Background(), "e1", start, nil, noopHandler); err != nil {
+	if err := setup.agent.Connect(context.Background(), "test-conv", "e1", start, nil, noopHandler); err != nil {
 		t.Fatalf("Connect: %v", err)
 	}
 
@@ -324,7 +324,7 @@ func TestConnect_NotebookDriveFile(t *testing.T) {
 	t.Setenv("COLAB_EXEC_STDOUT", "done")
 
 	start := &proto.AgentStart{Messages: []*proto.Message{userText("analyze trends")}}
-	if err := setup.agent.Connect(context.Background(), "e1", start, nil, noopHandler); err != nil {
+	if err := setup.agent.Connect(context.Background(), "test-conv", "e1", start, nil, noopHandler); err != nil {
 		t.Fatalf("Connect: %v", err)
 	}
 
@@ -372,7 +372,7 @@ func TestConnect_RetryOnSessionTimeout(t *testing.T) {
 	})
 
 	start := &proto.AgentStart{Messages: []*proto.Message{userText("test")}}
-	if err := agent.Connect(context.Background(), "e1", start, nil, handler); err != nil {
+	if err := agent.Connect(context.Background(), "test-conv", "e1", start, nil, handler); err != nil {
 		t.Fatalf("Connect should succeed after retry: %v", err)
 	}
 	if output != "success on retry" {

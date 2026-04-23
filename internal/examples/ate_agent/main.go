@@ -60,7 +60,8 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 		}
 
 		if err := stream.Send(&proto.AgentMessage{
-			ExecId: incoming.ExecId,
+			ConversationId: incoming.ConversationId,
+			ExecId:         incoming.ExecId,
 			Type: &proto.AgentMessage_Outputs{
 				Outputs: &proto.AgentOutputs{
 					Messages: []*proto.Message{msg},
@@ -72,7 +73,8 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 
 		// Send AgentEnd to signal end of outputs.
 		if err := stream.Send(&proto.AgentMessage{
-			ExecId: incoming.ExecId,
+			ConversationId: incoming.ConversationId,
+			ExecId:         incoming.ExecId,
 			Type: &proto.AgentMessage_End{
 				End: &proto.AgentEnd{},
 			},
@@ -81,8 +83,6 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 		}
 	}
 }
-
-
 
 func main() {
 	fmt.Printf("Listening on port: %s\n", port)

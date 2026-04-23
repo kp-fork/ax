@@ -104,15 +104,15 @@ Guidelines:
 	return p, nil
 }
 
-func (p *geminiPlannerAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
-	return p.loop(ctx, start, e, handler)
+func (p *geminiPlannerAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
+	return p.loop(ctx, conversationID, start, e, handler)
 }
 
 func (p *geminiPlannerAgent) Close() error {
 	return nil
 }
 
-func (p *geminiPlannerAgent) loop(ctx context.Context, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) (err error) {
+func (p *geminiPlannerAgent) loop(ctx context.Context, conversationID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) (err error) {
 	var outputs []*proto.Message
 	var outputCapturer = func(resp *proto.AgentOutputs) error {
 		outputs = append(outputs, resp.Messages...)
@@ -142,7 +142,7 @@ func (p *geminiPlannerAgent) loop(ctx context.Context, start *proto.AgentStart, 
 			Messages: append(start.Messages, outputs...),
 		}
 		outputs = nil
-		if _, err := e.Exec(ctx, nextAgentID, start, handler); err != nil {
+		if _, err := e.Exec(ctx, conversationID, nextAgentID, start, handler); err != nil {
 			return err
 		}
 	}

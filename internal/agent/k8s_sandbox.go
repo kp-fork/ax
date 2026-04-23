@@ -76,7 +76,7 @@ func newKubernetesSandboxAgentWithClient(ctx context.Context, client *sandboxcli
 	return agent, nil
 }
 
-func (a *KubernetesSandboxAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
+func (a *KubernetesSandboxAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -188,7 +188,7 @@ func (a *KubernetesSandboxAgent) Connect(ctx context.Context, execID string, sta
 	defer remoteAgent.Close()
 
 	// Forward the request!
-	return remoteAgent.Connect(ctx, execID, start, e, o)
+	return remoteAgent.Connect(ctx, conversationID, execID, start, e, o)
 }
 
 func findAvailablePort() (int, error) {

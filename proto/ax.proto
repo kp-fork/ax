@@ -44,11 +44,12 @@ message AgentOutputs {
 message AgentEnd {}
 
 message AgentMessage {
-  string exec_id = 1;
+  string conversation_id = 1;
+  string exec_id = 2;
   oneof type {
-    AgentStart start = 2;
-    AgentOutputs outputs = 3;
-    AgentEnd end = 4;
+    AgentStart start = 3;
+    AgentOutputs outputs = 4;
+    AgentEnd end = 5;
   }
 }
 

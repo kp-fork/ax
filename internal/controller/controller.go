@@ -234,7 +234,7 @@ func (d *Controller) execute(ctx context.Context, conversationID string, execID 
 	}); err != nil {
 		return err
 	}
-	state, err := e.Exec(ctx, execID, &proto.AgentStart{
+	state, err := e.Exec(ctx, conversationID, execID, &proto.AgentStart{
 		AgentId:  agentID,
 		Config:   agentConfig,
 		Messages: append(history, newInputs...),

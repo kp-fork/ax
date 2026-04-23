@@ -24,7 +24,7 @@ import (
 
 type DockerBuilderAgent struct{}
 
-func (a *DockerBuilderAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
+func (a *DockerBuilderAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	o(&proto.AgentOutputs{
 		Messages: []*proto.Message{{
 			Role: "assistant",
@@ -68,8 +68,6 @@ func (a *DockerBuilderAgent) Connect(ctx context.Context, execID string, start *
 	return nil
 }
 
-
-
 // Close gracefully shuts down the agent.
 func (a *DockerBuilderAgent) Close() error {
 	return nil
@@ -77,7 +75,7 @@ func (a *DockerBuilderAgent) Close() error {
 
 type DockerMirrorAgent struct{}
 
-func (a *DockerMirrorAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
+func (a *DockerMirrorAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, o agent.OutputHandler) error {
 	o(&proto.AgentOutputs{
 		Messages: []*proto.Message{{
 			Role: "assistant",

@@ -25,12 +25,12 @@ import (
 // LocalAgent wraps a local (in-process) agent implementation.
 // It implements the Agent interface for agents running in the same process as the controller.
 type LocalAgent struct {
-	processFunc     func(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error
+	processFunc func(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error
 }
 
 // LocalAgentConfig configures a local agent.
 type LocalAgentConfig struct {
-	ProcessFunc     func(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error
+	ProcessFunc func(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error
 }
 
 // NewLocalAgent creates a new local agent with the provided configuration.
@@ -40,13 +40,13 @@ func NewLocalAgent(config LocalAgentConfig) (*LocalAgent, error) {
 	}
 
 	return &LocalAgent{
-		processFunc:     config.ProcessFunc,
+		processFunc: config.ProcessFunc,
 	}, nil
 }
 
 // Connect handles processing of input content with callback handler.
-func (a *LocalAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
-	return a.processFunc(ctx, execID, start, e, o)
+func (a *LocalAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
+	return a.processFunc(ctx, conversationID, execID, start, e, o)
 }
 
 // Close gracefully shuts down the agent.

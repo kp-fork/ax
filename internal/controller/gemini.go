@@ -54,7 +54,7 @@ func (a *GeminiAgent) config(start *proto.AgentStart) (*proto.GeminiConfig, erro
 	return &cfg, nil
 }
 
-func (a *GeminiAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
+func (a *GeminiAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
 	cfg, err := a.config(start)
 	if err != nil {
 		return err

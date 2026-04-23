@@ -48,7 +48,7 @@ func DefaultExecutor(eventLog EventLog, registry map[string]agent.Agent) agent.E
 	}
 }
 
-func (tm *defaultExecutor) Exec(ctx context.Context, execID string, start *proto.AgentStart, o agent.OutputHandler) (proto.State, error) {
+func (tm *defaultExecutor) Exec(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, o agent.OutputHandler) (proto.State, error) {
 	execID = newExecID(tm.execID, execID)
 	a, ok := tm.registry[start.AgentId]
 	if !ok {
@@ -78,11 +78,12 @@ func (tm *defaultExecutor) Exec(ctx context.Context, execID string, start *proto
 	if state == proto.State_STATE_COMPLETED {
 		return proto.State_STATE_COMPLETED, nil
 	}
-	return tm.exec(ctx, execID, start, tm.eventLog, a, allInputs, o)
+	return tm.exec(ctx, conversationID, execID, start, tm.eventLog, a, allInputs, o)
 }
 
 func (tm *defaultExecutor) exec(
 	ctx context.Context,
+	conversationID string,
 	execID string,
 	start *proto.AgentStart,
 	el EventLog,
@@ -113,7 +114,7 @@ func (tm *defaultExecutor) exec(
 	}
 
 	start.Messages = history
-	if err := a.Connect(ctx, execID, start, child, outputBuffer); err != nil {
+	if err := a.Connect(ctx, conversationID, execID, start, child, outputBuffer); err != nil {
 		// _ = logFailed(ctx, el, execID, start) // Attempt to log failure, but prioritize returning the original error.
 		return proto.State_STATE_UNSPECIFIED, err
 	}

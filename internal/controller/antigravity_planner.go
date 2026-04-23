@@ -58,8 +58,8 @@ func NewAntigravityPlannerAgent(ctx context.Context, registry *Registry, cfg Ant
 		return nil, fmt.Errorf("failed to parse duration %q: %w", timeoutStr, err)
 	}
 	return &AntigravityPlannerAgent{
-		registry:   registry,
-		config:     cfg,
+		registry: registry,
+		config:   cfg,
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
@@ -67,12 +67,12 @@ func NewAntigravityPlannerAgent(ctx context.Context, registry *Registry, cfg Ant
 }
 
 // Connect starts the agent loop.
-func (p *AntigravityPlannerAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
-	return p.loop(ctx, execID, start, e, handler)
+func (p *AntigravityPlannerAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
+	return p.loop(ctx, conversationID, execID, start, e, handler)
 }
 
 // loop is the main execution loop for the Antigravity planner.
-func (p *AntigravityPlannerAgent) loop(ctx context.Context, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
+func (p *AntigravityPlannerAgent) loop(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e agent.Executor, handler agent.OutputHandler) error {
 	payload, err := p.preparePayload(execID, start)
 	if err != nil {
 		return err

@@ -65,7 +65,7 @@ func (a *RemoteAgent) connect() (*grpc.ClientConn, error) {
 }
 
 // Connect handles processing of input content with the remote agent.
-func (a *RemoteAgent) Connect(ctx context.Context, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
+func (a *RemoteAgent) Connect(ctx context.Context, conversationID string, execID string, start *proto.AgentStart, e Executor, o OutputHandler) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, "execution-id", execID)
 
 	conn, err := a.connect()
@@ -81,7 +81,8 @@ func (a *RemoteAgent) Connect(ctx context.Context, execID string, start *proto.A
 	}
 
 	if err := stream.Send(&proto.AgentMessage{
-		ExecId: execID,
+		ConversationId: conversationID,
+		ExecId:         execID,
 		Type: &proto.AgentMessage_Start{
 			Start: start,
 		},
@@ -109,6 +110,9 @@ func (a *RemoteAgent) Connect(ctx context.Context, execID string, start *proto.A
 		case *proto.AgentMessage_Start:
 			return errors.New("starting new executions from remote agents is not supported yet")
 		case *proto.AgentMessage_Outputs:
+			if resp.ConversationId != conversationID {
+				return fmt.Errorf("received outputs for different conversation id: %s != %s", resp.ConversationId, conversationID)
+			}
 			if resp.ExecId != execID {
 				return fmt.Errorf("received outputs for different execution id: %s != %s", resp.ExecId, execID)
 			}
@@ -116,6 +120,9 @@ func (a *RemoteAgent) Connect(ctx context.Context, execID string, start *proto.A
 				return fmt.Errorf("handler error: %w", err)
 			}
 		case *proto.AgentMessage_End:
+			if resp.ConversationId != conversationID {
+				return fmt.Errorf("received end for different conversation id: %s != %s", resp.ConversationId, conversationID)
+			}
 			if resp.ExecId != execID {
 				return fmt.Errorf("received end for different execution id: %s != %s", resp.ExecId, execID)
 			}
