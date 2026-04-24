@@ -22,6 +22,7 @@ package proto
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -41,7 +42,13 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// AgentService defines the gRPC service for agent communication
+// AgentService defines the gRPC service for agent communication.
+// This protocol enables a bidirectional communication between the
+// controller and the agent. Agents can start new agentic calls via
+// the controller within the same execution boundary by using the channel.
+//
+// WARNING: There will be significant changes to this protocol as
+// we are solidifying resumption on the wire.
 type AgentServiceClient interface {
 	// Connect is used by agents to connect to the controller.
 	Connect(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, AgentMessage], error)
@@ -84,7 +91,13 @@ func (c *agentServiceClient) HealthCheck(ctx context.Context, in *HealthCheckReq
 // All implementations must embed UnimplementedAgentServiceServer
 // for forward compatibility.
 //
-// AgentService defines the gRPC service for agent communication
+// AgentService defines the gRPC service for agent communication.
+// This protocol enables a bidirectional communication between the
+// controller and the agent. Agents can start new agentic calls via
+// the controller within the same execution boundary by using the channel.
+//
+// WARNING: There will be significant changes to this protocol as
+// we are solidifying resumption on the wire.
 type AgentServiceServer interface {
 	// Connect is used by agents to connect to the controller.
 	Connect(grpc.BidiStreamingServer[AgentMessage, AgentMessage]) error
@@ -101,10 +114,10 @@ type AgentServiceServer interface {
 type UnimplementedAgentServiceServer struct{}
 
 func (UnimplementedAgentServiceServer) Connect(grpc.BidiStreamingServer[AgentMessage, AgentMessage]) error {
-	return status.Error(codes.Unimplemented, "method Connect not implemented")
+	return status.Errorf(codes.Unimplemented, "method Connect not implemented")
 }
 func (UnimplementedAgentServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
 func (UnimplementedAgentServiceServer) testEmbeddedByValue()                      {}
@@ -117,7 +130,7 @@ type UnsafeAgentServiceServer interface {
 }
 
 func RegisterAgentServiceServer(s grpc.ServiceRegistrar, srv AgentServiceServer) {
-	// If the following call panics, it indicates UnimplementedAgentServiceServer was
+	// If the following call pancis, it indicates UnimplementedAgentServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
@@ -248,10 +261,10 @@ type ControllerServiceServer interface {
 type UnimplementedControllerServiceServer struct{}
 
 func (UnimplementedControllerServiceServer) Exec(*ExecRequest, grpc.ServerStreamingServer[ExecResponse]) error {
-	return status.Error(codes.Unimplemented, "method Exec not implemented")
+	return status.Errorf(codes.Unimplemented, "method Exec not implemented")
 }
 func (UnimplementedControllerServiceServer) RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RegisterAgent not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
 }
 func (UnimplementedControllerServiceServer) mustEmbedUnimplementedControllerServiceServer() {}
 func (UnimplementedControllerServiceServer) testEmbeddedByValue()                           {}
@@ -264,7 +277,7 @@ type UnsafeControllerServiceServer interface {
 }
 
 func RegisterControllerServiceServer(s grpc.ServiceRegistrar, srv ControllerServiceServer) {
-	// If the following call panics, it indicates UnimplementedControllerServiceServer was
+	// If the following call pancis, it indicates UnimplementedControllerServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
@@ -404,13 +417,13 @@ type EventLogServiceServer interface {
 type UnimplementedEventLogServiceServer struct{}
 
 func (UnimplementedEventLogServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method List not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
 func (UnimplementedEventLogServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Delete not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedEventLogServiceServer) Fork(context.Context, *ForkRequest) (*ForkResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Fork not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method Fork not implemented")
 }
 func (UnimplementedEventLogServiceServer) mustEmbedUnimplementedEventLogServiceServer() {}
 func (UnimplementedEventLogServiceServer) testEmbeddedByValue()                         {}
@@ -423,7 +436,7 @@ type UnsafeEventLogServiceServer interface {
 }
 
 func RegisterEventLogServiceServer(s grpc.ServiceRegistrar, srv EventLogServiceServer) {
-	// If the following call panics, it indicates UnimplementedEventLogServiceServer was
+	// If the following call pancis, it indicates UnimplementedEventLogServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.

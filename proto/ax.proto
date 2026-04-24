@@ -92,7 +92,13 @@ message HealthCheckResponse {
   string message = 2;
 }
 
-// AgentService defines the gRPC service for agent communication
+// AgentService defines the gRPC service for agent communication.
+// This protocol enables a bidirectional communication between the
+// controller and the agent. Agents can start new agentic calls via
+// the controller within the same execution boundary by using the channel.
+//
+// WARNING: There will be significant changes to this protocol as
+// we are solidifying resumption on the wire.
 service AgentService {
   // Connect is used by agents to connect to the controller.
   rpc Connect(stream AgentMessage) returns (stream AgentMessage);
@@ -113,7 +119,7 @@ enum State {
 message ExecRequest {
   string conversation_id = 1;            // Unique conversation identifier
   repeated Message inputs = 2;           // New inputs
-  int32 last_seq = 3;               // Last sequence number seen by the client
+  int32 last_seq = 3;                    // Last sequence number seen by the client
 
   string agent_id = 4;                   // Agent ID, if empty planner is used
   google.protobuf.Any agent_config = 5;  // Agent configuration if any

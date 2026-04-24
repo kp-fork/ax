@@ -1,24 +1,26 @@
 # Agent eXecutor (AX)
 
 > [!WARNING]
-> 🚧 This project is in active development and may introduce breaking changes.
+> 🚧 This project is in active development and WILL introduce breaking changes.
 
 AX, short for Agent eXecutor, is a distributed agent runtime. It provides a
 runtime that coordinates agentic loops, manages executions with event logging,
-and communicates with both local and remote agents via streaming protocols.
-AX knows how to resume and recover from failures, even in distributed fashion.
+and communicates with both local and remote actors.
+AX is designed for reliability, with native support for recovery
+and execution resumption, even in complex distributed setups.
 
 ## Features
 
-- **Distributed Runtime**: Controller, skills, tools, and agents can execute in isolation
+- **Distributed Runtime**: Controller, skills, tools, and agents can execute in isolation without having side effects on each other
 - **Resumption**: Automatic recovery from failures or interruptions
-- **Local & Remote Agents**: Support for both in-process and remote agent deployment
-- **Tools and Skills**: Built-in bash tool and agent skills support
-- **Registry**: Agent discovery and selection
+- **Skills, Tools, Agents**: Support for skill, tool, and agent selection and execution
+- **Auditing and Policy**: All user and agentic calls are coordinated by a central controller, easy to control and audit the overall execution and skill/tool/agent calls
+- **Built-in Capabilities**: Antigravity as the default harness, integrated Bash tool, and Gemini agent support
 
 Built-in consistency and resumability features:
 - **Single-Writer Architecture**: Centralized controller ensures consistent state management
 - **Event Log**: Durable execution state with automatic recovery
+- **Advanced Resumption**: Support for compute-layer actor resumption on compatible platforms
 
 ## Overview
 
@@ -28,13 +30,13 @@ Built-in consistency and resumability features:
 │  - Executor            │--(in process)---| local  agent |
 │  - Event Log           │                 └──────────────┘
 │  - Registry            │                 ┌──────────────┐
-│  - Local Agents        │--(gRPC stream)--| remote agent |
-│  - Tools & Skills      │                 └──────────────┘
+│  - Tools               │--(gRPC stream)--| remote agent |
+│  - Skills              │                 └──────────────┘
 └────────────────────────┘
 ```
 
-As agents evolve from simple assistants to autonomous workers,
-developers need a robust runtime to manage state, ensure reliability,
+As agents evolve from simple assistants to autonomous long running workers,
+builders need a robust runtime to manage state, ensure reliability,
 and audit execution. As we are moving away from monolithic agents towards
 distributed harnesses where tools, skills and agents are deployed as
 isolated actors, a distributed runtime with dynamically spawned isolated
@@ -42,6 +44,12 @@ workers becomes a necessity. AX provides the foundational layer to fill these ga
 
 While compute-agnostic, AX is optimized to provide the best
 experience on Kubernetes.
+
+We expect every sophisticated agentic application will need the capabilities provided by AX.
+We are building this layer as a general widely available foundation,
+enabling builders to focus on building their applications rather than infrastructure.
+We decided to build this project in public to validate every design decision before
+a stable release is cut. We highly encourage you to give us feedback.
 
 ## Installation
 
@@ -63,7 +71,7 @@ You should see the ax CLI usage information.
 
 ## Quick Start
 
-### 1. Run exec
+### 1. Execute
 
 The CLI provides an easy way to execute by using the
 agents and built-in tools already linked into the AX binary.
@@ -113,7 +121,7 @@ ax exec \
   --resume
 ```
 
-### 2. Run exec with Custom Agents
+### 2. Execute with Custom Agents
 
 Most developers want to build their own agents. AX allows running custom agents as remote
 or sandbox agents. This example demonstrates how the AX server executes remote agents
@@ -139,7 +147,7 @@ registry:
 
 ax serve
 ```
-The server exposes the `AXService` on port `:8494` by default.
+The server exposes the service on port `:8494` by default.
 
 **Terminal 3** - Register the remote agent and execute:
 ```bash
@@ -351,16 +359,26 @@ requires explicit user approval via a confirmation flow before running.
 
 ### Custom Agents
 
-There are several ways to register custom agents in AX by implementing
+Custom agents can be registered by implementing
 the `AgentService` interface defined in `proto/ax.proto`:
 
 - [Remote Agent](docs/remote-agent.md)
 - [Kubernetes Sandbox Agents](docs/k8s-sandbox-agent.md)
 
 ## What AX is NOT?
-* An agentic framework, AX is agnostic of the framework used to build agents.
+* An agentic framework, AX is agnostic of the framework used to build agents. We are working with
+  framework authors (e.g. ADK) to provide built-in support for AX.
 * A container or job scheduler, we delegate it to the new capabilities in Kubernetes.
 * A specific harness like a coding agent, we allow bringing any harness as an agent.
+* A model specific controller. AX is agnostic of the models used.
+
+## Acknowledgements
+
+We thank Google DeepMind for their earlier work in distributed harnesses and
+their current work on Antigravity. AX is heavily influenced by this collobration
+and the internal agentic stack we together have built for Google.
+We thank the Google Kubernetes Engine team for their deep contributions and
+insights regarding isolation, resumption and job scheduling.
 
 ## License
 
