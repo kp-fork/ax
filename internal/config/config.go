@@ -18,6 +18,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/google/ax/internal/agent"
 	"gopkg.in/yaml.v3"
@@ -61,8 +62,8 @@ type EventLogConfig struct {
 
 // PlannerConfig configures the planner.
 type PlannerConfig struct {
-	Type   string              `yaml:"type"` // "gemini" or "antigravity"
-	Gemini GeminiPlannerConfig `yaml:"gemini,omitempty"`
+	Type        string                   `yaml:"type"` // "gemini" or "antigravity"
+	Gemini      GeminiPlannerConfig      `yaml:"gemini,omitempty"`
 	Antigravity AntigravityPlannerConfig `yaml:"antigravity,omitempty"`
 }
 
@@ -89,6 +90,24 @@ type GeminiPlannerConfig struct {
 	Timeout      string  `yaml:"timeout,omitempty"`
 	SystemPrompt string  `yaml:"system_prompt,omitempty"`
 	SkillsDir    string  `yaml:"skills_dir,omitempty"` // Directory to discover skills from
+}
+
+func (c *GeminiPlannerConfig) setDefaults() {
+	if c.Model == "" {
+		c.Model = "gemini-3-flash-preview"
+	}
+	if c.Timeout == "" {
+		c.Timeout = "30s"
+	}
+}
+
+// GeminiConfig is the configuration for a Gemini agent execution.
+type GeminiConfig struct {
+	Model        string        `json:"model,omitempty" yaml:"model,omitempty"`
+	SystemPrompt string        `json:"system_prompt,omitempty" yaml:"system_prompt,omitempty"`
+	MaxTokens    int32         `json:"max_tokens,omitempty" yaml:"max_tokens,omitempty"`
+	Timeout      time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Tools        []string      `json:"tools,omitempty" yaml:"tools,omitempty"`
 }
 
 // ATEAgentConfig allows registering a new agent with an ATE actor template.
@@ -187,6 +206,9 @@ func (c *Config) setDefaults() {
 	// Planner defaults
 	if c.Planner.Type == "" {
 		c.Planner.Type = "gemini"
+	}
+	if c.Planner.Type == "gemini" {
+		c.Planner.Gemini.setDefaults()
 	}
 	if c.Planner.Type == "antigravity" {
 		c.Planner.Antigravity.setDefaults()

@@ -16,18 +16,19 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
-	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/google/ax/internal/agent"
+	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/skills"
 	"github.com/google/ax/proto"
 	"google.golang.org/genai"
-	pb "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -40,16 +41,16 @@ func NewGeminiAgent() *GeminiAgent {
 	return &GeminiAgent{}
 }
 
-func (a *GeminiAgent) config(start *proto.AgentStart) (*proto.GeminiConfig, error) {
+func (a *GeminiAgent) config(start *proto.AgentStart) (*config.GeminiConfig, error) {
 	if len(start.AgentConfig) == 0 {
-		return &proto.GeminiConfig{
+		return &config.GeminiConfig{
 			Model:   "gemini-3-flash-preview",
-			Timeout: &duration.Duration{Seconds: 30},
+			Timeout: 30 * time.Second,
 		}, nil
 	}
 
-	var cfg proto.GeminiConfig
-	if err := pb.Unmarshal(start.AgentConfig, &cfg); err != nil {
+	var cfg config.GeminiConfig
+	if err := json.Unmarshal(start.AgentConfig, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal Gemini config: %w", err)
 	}
 	return &cfg, nil
@@ -68,7 +69,11 @@ func (a *GeminiAgent) Connect(ctx context.Context, conversationID string, execID
 
 	inputs := start.Messages
 	contents := protoToContents(inputs)
-	ctx, cancel := context.WithTimeout(ctx, cfg.Timeout.AsDuration())
+	timeout := 30 * time.Second
+	if cfg.Timeout != 0 {
+		timeout = cfg.Timeout
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	var systemPrompt *genai.Content

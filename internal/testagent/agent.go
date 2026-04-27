@@ -18,16 +18,15 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/internal/historyutil"
-	testagentpb "github.com/google/ax/internal/testagent/proto"
 	"github.com/google/ax/proto"
 	"github.com/google/uuid"
-	pb "google.golang.org/protobuf/proto"
 )
 
 // Please note that this is not production code. testagent is only for testing ax.
@@ -41,6 +40,10 @@ func Agents() map[string]agent.Agent {
 		"docker-mirror":     &DockerMirrorAgent{},
 		"kubernetes-deploy": &KubernetesDeployAgent{},
 	}
+}
+
+type KubernetesDeployAgentConfig struct {
+	Regions []string `json:"regions"`
 }
 
 type CodingAgent struct{}
@@ -86,15 +89,15 @@ func (a *CodingAgent) Connect(ctx context.Context, conversationID string, execID
 	}
 
 	{
-		config, err := pb.Marshal(&testagentpb.KubernetesDeployAgentConfig{
+		config, err := json.Marshal(&KubernetesDeployAgentConfig{
 			Regions: []string{"us-central1"},
 		})
 		if err != nil {
 			return err
 		}
 		outputs, err := exec.Exec(ctx, conversationID, "deploy", &proto.AgentStart{
-			AgentId:  "kubernetes-deploy",
-			Messages: history,
+			AgentId:     "kubernetes-deploy",
+			Messages:    history,
 			AgentConfig: config,
 		})
 		if err != nil {
@@ -109,15 +112,15 @@ func (a *CodingAgent) Connect(ctx context.Context, conversationID string, execID
 	}
 
 	{
-		config, err := pb.Marshal(&testagentpb.KubernetesDeployAgentConfig{
+		config, err := json.Marshal(&KubernetesDeployAgentConfig{
 			Regions: []string{"europe-north1", "asia-east1", "us-west2"},
 		})
 		if err != nil {
 			return err
 		}
 		outputs, err := exec.Exec(ctx, conversationID, "deploy-more", &proto.AgentStart{
-			AgentId:  "kubernetes-deploy",
-			Messages: history,
+			AgentId:     "kubernetes-deploy",
+			Messages:    history,
 			AgentConfig: config,
 		})
 		if err != nil {
@@ -274,8 +277,8 @@ func (a *KubernetesDeployAgent) Connect(ctx context.Context, conversationID stri
 	if start.AgentConfig == nil {
 		return fmt.Errorf("no config for id=%v", execID)
 	}
-	var config testagentpb.KubernetesDeployAgentConfig
-	if err := pb.Unmarshal(start.AgentConfig, &config); err != nil {
+	var config KubernetesDeployAgentConfig
+	if err := json.Unmarshal(start.AgentConfig, &config); err != nil {
 		return err
 	}
 	if len(config.Regions) == 0 {

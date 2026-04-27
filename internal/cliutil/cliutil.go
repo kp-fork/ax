@@ -23,8 +23,6 @@ import (
 	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/controller"
 	"github.com/google/ax/internal/controller/executor"
-	"github.com/google/ax/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 // NewControllerFromConfig creates a new Controller instance based on the provided configuration.
@@ -55,10 +53,10 @@ func NewControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 				return nil, fmt.Errorf("failed to parse duration: %v", err)
 			}
 			return controller.NewGeminiPlannerAgent(ctx, r, controller.GeminiPlannerConfig{
-				GeminiConfig: &proto.GeminiConfig{
+				GeminiConfig: &config.GeminiConfig{
 					Model:        cfg.Planner.Gemini.Model,
 					MaxTokens:    cfg.Planner.Gemini.MaxTokens,
-					Timeout:      durationpb.New(timeout),
+					Timeout:      timeout,
 					SystemPrompt: cfg.Planner.Gemini.SystemPrompt,
 				},
 				SkillsDir: cfg.Planner.Gemini.SkillsDir,

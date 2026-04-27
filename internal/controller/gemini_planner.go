@@ -19,9 +19,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
-	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/google/ax/internal/agent"
+	"github.com/google/ax/internal/config"
 	"github.com/google/ax/proto"
 	"github.com/google/uuid"
 	"google.golang.org/genai"
@@ -29,7 +30,7 @@ import (
 
 // GeminiPlannerConfig configures the Gemini-based planner.
 type GeminiPlannerConfig struct {
-	GeminiConfig *proto.GeminiConfig
+	GeminiConfig *config.GeminiConfig
 	SkillsDir    string // Directory for discovering skills (optional)
 	MaxSteps     int    // Max steps (default: 100)
 }
@@ -44,23 +45,23 @@ type geminiPlannerAgent struct {
 }
 
 // NewGeminiPlannerAgent creates a new Gemini-based agent.
-func NewGeminiPlannerAgent(ctx context.Context, registry *Registry, config GeminiPlannerConfig) (agent.Agent, error) {
-	if config.GeminiConfig == nil {
-		config.GeminiConfig = &proto.GeminiConfig{}
+func NewGeminiPlannerAgent(ctx context.Context, registry *Registry, cfg GeminiPlannerConfig) (agent.Agent, error) {
+	if cfg.GeminiConfig == nil {
+		cfg.GeminiConfig = &config.GeminiConfig{}
 	}
-	if config.GeminiConfig.Timeout == nil {
-		config.GeminiConfig.Timeout = &duration.Duration{Seconds: 30}
+	if cfg.GeminiConfig.Timeout == 0 {
+		cfg.GeminiConfig.Timeout = 30 * time.Second
 	}
-	if config.GeminiConfig.Model == "" {
-		config.GeminiConfig.Model = os.Getenv("AX_GEMINI_MODEL")
-		if config.GeminiConfig.Model == "" {
-			config.GeminiConfig.Model = "gemini-3-flash-preview"
+	if cfg.GeminiConfig.Model == "" {
+		cfg.GeminiConfig.Model = os.Getenv("AX_GEMINI_MODEL")
+		if cfg.GeminiConfig.Model == "" {
+			cfg.GeminiConfig.Model = "gemini-3-flash-preview"
 		}
 	}
 
 	// Default system prompt
-	if config.GeminiConfig.SystemPrompt == "" {
-		config.GeminiConfig.SystemPrompt = `You are an intelligent orchestrator. Your role is to analyze the conversation history and user requests, then select the most appropriate agent to handle the task.
+	if cfg.GeminiConfig.SystemPrompt == "" {
+		cfg.GeminiConfig.SystemPrompt = `You are an intelligent orchestrator. Your role is to analyze the conversation history and user requests, then select the most appropriate agent to handle the task.
 
 Available tools have been provided to you as function tools. Each agent has:
 - A unique ID
@@ -85,7 +86,7 @@ Guidelines:
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
-	skillsTool, err := NewSkillsTool(config.SkillsDir)
+	skillsTool, err := NewSkillsTool(cfg.SkillsDir)
 	if err != nil && err != io.EOF {
 		return nil, fmt.Errorf("failed to initialize skills tool: %w", err)
 	}
@@ -95,7 +96,7 @@ Guidelines:
 		bashTool:   &BashTool{},
 		skillsTool: skillsTool,
 		registry:   registry,
-		config:     config,
+		config:     cfg,
 	}
 
 	if sp := skillsTool.SystemPrompt(); sp != "" {
@@ -165,7 +166,7 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 	}
 
 	contents := protoToContents(inputs)
-	ctx, cancel := context.WithTimeout(ctx, p.config.GeminiConfig.Timeout.AsDuration())
+	ctx, cancel := context.WithTimeout(ctx, p.config.GeminiConfig.Timeout)
 	defer cancel()
 
 	resp, err := p.client.Models.GenerateContent(ctx, p.config.GeminiConfig.Model, contents, &genai.GenerateContentConfig{
