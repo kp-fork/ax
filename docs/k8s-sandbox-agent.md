@@ -10,15 +10,12 @@ AX supports dynamically provisioning secure, isolated agents on Kubernetes via t
 ## Setup: Deploying the Router
 Before using Sandbox Agents remotely and developing locally, you must deploy the `sandbox-router` into your cluster. This router proxies traffic securely to the isolated gVisor pods (direct port-forwarding to gVisor pods is not supported by Kubernetes due to netstack isolation).
 
-1. Cross-compile the proxy binary via Make and inject it into an Alpine Pod:
+1. Apply the manifest:
 ```bash
-# Build the router for linux and copy it into the cluster
-make build-router
-kubectl apply -f cmd/sandbox-router/sandbox-router.yaml
-kubectl wait --for=condition=Ready pod -l app=sandbox-router --timeout=60s
-POD_NAME=$(kubectl get pods -l app=sandbox-router -o jsonpath='{.items[0].metadata.name}')
-kubectl cp sandbox-router $POD_NAME:/app/sandbox-router
-kubectl exec $POD_NAME -- touch /app/.done
+
+# Apply the manifest
+kubectl apply -f cmd/k8s-sandbox-router/sandbox-router.yaml
+kubectl rollout status deployment/sandbox-router --timeout=60s
 ```
 
 2. Expose it as a service:

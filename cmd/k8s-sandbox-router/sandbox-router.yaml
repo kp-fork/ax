@@ -30,20 +30,6 @@ spec:
     spec:
       containers:
       - name: router
-        # TODO: consider other options instead of Alpine
-        image: alpine:latest
-        command: ["/bin/sh", "-c"]
-        args:
-        - |
-          while [ ! -f /app/.done ]; do sleep 1; done
-          echo "Starting router..."
-          chmod +x /app/sandbox-router
-          exec /app/sandbox-router
+        image: gcr.io/ax-container-images/k8s-sandbox-router
         ports:
         - containerPort: 8080
-        volumeMounts:
-        - name: app-vol
-          mountPath: /app
-      volumes:
-      - name: app-vol
-        emptyDir: {}
