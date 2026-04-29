@@ -369,6 +369,8 @@ the `AgentService` interface defined in `proto/ax.proto`:
 - [Kubernetes Sandbox Agents](docs/k8s-sandbox-agent.md)
 
 ## What AX is NOT?
+* Managed service. AX is self served, and isn't a managed service. We make it easy for users
+  to deploy it on their clusters.
 * An agentic framework, AX is agnostic of the framework used to build agents. We are working with
   framework authors (e.g. ADK) to provide built-in support for AX.
 * A specific harness like a coding agent, we allow bringing any harness as an agent.
