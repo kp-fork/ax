@@ -14,7 +14,7 @@ Before using Sandbox Agents remotely and developing locally, you must deploy the
 ```bash
 
 # Apply the manifest
-kubectl apply -f cmd/k8s-sandbox-router/sandbox-router.yaml
+kubectl apply -f internal/experimental/k8s-sandbox-router/sandbox-router.yaml
 kubectl rollout status deployment/sandbox-router --timeout=60s
 ```
 

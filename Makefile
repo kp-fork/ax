@@ -76,4 +76,4 @@ ate-agent-image:
 
 k8s-sandbox-router-image:
 	@echo "Building sandbox-router container image with ko..."
-	ko build --base-import-paths ./cmd/k8s-sandbox-router
+	ko build --base-import-paths ./internal/experimental/k8s-sandbox-router
