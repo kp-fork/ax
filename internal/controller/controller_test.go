@@ -236,6 +236,52 @@ func TestController_Exec_LastSeq(t *testing.T) {
 	}
 }
 
+func TestController_Exec_LastSeq_NotFound(t *testing.T) {
+	ctx := context.Background()
+	cid := "test-conv-seq-not-found"
+
+	log := &executortest.MemoryEventLog{}
+	// Pre-populate history
+	log.AllEvents = []*proto.ConversationEvent{
+		{
+			ConversationId: cid,
+			Seq:            1,
+			Messages: []*proto.Message{
+				{Role: "user", Content: &proto.Content{Type: &proto.Content_Text{Text: &proto.TextContent{Text: "msg 1"}}}},
+			},
+			State: proto.State_STATE_COMPLETED,
+		},
+	}
+
+	c, err := New(ctx, Config{
+		EventLogBuilder: func() (executor.EventLog, error) {
+			return log, nil
+		},
+		PlannerBuilder: func(ctx context.Context, r *Registry) (agent.Agent, error) {
+			return &dummyAgent{}, nil
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	handler := ExecHandler(func(resp *proto.ExecResponse) error {
+		return nil
+	})
+
+	err = c.Exec(ctx, &proto.ExecRequest{
+		ConversationId: cid,
+		LastSeq:        99,
+	}, handler)
+	if err == nil {
+		t.Fatal("expected error when LastSeq is not found, got nil")
+	}
+	if err.Error() != "last_seq 99 not found" {
+		t.Fatalf("expected 'last_seq 99 not found', got %v", err)
+	}
+}
+
 func TestController_Exec_WaitsForConfirmation(t *testing.T) {
 	ctx := context.Background()
 	cid := "test-conv-conf"

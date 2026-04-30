@@ -99,7 +99,11 @@ func (d *Controller) tryResuming(ctx context.Context, req *proto.ExecRequest, el
 	}
 
 	if req.LastSeq != 0 {
+		found := false
 		for _, ev := range events {
+			if ev.Seq == req.LastSeq {
+				found = true
+			}
 			if ev.Seq > req.LastSeq {
 				if err := handler(&proto.ExecResponse{
 					Outputs: ev.Messages,
@@ -108,6 +112,9 @@ func (d *Controller) tryResuming(ctx context.Context, req *proto.ExecRequest, el
 					return nil, false, err
 				}
 			}
+		}
+		if !found {
+			return nil, false, fmt.Errorf("last_seq %d not found", req.LastSeq)
 		}
 	}
 
