@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -310,10 +312,12 @@ type SkillsTool struct {
 func NewSkillsTool(dir string) (Tool, error) {
 	executor, err := skills.NewExecutor(dir)
 	if err != nil {
+		// If no skills are found or the directory does not exist, fallback to a no-op tool
+		// to avoid hard errors when skills are not configured or available.
+		if errors.Is(err, io.EOF) || errors.Is(err, os.ErrNotExist) {
+			return &NoopTool{}, nil
+		}
 		return nil, err
-	}
-	if !executor.HasSkills() {
-		return &NoopTool{}, nil
 	}
 	return &SkillsTool{executor: executor}, nil
 }
