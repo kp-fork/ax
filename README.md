@@ -366,7 +366,8 @@ Custom agents can be registered by implementing
 the `AgentService` interface defined in `proto/ax.proto`:
 
 - [Remote Agent](docs/remote-agent.md)
-- [Kubernetes Sandbox Agents](docs/k8s-sandbox-agent.md)
+- [Kubernetes Sandbox Agents (Experimental)](docs/experimental/k8s-sandbox-agent.md)
+- [Colab Agents (Experimental)](docs/experimental/colab-agent.md)
 
 ## What AX is NOT?
 * Managed service. AX is self served, and isn't a managed service. We make it easy for users
