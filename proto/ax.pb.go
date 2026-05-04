@@ -801,186 +801,6 @@ func (x *ExecResponse) GetSeq() int32 {
 	return 0
 }
 
-type RemoteAgentConfig struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       string                 `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"` // gRPC address for remote agents
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoteAgentConfig) Reset() {
-	*x = RemoteAgentConfig{}
-	mi := &file_proto_ax_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoteAgentConfig) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoteAgentConfig) ProtoMessage() {}
-
-func (x *RemoteAgentConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoteAgentConfig.ProtoReflect.Descriptor instead.
-func (*RemoteAgentConfig) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *RemoteAgentConfig) GetAddress() string {
-	if x != nil {
-		return x.Address
-	}
-	return ""
-}
-
-// RegisterAgentRequest for registering an agent
-type RegisterAgentRequest struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	AgentId     string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	Name        string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`               // Human-readable name for the agent
-	Description string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"` // Description of agent capabilities
-	Metadata    map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Types that are valid to be assigned to Config:
-	//
-	//	*RegisterAgentRequest_Remote
-	Config        isRegisterAgentRequest_Config `protobuf_oneof:"config"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RegisterAgentRequest) Reset() {
-	*x = RegisterAgentRequest{}
-	mi := &file_proto_ax_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RegisterAgentRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterAgentRequest) ProtoMessage() {}
-
-func (x *RegisterAgentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterAgentRequest.ProtoReflect.Descriptor instead.
-func (*RegisterAgentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *RegisterAgentRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *RegisterAgentRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *RegisterAgentRequest) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *RegisterAgentRequest) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-func (x *RegisterAgentRequest) GetConfig() isRegisterAgentRequest_Config {
-	if x != nil {
-		return x.Config
-	}
-	return nil
-}
-
-func (x *RegisterAgentRequest) GetRemote() *RemoteAgentConfig {
-	if x != nil {
-		if x, ok := x.Config.(*RegisterAgentRequest_Remote); ok {
-			return x.Remote
-		}
-	}
-	return nil
-}
-
-type isRegisterAgentRequest_Config interface {
-	isRegisterAgentRequest_Config()
-}
-
-type RegisterAgentRequest_Remote struct {
-	Remote *RemoteAgentConfig `protobuf:"bytes,5,opt,name=remote,proto3,oneof"`
-}
-
-func (*RegisterAgentRequest_Remote) isRegisterAgentRequest_Config() {}
-
-// RegisterAgentResponse contains registration result
-type RegisterAgentResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RegisterAgentResponse) Reset() {
-	*x = RegisterAgentResponse{}
-	mi := &file_proto_ax_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RegisterAgentResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterAgentResponse) ProtoMessage() {}
-
-func (x *RegisterAgentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterAgentResponse.ProtoReflect.Descriptor instead.
-func (*RegisterAgentResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{13}
-}
-
 type DeleteRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
@@ -990,7 +810,7 @@ type DeleteRequest struct {
 
 func (x *DeleteRequest) Reset() {
 	*x = DeleteRequest{}
-	mi := &file_proto_ax_proto_msgTypes[14]
+	mi := &file_proto_ax_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1002,7 +822,7 @@ func (x *DeleteRequest) String() string {
 func (*DeleteRequest) ProtoMessage() {}
 
 func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[14]
+	mi := &file_proto_ax_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1015,7 +835,7 @@ func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{14}
+	return file_proto_ax_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteRequest) GetConversationId() string {
@@ -1033,7 +853,7 @@ type DeleteResponse struct {
 
 func (x *DeleteResponse) Reset() {
 	*x = DeleteResponse{}
-	mi := &file_proto_ax_proto_msgTypes[15]
+	mi := &file_proto_ax_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1045,7 +865,7 @@ func (x *DeleteResponse) String() string {
 func (*DeleteResponse) ProtoMessage() {}
 
 func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[15]
+	mi := &file_proto_ax_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1058,7 +878,7 @@ func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{15}
+	return file_proto_ax_proto_rawDescGZIP(), []int{12}
 }
 
 type ForkRequest struct {
@@ -1077,7 +897,7 @@ type ForkRequest struct {
 
 func (x *ForkRequest) Reset() {
 	*x = ForkRequest{}
-	mi := &file_proto_ax_proto_msgTypes[16]
+	mi := &file_proto_ax_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1089,7 +909,7 @@ func (x *ForkRequest) String() string {
 func (*ForkRequest) ProtoMessage() {}
 
 func (x *ForkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[16]
+	mi := &file_proto_ax_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1102,7 +922,7 @@ func (x *ForkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForkRequest.ProtoReflect.Descriptor instead.
 func (*ForkRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{16}
+	return file_proto_ax_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ForkRequest) GetSrcConversationId() string {
@@ -1135,7 +955,7 @@ type ForkResponse struct {
 
 func (x *ForkResponse) Reset() {
 	*x = ForkResponse{}
-	mi := &file_proto_ax_proto_msgTypes[17]
+	mi := &file_proto_ax_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1147,7 +967,7 @@ func (x *ForkResponse) String() string {
 func (*ForkResponse) ProtoMessage() {}
 
 func (x *ForkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ax_proto_msgTypes[17]
+	mi := &file_proto_ax_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1160,7 +980,7 @@ func (x *ForkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForkResponse.ProtoReflect.Descriptor instead.
 func (*ForkResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ax_proto_rawDescGZIP(), []int{17}
+	return file_proto_ax_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ForkResponse) GetConversationId() string {
@@ -1221,20 +1041,7 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\fagent_config\x18\x05 \x01(\fR\vagentConfig\"G\n" +
 	"\fExecResponse\x12%\n" +
 	"\aoutputs\x18\x01 \x03(\v2\v.ax.MessageR\aoutputs\x12\x10\n" +
-	"\x03seq\x18\x02 \x01(\x05R\x03seq\"-\n" +
-	"\x11RemoteAgentConfig\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"\xa3\x02\n" +
-	"\x14RegisterAgentRequest\x12\x19\n" +
-	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12B\n" +
-	"\bmetadata\x18\x04 \x03(\v2&.ax.RegisterAgentRequest.MetadataEntryR\bmetadata\x12/\n" +
-	"\x06remote\x18\x05 \x01(\v2\x15.ax.RemoteAgentConfigH\x00R\x06remote\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\b\n" +
-	"\x06config\"\x17\n" +
-	"\x15RegisterAgentResponse\"8\n" +
+	"\x03seq\x18\x02 \x01(\x05R\x03seq\"8\n" +
 	"\rDeleteRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"\x10\n" +
 	"\x0eDeleteResponse\"\x88\x01\n" +
@@ -1251,10 +1058,9 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\x0fSTATE_COMPLETED\x10\x032\x81\x01\n" +
 	"\fAgentService\x121\n" +
 	"\aConnect\x12\x10.ax.AgentMessage\x1a\x10.ax.AgentMessage(\x010\x01\x12>\n" +
-	"\vHealthCheck\x12\x16.ax.HealthCheckRequest\x1a\x17.ax.HealthCheckResponse2\x86\x01\n" +
+	"\vHealthCheck\x12\x16.ax.HealthCheckRequest\x1a\x17.ax.HealthCheckResponse2@\n" +
 	"\x11ControllerService\x12+\n" +
-	"\x04Exec\x12\x0f.ax.ExecRequest\x1a\x10.ax.ExecResponse0\x01\x12D\n" +
-	"\rRegisterAgent\x12\x18.ax.RegisterAgentRequest\x1a\x19.ax.RegisterAgentResponse2\x85\x01\n" +
+	"\x04Exec\x12\x0f.ax.ExecRequest\x1a\x10.ax.ExecResponse0\x012\x85\x01\n" +
 	"\x0fEventLogService\x12;\n" +
 	"\x12DeleteConversation\x12\x11.ax.DeleteRequest\x1a\x12.ax.DeleteResponse\x125\n" +
 	"\x10ForkConversation\x12\x0f.ax.ForkRequest\x1a\x10.ax.ForkResponseB\x1cZ\x1agithub.com/google/ax/protob\x06proto3"
@@ -1272,7 +1078,7 @@ func file_proto_ax_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_ax_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_ax_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_proto_ax_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_proto_ax_proto_goTypes = []any{
 	(State)(0),                    // 0: ax.State
 	(*AgentStart)(nil),            // 1: ax.AgentStart
@@ -1286,16 +1092,12 @@ var file_proto_ax_proto_goTypes = []any{
 	(*HealthCheckResponse)(nil),   // 9: ax.HealthCheckResponse
 	(*ExecRequest)(nil),           // 10: ax.ExecRequest
 	(*ExecResponse)(nil),          // 11: ax.ExecResponse
-	(*RemoteAgentConfig)(nil),     // 12: ax.RemoteAgentConfig
-	(*RegisterAgentRequest)(nil),  // 13: ax.RegisterAgentRequest
-	(*RegisterAgentResponse)(nil), // 14: ax.RegisterAgentResponse
-	(*DeleteRequest)(nil),         // 15: ax.DeleteRequest
-	(*DeleteResponse)(nil),        // 16: ax.DeleteResponse
-	(*ForkRequest)(nil),           // 17: ax.ForkRequest
-	(*ForkResponse)(nil),          // 18: ax.ForkResponse
-	nil,                           // 19: ax.RegisterAgentRequest.MetadataEntry
-	(*Content)(nil),               // 20: ax.Content
-	(*timestamppb.Timestamp)(nil), // 21: google.protobuf.Timestamp
+	(*DeleteRequest)(nil),         // 12: ax.DeleteRequest
+	(*DeleteResponse)(nil),        // 13: ax.DeleteResponse
+	(*ForkRequest)(nil),           // 14: ax.ForkRequest
+	(*ForkResponse)(nil),          // 15: ax.ForkResponse
+	(*Content)(nil),               // 16: ax.Content
+	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
 }
 var file_proto_ax_proto_depIdxs = []int32{
 	5,  // 0: ax.AgentStart.messages:type_name -> ax.Message
@@ -1303,34 +1105,30 @@ var file_proto_ax_proto_depIdxs = []int32{
 	1,  // 2: ax.AgentMessage.start:type_name -> ax.AgentStart
 	2,  // 3: ax.AgentMessage.outputs:type_name -> ax.AgentOutputs
 	3,  // 4: ax.AgentMessage.end:type_name -> ax.AgentEnd
-	20, // 5: ax.Message.content:type_name -> ax.Content
+	16, // 5: ax.Message.content:type_name -> ax.Content
 	5,  // 6: ax.ConversationEvent.messages:type_name -> ax.Message
 	0,  // 7: ax.ConversationEvent.state:type_name -> ax.State
 	5,  // 8: ax.ExecutionEvent.inputs:type_name -> ax.Message
 	5,  // 9: ax.ExecutionEvent.outputs:type_name -> ax.Message
 	0,  // 10: ax.ExecutionEvent.state:type_name -> ax.State
-	21, // 11: ax.ExecutionEvent.timestamp:type_name -> google.protobuf.Timestamp
+	17, // 11: ax.ExecutionEvent.timestamp:type_name -> google.protobuf.Timestamp
 	5,  // 12: ax.ExecRequest.inputs:type_name -> ax.Message
 	5,  // 13: ax.ExecResponse.outputs:type_name -> ax.Message
-	19, // 14: ax.RegisterAgentRequest.metadata:type_name -> ax.RegisterAgentRequest.MetadataEntry
-	12, // 15: ax.RegisterAgentRequest.remote:type_name -> ax.RemoteAgentConfig
-	4,  // 16: ax.AgentService.Connect:input_type -> ax.AgentMessage
-	8,  // 17: ax.AgentService.HealthCheck:input_type -> ax.HealthCheckRequest
-	10, // 18: ax.ControllerService.Exec:input_type -> ax.ExecRequest
-	13, // 19: ax.ControllerService.RegisterAgent:input_type -> ax.RegisterAgentRequest
-	15, // 20: ax.EventLogService.DeleteConversation:input_type -> ax.DeleteRequest
-	17, // 21: ax.EventLogService.ForkConversation:input_type -> ax.ForkRequest
-	4,  // 22: ax.AgentService.Connect:output_type -> ax.AgentMessage
-	9,  // 23: ax.AgentService.HealthCheck:output_type -> ax.HealthCheckResponse
-	11, // 24: ax.ControllerService.Exec:output_type -> ax.ExecResponse
-	14, // 25: ax.ControllerService.RegisterAgent:output_type -> ax.RegisterAgentResponse
-	16, // 26: ax.EventLogService.DeleteConversation:output_type -> ax.DeleteResponse
-	18, // 27: ax.EventLogService.ForkConversation:output_type -> ax.ForkResponse
-	22, // [22:28] is the sub-list for method output_type
-	16, // [16:22] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	4,  // 14: ax.AgentService.Connect:input_type -> ax.AgentMessage
+	8,  // 15: ax.AgentService.HealthCheck:input_type -> ax.HealthCheckRequest
+	10, // 16: ax.ControllerService.Exec:input_type -> ax.ExecRequest
+	12, // 17: ax.EventLogService.DeleteConversation:input_type -> ax.DeleteRequest
+	14, // 18: ax.EventLogService.ForkConversation:input_type -> ax.ForkRequest
+	4,  // 19: ax.AgentService.Connect:output_type -> ax.AgentMessage
+	9,  // 20: ax.AgentService.HealthCheck:output_type -> ax.HealthCheckResponse
+	11, // 21: ax.ControllerService.Exec:output_type -> ax.ExecResponse
+	13, // 22: ax.EventLogService.DeleteConversation:output_type -> ax.DeleteResponse
+	15, // 23: ax.EventLogService.ForkConversation:output_type -> ax.ForkResponse
+	19, // [19:24] is the sub-list for method output_type
+	14, // [14:19] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_proto_ax_proto_init() }
@@ -1344,16 +1142,13 @@ func file_proto_ax_proto_init() {
 		(*AgentMessage_Outputs)(nil),
 		(*AgentMessage_End)(nil),
 	}
-	file_proto_ax_proto_msgTypes[12].OneofWrappers = []any{
-		(*RegisterAgentRequest_Remote)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_ax_proto_rawDesc), len(file_proto_ax_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

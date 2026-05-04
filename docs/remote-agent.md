@@ -6,8 +6,8 @@ See `examples/remote_agent/main.go` for a complete implementation.
 
 **Workflow:**
 1. Remote agent starts as gRPC server on a port (e.g., :50051)
-2. Start the server: `ax serve`
-3. Register the agent: `ax register --agent-id my-agent --agent-name "My Agent" --agent-description "Agent description" --agent-addr localhost:50051`
+2. Declare the remote agent in `ax.yaml` under `registry.remote_agents`
+3. Start the server: `ax serve`
 4. When the server executes, it calls the agent's `Connect` RPC
 5. AX streams input content → Agent processes → Agent streams output back
 

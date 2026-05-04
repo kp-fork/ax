@@ -310,7 +310,18 @@ type SkillsTool struct {
 }
 
 func NewSkillsTool(dir string) (Tool, error) {
-	executor, err := skills.NewExecutor(dir)
+	resolvedDir := dir
+	if resolvedDir == "" {
+		resolvedDir = os.Getenv("SKILLS_DIR")
+	}
+	if resolvedDir == "" {
+		resolvedDir = skills.DefaultDir()
+	}
+	if _, err := os.Stat(resolvedDir); os.IsNotExist(err) {
+		return &NoopTool{}, nil
+	}
+
+	executor, err := skills.NewExecutor(resolvedDir)
 	if err != nil {
 		// If no skills are found or the directory does not exist, fallback to a no-op tool
 		// to avoid hard errors when skills are not configured or available.

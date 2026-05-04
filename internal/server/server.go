@@ -24,9 +24,10 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 
-	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/controller"
 	"github.com/google/ax/proto"
 )
@@ -77,45 +78,6 @@ func (s *Server) DeleteConversation(ctx context.Context, req *proto.DeleteReques
 	return &proto.DeleteResponse{}, nil
 }
 
-// RegisterAgent registers a new remote agent with the controller.
-func (s *Server) RegisterAgent(ctx context.Context, req *proto.RegisterAgentRequest) (*proto.RegisterAgentResponse, error) {
-	if req.AgentId == "" {
-		return nil, fmt.Errorf("agent_id is required")
-	}
-	if req.Name == "" {
-		return nil, fmt.Errorf("name is required")
-	}
-	if req.Description == "" {
-		return nil, fmt.Errorf("description is required")
-	}
-	if req.Config == nil {
-		return nil, fmt.Errorf("config is required")
-	}
-
-	registry := s.controller.Registry()
-
-	switch cfg := req.Config.(type) {
-	case *proto.RegisterAgentRequest_Remote:
-		if cfg.Remote.Address == "" {
-			return nil, fmt.Errorf("address is required for remote agents")
-		}
-
-		err := registry.RegisterRemote(config.RemoteAgentConfig{
-			ID:          req.AgentId,
-			Name:        req.Name,
-			Description: req.Description,
-			Address:     cfg.Remote.Address,
-			Metadata:    req.Metadata,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to register agent: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("unknown agent type")
-	}
-
-	return &proto.RegisterAgentResponse{}, nil
-}
 
 // Serve starts the gRPC server on the specified address.
 func (s *Server) Serve(address string, opts ...grpc.ServerOption) error {
@@ -127,6 +89,11 @@ func (s *Server) Serve(address string, opts ...grpc.ServerOption) error {
 	s.grpcServer = grpc.NewServer(opts...)
 	proto.RegisterControllerServiceServer(s.grpcServer, s)
 	proto.RegisterEventLogServiceServer(s.grpcServer, s)
+
+	// Register standard gRPC Health Check server
+	hs := health.NewServer()
+	hs.SetServingStatus("AX", grpc_health_v1.HealthCheckResponse_SERVING)
+	grpc_health_v1.RegisterHealthServer(s.grpcServer, hs)
 
 	if err := s.grpcServer.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)

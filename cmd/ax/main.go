@@ -40,12 +40,11 @@ var rootCmd = &cobra.Command{
 	Short: "AX - Agent eXecutor",
 	Long: `ax provides a server and CLI tools for managing agent orchestrator tasks.
 It provides commands to execute tasks, resume from checkpoints,
-register agents, and run the controller server.`,
+and run the controller server.`,
 }
 
 func init() {
 	rootCmd.AddCommand(execCmd)
-	rootCmd.AddCommand(registerCmd)
 	rootCmd.AddCommand(serveCmd)
 
 	rootCmd.AddCommand(forkCmd)

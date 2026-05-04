@@ -22,6 +22,7 @@ import (
 
 	"github.com/google/ax/internal/agent"
 	"github.com/google/ax/internal/config"
+	expagent "github.com/google/ax/internal/experimental/agent"
 )
 
 // RegisterATE registers an ATE agent by creating an ATE agent client.
@@ -38,7 +39,7 @@ func (r *Registry) RegisterATE(ctx context.Context, ateTarget string, cfg config
 	}
 
 	// Create ATE agent client
-	ateAgent, err := agent.NewATEAgent(ateTarget, agent.ATEAgentConfig{
+	ateAgent, err := expagent.NewATEAgent(ateTarget, expagent.ATEAgentConfig{
 		Namespace: cfg.Namespace,
 		Template:  cfg.Template,
 		Port:      cfg.Port,
@@ -48,7 +49,7 @@ func (r *Registry) RegisterATE(ctx context.Context, ateTarget string, cfg config
 	}
 
 	r.agents[cfg.ID] = ateAgent
-	r.agentInfo[cfg.ID] = &AgentInfo{
+	r.agentInfo[cfg.ID] = &agent.AgentInfo{
 		ID:          cfg.ID,
 		Name:        cfg.Name,
 		Description: cfg.Description,

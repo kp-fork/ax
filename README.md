@@ -47,7 +47,7 @@ isolated actors, a distributed runtime with dynamically spawned isolated
 workers becomes a necessity. AX provides the foundational layer to fill these gaps.
 
 While compute-agnostic, AX is aiming to provide the best
-experience on Kubernetes.
+experience on [Kubernetes](./manifests/README.md).
 
 We expect every sophisticated agentic application will need the capabilities provided by AX.
 We are building this layer as a widely available foundation,
@@ -298,23 +298,7 @@ ax trace --conversation 1a6e0b29-87c2-4af0-81ac-0c73bf8fa293
 ax trace --conversation 1a6e0b29-87c2-4af0-81ac-0c73bf8fa293 --addr 0.0.0.0:9090
 ```
 
-### Register
 
-```bash
-ax register \
-    --agent-id <id> \
-    --agent-addr <address> \
-    --agent-name <name> \
-    --agent-description <desc> \
-    [--server <address>]
-```
-
-Options:
-- `--agent-id`: Unique agent identifier (required)
-- `--agent-addr`: gRPC agent server address (e.g., "localhost:50051") (required)
-- `--agent-name`: Human-readable name for the agent (required)
-- `--agent-description`: Description of agent capabilities (required)
-- `--server`: gRPC controller server address (default: "localhost:8494")
 
 ## Event Log Format
 
