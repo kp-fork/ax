@@ -188,8 +188,7 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ControllerService_Exec_FullMethodName          = "/ax.ControllerService/Exec"
-	ControllerService_RegisterAgent_FullMethodName = "/ax.ControllerService/RegisterAgent"
+	ControllerService_Exec_FullMethodName = "/ax.ControllerService/Exec"
 )
 
 // ControllerServiceClient is the client API for ControllerService service.
@@ -199,8 +198,6 @@ type ControllerServiceClient interface {
 	// Exec executes an agentic task or resumes an existing one with streaming responses
 	// If the conversation_id already exists, it will be resumed.
 	Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ExecResponse], error)
-	// RegisterAgent registers a new agent with the controller
-	RegisterAgent(ctx context.Context, in *RegisterAgentRequest, opts ...grpc.CallOption) (*RegisterAgentResponse, error)
 }
 
 type controllerServiceClient struct {
@@ -230,16 +227,6 @@ func (c *controllerServiceClient) Exec(ctx context.Context, in *ExecRequest, opt
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ControllerService_ExecClient = grpc.ServerStreamingClient[ExecResponse]
 
-func (c *controllerServiceClient) RegisterAgent(ctx context.Context, in *RegisterAgentRequest, opts ...grpc.CallOption) (*RegisterAgentResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RegisterAgentResponse)
-	err := c.cc.Invoke(ctx, ControllerService_RegisterAgent_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ControllerServiceServer is the server API for ControllerService service.
 // All implementations must embed UnimplementedControllerServiceServer
 // for forward compatibility.
@@ -247,8 +234,6 @@ type ControllerServiceServer interface {
 	// Exec executes an agentic task or resumes an existing one with streaming responses
 	// If the conversation_id already exists, it will be resumed.
 	Exec(*ExecRequest, grpc.ServerStreamingServer[ExecResponse]) error
-	// RegisterAgent registers a new agent with the controller
-	RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error)
 	mustEmbedUnimplementedControllerServiceServer()
 }
 
@@ -261,9 +246,6 @@ type UnimplementedControllerServiceServer struct{}
 
 func (UnimplementedControllerServiceServer) Exec(*ExecRequest, grpc.ServerStreamingServer[ExecResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method Exec not implemented")
-}
-func (UnimplementedControllerServiceServer) RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
 }
 func (UnimplementedControllerServiceServer) mustEmbedUnimplementedControllerServiceServer() {}
 func (UnimplementedControllerServiceServer) testEmbeddedByValue()                           {}
@@ -297,36 +279,13 @@ func _ControllerService_Exec_Handler(srv interface{}, stream grpc.ServerStream) 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ControllerService_ExecServer = grpc.ServerStreamingServer[ExecResponse]
 
-func _ControllerService_RegisterAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterAgentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ControllerServiceServer).RegisterAgent(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ControllerService_RegisterAgent_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ControllerServiceServer).RegisterAgent(ctx, req.(*RegisterAgentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ControllerService_ServiceDesc is the grpc.ServiceDesc for ControllerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ControllerService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ax.ControllerService",
 	HandlerType: (*ControllerServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "RegisterAgent",
-			Handler:    _ControllerService_RegisterAgent_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Exec",

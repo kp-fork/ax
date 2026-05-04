@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 
 	"google.golang.org/genai"
 )
@@ -33,12 +32,6 @@ type Executor struct {
 // NewExecutor discovers skills in dir, then creates an Executor. The caller is
 // responsible for creating the client and choosing a model.
 func NewExecutor(dir string) (*Executor, error) {
-	if dir == "" {
-		dir = os.Getenv("SKILLS_DIR")
-	}
-	if dir == "" {
-		dir = DefaultDir()
-	}
 
 	found, err := Discover(dir)
 	if err != nil {
