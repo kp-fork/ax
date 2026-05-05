@@ -355,7 +355,6 @@ requires explicit user approval via a confirmation flow before running.
 Custom agents can be registered on the AX server:
 
 - [Remote Agent](docs/remote-agent.md)
-- [Kubernetes Sandbox Agents (Experimental)](docs/experimental/k8s-sandbox-agent.md)
 - [Colab Agents (Experimental)](docs/experimental/colab-agent.md)
 
 Please note that AX is actively developing a resumable streaming protocol;

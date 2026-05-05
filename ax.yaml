@@ -47,14 +47,6 @@ registry:
   #     metadata:
   #       version: "1.0"
 
-  # k8s_sandbox_agents:
-  #   - id: "uppercase"
-  #     name: "Uppercase Agent"
-  #     description: "Converts text to uppercase."
-  #     sandbox_template_ref: "uppercase-agent-template"
-  #     container_port: 8494
-  #     use_router: true
-
   # colab_agents:
   #   - id: "plotter"
   #     name: "Function Plotter"

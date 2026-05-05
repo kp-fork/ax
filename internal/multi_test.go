@@ -89,7 +89,7 @@ func TestMulti(t *testing.T) {
 		Description: "Converts text to uppercase",
 		Agent:       uppercaseAgent,
 	}); err != nil {
-		t.Fatalf("Error registering sandbox agent: %v", err)
+		t.Fatalf("Error registering uppercase agent: %v", err)
 	}
 
 	inputs := []*proto.Message{
@@ -228,7 +228,7 @@ func (m *mockPlanner) Connect(ctx context.Context, conversationID string, execID
 		return err
 	}
 
-	// Step 3: Remote -> Sandbox
+	// Step 3: Remote -> Uppercase
 	if strings.HasPrefix(lastText, "Remote Prefix:") {
 		inputs := append(start.Messages, &proto.Message{
 			Role: "assistant",
@@ -245,7 +245,7 @@ func (m *mockPlanner) Connect(ctx context.Context, conversationID string, execID
 		return err
 	}
 
-	// Final step: Sandbox -> Done
+	// Final step: Uppercase -> Done
 	if strings.Contains(lastText, "UPPERCASE") {
 		return handler(&proto.AgentOutputs{
 			Messages: []*proto.Message{{

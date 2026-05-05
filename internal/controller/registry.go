@@ -140,40 +140,6 @@ func (r *Registry) registerA2A(ctx context.Context, cfg config.RemoteAgentConfig
 	return nil
 }
 
-// RegisterKubernetesSandbox registers a sandbox agent by dynamically provisioning a Sandbox on GKE.
-func (r *Registry) RegisterKubernetesSandbox(ctx context.Context, cfg config.SandboxAgentConfig) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if err := validateID(cfg.ID); err != nil {
-		return err
-	}
-
-	if _, ok := r.agents[cfg.ID]; ok {
-		return fmt.Errorf("agent %s already registered", cfg.ID)
-	}
-
-	sandboxAgent, err := expagent.NewKubernetesSandboxAgent(ctx, expagent.KubernetesSandboxAgentConfig{
-		ID:                 cfg.ID,
-		SandboxTemplateRef: cfg.SandboxTemplateRef,
-		ContainerPort:      cfg.ContainerPort,
-		UseRouter:          cfg.UseRouter,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to provision sandbox agent: %w", err)
-	}
-
-	r.agents[cfg.ID] = sandboxAgent
-	r.agentInfo[cfg.ID] = &agent.AgentInfo{
-		ID:          cfg.ID,
-		Name:        cfg.Name,
-		Description: cfg.Description,
-		Metadata:    cfg.Metadata,
-	}
-
-	return nil
-}
-
 // RegisterColab registers a Colab agent that executes a local Python file
 // on a remote Colab session via the colab CLI.
 func (r *Registry) RegisterColab(cfg config.ColabAgentConfig) error {

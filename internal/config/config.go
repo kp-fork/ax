@@ -36,10 +36,9 @@ type Config struct {
 
 // RegistryConfig allows registring agents.
 type RegistryConfig struct {
-	RemoteAgents            []RemoteAgentConfig  `yaml:"remote_agents,omitempty"`
-	KubernetesSandboxAgents []SandboxAgentConfig `yaml:"k8s_sandbox_agents,omitempty"`
-	ColabAgents             []ColabAgentConfig   `yaml:"colab_agents,omitempty"`
-	ATEAgents               []ATEAgentConfig     `yaml:"ate_agents,omitempty"`
+	RemoteAgents []RemoteAgentConfig `yaml:"remote_agents,omitempty"`
+	ColabAgents  []ColabAgentConfig  `yaml:"colab_agents,omitempty"`
+	ATEAgents    []ATEAgentConfig    `yaml:"ate_agents,omitempty"`
 }
 
 // ATEConfig configures the ATE integration.
@@ -140,18 +139,6 @@ type RemoteAgentConfig struct {
 // RemoteAgentConfig.Protocol is "a2a".
 type A2AConfig struct {
 	Stateless bool `yaml:"stateless,omitempty"` // Send full history each turn (default: stateful)
-}
-
-// SandboxAgentConfig configures a Kubernetes Sandbox agent to register on startup.
-type SandboxAgentConfig struct {
-	ID                 string `yaml:"id"`                   // Unique agent identifier
-	Name               string `yaml:"name"`                 // Human-readable name
-	Description        string `yaml:"description"`          // Description of agent capabilities
-	SandboxTemplateRef string `yaml:"sandbox_template_ref"` // Name of the SandboxTemplate CR to use
-	// TODO: implement shutdown_time for automatic sandbox shutdown
-	ContainerPort int               `yaml:"container_port,omitempty"` // Optional container port, defaults to 8494
-	UseRouter     bool              `yaml:"use_router,omitempty"`     // Override port-forwarding to use Sandbox Router
-	Metadata      map[string]string `yaml:"metadata,omitempty"`       // Optional metadata
 }
 
 // ColabAgentConfig configures a Colab agent to register on startup.

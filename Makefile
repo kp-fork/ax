@@ -74,10 +74,6 @@ ate-agent-image:
 	@echo "Building ATE agent container image with ko..."
 	GOFLAGS="-tags=ate" ko build --base-import-paths ./internal/experimental/examples/ate_agent
 
-k8s-sandbox-router-image:
-	@echo "Building sandbox-router container image with ko..."
-	ko build --base-import-paths ./internal/experimental/k8s-sandbox-router
-
 axepp-image:
 	@echo "Building axepp container image with ko..."
 	GOFLAGS="-tags=ate" ko build --base-import-paths ./cmd/axepp
@@ -88,4 +84,4 @@ ax-shell-image:
 	KO_DOCKER_REPO=$(KO_DOCKER_REPO)/ax-shell KO_DEFAULTBASEIMAGE=busybox:1.36 GOFLAGS="-tags=ate" ko build --base-import-paths ./cmd/ax
 
 # Build all container images
-images: ax-image ate-agent-image k8s-sandbox-router-image axepp-image ax-shell-image
+images: ax-image ate-agent-image axepp-image ax-shell-image
