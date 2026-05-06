@@ -104,3 +104,58 @@ func TestController_Fork(t *testing.T) {
 		t.Errorf("expected seq 1, got %d", events2[0].Seq)
 	}
 }
+
+func TestController_Fork_SrcSeqNotFound(t *testing.T) {
+	ctx := context.Background()
+	srcCID := "src-conv"
+
+	log := &executortest.MemoryEventLog{}
+	log.AllEvents = []*proto.ConversationEvent{
+		{
+			ConversationId: srcCID,
+			Seq:            1,
+			Messages: []*proto.Message{
+				{Role: "user", Content: &proto.Content{Type: &proto.Content_Text{Text: &proto.TextContent{Text: "msg 1"}}}},
+			},
+			State: proto.State_STATE_COMPLETED,
+		},
+		{
+			ConversationId: srcCID,
+			Seq:            2,
+			Messages: []*proto.Message{
+				{Role: "assistant", Content: &proto.Content{Type: &proto.Content_Text{Text: &proto.TextContent{Text: "msg 2"}}}},
+			},
+			State: proto.State_STATE_COMPLETED,
+		},
+	}
+
+	c, err := New(ctx, Config{
+		EventLogBuilder: func() (executor.EventLog, error) {
+			return log, nil
+		},
+		PlannerBuilder: func(ctx context.Context, r *Registry) (agent.Agent, error) {
+			return &dummyAgent{}, nil
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	// Non-existent src_seq must error and write nothing.
+	if _, err := c.Fork(ctx, srcCID, 99, "dest-conv"); err == nil {
+		t.Fatal("expected error when src_seq does not exist, got nil")
+	}
+	events, err := log.Events(ctx, "dest-conv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 0 {
+		t.Fatalf("expected 0 events on failed fork, got %d", len(events))
+	}
+
+	// src_seq exactly at the max is valid and must succeed.
+	if _, err := c.Fork(ctx, srcCID, 2, "dest-conv-boundary"); err != nil {
+		t.Fatalf("unexpected error forking at boundary src_seq: %v", err)
+	}
+}

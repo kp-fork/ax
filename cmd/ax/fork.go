@@ -34,19 +34,19 @@ var (
 var forkCmd = &cobra.Command{
 	Use:   "fork",
 	Short: "Fork an event log from a specific checkpoint",
-	Long: `Fork an existing agentic event log from a specific checkpoint.
-If --dest-conversation is not provided, a new UUID will be generated.`,
-	RunE: runFork,
+	Long:  `Fork an existing agentic event log into a new conversation, optionally from a specific checkpoint.`,
+	RunE:  runFork,
 }
 
 func init() {
 	forkCmd.Flags().StringVar(&forkSourceConversation, "src-conversation", "", "Source conversation ID to fork from (required)")
 	forkCmd.Flags().Int32Var(&forkSourceSeq, "src-seq", 0, "Sequence number to fork from (optional, defaults to latest)")
-	forkCmd.Flags().StringVar(&forkDestConversation, "dest-conversation", "", "Destination conversation ID (optional, generates UUID if not provided)")
+	forkCmd.Flags().StringVar(&forkDestConversation, "dest-conversation", "", "Destination conversation ID (required)")
 	forkCmd.Flags().StringVar(&forkServerAddr, "server", "", "gRPC controller server address (if specified, connects to remote server; otherwise runs with a local built-in AX server)")
 	forkCmd.Flags().StringVar(&forkConfigFile, "config", "ax.yaml", "Path to YAML configuration file (only used with a local built-in AX server)")
 
 	forkCmd.MarkFlagRequired("src-conversation")
+	forkCmd.MarkFlagRequired("dest-conversation")
 }
 
 func runFork(cmd *cobra.Command, args []string) error {

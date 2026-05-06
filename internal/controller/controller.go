@@ -302,11 +302,31 @@ func (d *Controller) Fork(ctx context.Context, srcConversationID string, srcSeq 
 		return "", fmt.Errorf("source conversation %s not found or has no events", srcConversationID)
 	}
 
-	for _, ev := range events {
-		if srcSeq > 0 && ev.Seq > srcSeq {
-			break // Optimization: events are ordered by seq, so we can stop iterating
+	// When the caller specifies srcSeq, require that it actually exists in
+	// the source event log. Without this check a typo or stale checkpoint
+	// silently degrades to "fork all events", which is misleading. Walk
+	// the events once: stop as soon as we pass the requested seq, and
+	// truncate the slice on an exact match so the copy loop below doesn't
+	// need to re-check the bound.
+	if srcSeq > 0 {
+		found := false
+		for i, ev := range events {
+			if ev.Seq == srcSeq {
+				events = events[:i+1]
+				found = true
+				break
+			}
+			if ev.Seq > srcSeq {
+				break
+			}
 		}
-		// Clone the event to update the conversation ID
+		if !found {
+			return "", fmt.Errorf("src_seq %d not found in conversation %s", srcSeq, srcConversationID)
+		}
+	}
+
+	for _, ev := range events {
+		// Clone the event to update the conversation ID.
 		newEvent := &proto.ConversationEvent{
 			ConversationId: destConversationID,
 			Seq:            ev.Seq,

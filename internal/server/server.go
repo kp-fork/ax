@@ -66,6 +66,11 @@ func (s *Server) ForkConversation(ctx context.Context, req *proto.ForkRequest) (
 	if req.SrcConversationId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "src_conversation_id is required")
 	}
+	// dest_conversation_id must be supplied by the caller: the substrate
+	// router uses it to bring up the actor for the new conversation
+	// before the request reaches this handler, so an empty value here
+	// would mean no actor was provisioned.
+	// TODO: consider relaxing this requirement.
 	if req.DestConversationId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "dest_conversation_id is required")
 	}
@@ -74,7 +79,7 @@ func (s *Server) ForkConversation(ctx context.Context, req *proto.ForkRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to fork conversation: %v", err)
 	}
-	go suspendActor(req.DestConversationId) // TODO(jbd): Move to an interceptor.
+	go suspendActor(destID) // TODO(jbd): Move to an interceptor.
 	return &proto.ForkResponse{ConversationId: destID}, nil
 }
 

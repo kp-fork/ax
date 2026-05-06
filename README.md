@@ -260,28 +260,28 @@ into a new event log.
 ```bash
 ax fork \
     --src-conversation <id> \
+    --dest-conversation <id> \
     [--src-seq <number>] \
-    [--dest-conversation <id>] \
     [--server <address>]
 ```
 
 Options:
 - `--src-conversation`: Source conversation ID to fork from (required)
-- `--src-seq`: Sequence number to fork from (optional, defaults to latest)
-- `--dest-conversation`: Destination conversation ID (optional, generates UUID if not provided)
+- `--dest-conversation`: Destination conversation ID for the new event log (required)
+- `--src-seq`: Sequence number to fork from (optional, defaults to latest). Must be a sequence that exists in the source conversation.
 - `--server`: gRPC controller server address (default: "localhost:8494")
 
 **Example:**
 
 ```bash
-# Fork from the latest state
-ax fork --src-conversation 38460323-9a78-41cb-8991-022b0ff2c19c
+# Fork from the latest state into a new conversation
+ax fork --src-conversation 38460323-9a78-41cb-8991-022b0ff2c19c \
+        --dest-conversation e5e26e38-53a2-4f22-b1cb-ae867357df83
 
 # Fork from a specific checkpoint
-ax fork --src-conversation 38460323-9a78-41cb-8991-022b0ff2c19c --src-seq 12
-
-# Fork from a specific checkpoint to a new event log with a specific new ID
-ax fork --src-conversation 38460323-9a78-41cb-8991-022b0ff2c19c --src-seq 12 --dest-conversation e5e26e38-53a2-4f22-b1cb-ae867357df83
+ax fork --src-conversation 38460323-9a78-41cb-8991-022b0ff2c19c \
+        --dest-conversation e5e26e38-53a2-4f22-b1cb-ae867357df83 \
+        --src-seq 12
 ```
 
 ### Trace

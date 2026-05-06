@@ -85,3 +85,46 @@ func TestServer_Fork(t *testing.T) {
 		t.Fatalf("expected 1 event, got %d", len(events))
 	}
 }
+
+// TestServer_Fork_RequiresDestID verifies that ForkConversation rejects
+// a request without DestConversationId. The substrate router relies on
+// the dest ID to bring up the conversation's actor before the handler
+// runs, so we can't accept empty IDs at this layer.
+func TestServer_Fork_RequiresDestID(t *testing.T) {
+	ctx := context.Background()
+	srcCID := "src-conv"
+
+	log := &executortest.MemoryEventLog{}
+	log.AllEvents = []*proto.ConversationEvent{
+		{
+			ConversationId: srcCID,
+			Seq:            1,
+			Messages: []*proto.Message{
+				{Role: "user", Content: &proto.Content{Type: &proto.Content_Text{Text: &proto.TextContent{Text: "msg 1"}}}},
+			},
+			State: proto.State_STATE_COMPLETED,
+		},
+	}
+
+	c, err := controller.New(ctx, controller.Config{
+		EventLogBuilder: func() (executor.EventLog, error) {
+			return log, nil
+		},
+		PlannerBuilder: func(ctx context.Context, r *controller.Registry) (agent.Agent, error) {
+			return &dummyAgent{}, nil
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	s := New(c)
+
+	if _, err := s.ForkConversation(ctx, &proto.ForkRequest{
+		SrcConversationId: srcCID,
+		// DestConversationId intentionally left empty.
+	}); err == nil {
+		t.Fatal("expected InvalidArgument when DestConversationId is empty, got nil")
+	}
+}
