@@ -98,8 +98,12 @@ ax exec \
   --input "Show me the contents of README.md"
 ```
 
-You can continue from a previous sequence if the client gets disconnected.
-In this example, we resume from sequence number 12:
+If the client gets disconnected, pass the last sequence it saw to
+replay the events it missed. This catches the client up; it does not
+rewind the conversation. To branch from a checkpoint, use `ax fork`
+instead.
+
+In this example, we catch up a client from sequence number 12:
 
 ```bash
 ax exec \
@@ -187,7 +191,7 @@ Options:
 - `--server`: gRPC controller server address (optional. If not provided, runs with a local built-in AX server)
 - `--config`: Path to YAML configuration file (only used with a local built-in AX server, default: "ax.yaml")
 - `--resume`: Resume a conversation without inputs (optional, mutually exclusive with `--input`)
-- `--last-seq`: Last sequence number seen by the client to resume from (optional)
+- `--last-seq`: Last sequence number seen by the client to resume from (optional). The server replays any later events so the client can catch up after a disconnect.
 
 **Examples:**
 
