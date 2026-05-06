@@ -80,6 +80,22 @@ Rules for Operation:
 - Always be concise. Focus on action and execution results rather than conversational explanations.`
 	}
 
+	// Fail fast if no Gemini credentials are configured. We check the three
+	// env vars the underlying genai SDK recognizes (see
+	// google.golang.org/genai/client.go NewClient docs):
+	//   - GEMINI_API_KEY: AI Studio API key.
+	//   - GOOGLE_API_KEY: alternate name for the AI Studio API key; the SDK
+	//     accepts both and gives this one precedence when both are set.
+	//   - GOOGLE_GENAI_USE_VERTEXAI: switches the SDK to the Vertex AI
+	//     backend, which uses Application Default Credentials instead of an
+	//     API key.
+	if os.Getenv("GEMINI_API_KEY") == "" && os.Getenv("GOOGLE_API_KEY") == "" && os.Getenv("GOOGLE_GENAI_USE_VERTEXAI") == "" {
+		return nil, fmt.Errorf("no Gemini credentials configured: set either GEMINI_API_KEY (AI Studio) " +
+			"or GOOGLE_GENAI_USE_VERTEXAI=True with GCLOUD_PROJECT and GCLOUD_LOCATION (Vertex AI) " +
+			"on the ax serve process and restart it; " +
+			"see https://github.com/google-gemini/ax#authentication")
+	}
+
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
