@@ -106,6 +106,7 @@ type GeminiConfig struct {
 	Model        string        `json:"model,omitempty" yaml:"model,omitempty"`
 	SystemPrompt string        `json:"system_prompt,omitempty" yaml:"system_prompt,omitempty"`
 	MaxTokens    int32         `json:"max_tokens,omitempty" yaml:"max_tokens,omitempty"`
+	Temperature  float32       `json:"temperature,omitempty" yaml:"temperature,omitempty"` // 0 means use model default
 	Timeout      time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 	Tools        []string      `json:"tools,omitempty" yaml:"tools,omitempty"`
 }

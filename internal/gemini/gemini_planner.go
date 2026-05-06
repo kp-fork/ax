@@ -183,7 +183,7 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 	ctx, cancel := context.WithTimeout(ctx, p.config.GeminiConfig.Timeout)
 	defer cancel()
 
-	resp, err := p.client.Models.GenerateContent(ctx, p.config.GeminiConfig.Model, contents, &genai.GenerateContentConfig{
+	genCfg := &genai.GenerateContentConfig{
 		Tools: tools,
 		ToolConfig: &genai.ToolConfig{
 			FunctionCallingConfig: &genai.FunctionCallingConfig{
@@ -193,7 +193,14 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 		SystemInstruction: genai.Text(p.config.GeminiConfig.SystemPrompt)[0],
 		MaxOutputTokens:   p.config.GeminiConfig.MaxTokens,
 		CandidateCount:    1,
-	})
+	}
+	// Temperature is *float32 in genai: leave nil to inherit the model's
+	// default. We treat the zero value in our config the same way.
+	if t := p.config.GeminiConfig.Temperature; t > 0 {
+		genCfg.Temperature = &t
+	}
+
+	resp, err := p.client.Models.GenerateContent(ctx, p.config.GeminiConfig.Model, contents, genCfg)
 
 	if err != nil {
 		return "", false, fmt.Errorf("failed to generate in planner: %w", err)

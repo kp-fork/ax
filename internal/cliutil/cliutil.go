@@ -58,6 +58,7 @@ func NewControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 				GeminiConfig: &config.GeminiConfig{
 					Model:        cfg.Planner.Gemini.Model,
 					MaxTokens:    cfg.Planner.Gemini.MaxTokens,
+					Temperature:  cfg.Planner.Gemini.Temperature,
 					Timeout:      timeout,
 					SystemPrompt: cfg.Planner.Gemini.SystemPrompt,
 				},
