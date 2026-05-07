@@ -120,31 +120,32 @@ func (s *server) Connect(stream grpc.BidiStreamingServer[proto.AgentMessage, pro
 			}
 		}
 
-		if !keepLooping {
-			// Send final text output if any
-			for _, part := range candidate.Content.Parts {
-				if part.Text != "" {
-					responseMsg := &proto.Message{
-						Role: "assistant",
-						Content: &proto.Content{
-							Type: &proto.Content_Text{
-								Text: &proto.TextContent{Text: "[DockerAgent] " + part.Text},
-							},
+		// Send text output if any (regardless of keepLooping)
+		for _, part := range candidate.Content.Parts {
+			if part.Text != "" {
+				responseMsg := &proto.Message{
+					Role: "assistant",
+					Content: &proto.Content{
+						Type: &proto.Content_Text{
+							Text: &proto.TextContent{Text: "[DockerAgent] " + part.Text},
 						},
-					}
-					if err := stream.Send(&proto.AgentMessage{
-						ConversationId: incoming.ConversationId,
-						ExecId:         incoming.ExecId,
-						Type: &proto.AgentMessage_Outputs{
-							Outputs: &proto.AgentOutputs{
-								Messages: []*proto.Message{responseMsg},
-							},
+					},
+				}
+				if err := stream.Send(&proto.AgentMessage{
+					ConversationId: incoming.ConversationId,
+					ExecId:         incoming.ExecId,
+					Type: &proto.AgentMessage_Outputs{
+						Outputs: &proto.AgentOutputs{
+							Messages: []*proto.Message{responseMsg},
 						},
-					}); err != nil {
-						return err
-					}
+					},
+				}); err != nil {
+					return err
 				}
 			}
+		}
+
+		if !keepLooping {
 			break
 		}
 	}
