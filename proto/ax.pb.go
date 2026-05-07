@@ -801,27 +801,27 @@ func (x *ExecResponse) GetSeq() int32 {
 	return 0
 }
 
-type DeleteRequest struct {
+type DeleteConversationRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *DeleteRequest) Reset() {
-	*x = DeleteRequest{}
+func (x *DeleteConversationRequest) Reset() {
+	*x = DeleteConversationRequest{}
 	mi := &file_proto_ax_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteRequest) String() string {
+func (x *DeleteConversationRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteRequest) ProtoMessage() {}
+func (*DeleteConversationRequest) ProtoMessage() {}
 
-func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
+func (x *DeleteConversationRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_ax_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -833,38 +833,38 @@ func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
-func (*DeleteRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteConversationRequest.ProtoReflect.Descriptor instead.
+func (*DeleteConversationRequest) Descriptor() ([]byte, []int) {
 	return file_proto_ax_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *DeleteRequest) GetConversationId() string {
+func (x *DeleteConversationRequest) GetConversationId() string {
 	if x != nil {
 		return x.ConversationId
 	}
 	return ""
 }
 
-type DeleteResponse struct {
+type DeleteConversationResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteResponse) Reset() {
-	*x = DeleteResponse{}
+func (x *DeleteConversationResponse) Reset() {
+	*x = DeleteConversationResponse{}
 	mi := &file_proto_ax_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteResponse) String() string {
+func (x *DeleteConversationResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteResponse) ProtoMessage() {}
+func (*DeleteConversationResponse) ProtoMessage() {}
 
-func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
+func (x *DeleteConversationResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_ax_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -876,18 +876,18 @@ func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
-func (*DeleteResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteConversationResponse.ProtoReflect.Descriptor instead.
+func (*DeleteConversationResponse) Descriptor() ([]byte, []int) {
 	return file_proto_ax_proto_rawDescGZIP(), []int{12}
 }
 
-type ForkRequest struct {
+type ForkConversationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Required: The source conversation ID to fork from.
 	SrcConversationId string `protobuf:"bytes,1,opt,name=src_conversation_id,json=srcConversationId,proto3" json:"src_conversation_id,omitempty"`
 	// Optional: The sequence number to fork from.
 	// Defaults to the latest sequence if not set or set to 0.
-	SrcSeq int32 `protobuf:"varint,2,opt,name=src_seq,json=srcSeq,proto3" json:"src_seq,omitempty"`
+	SrcSeq int32 `protobuf:"varint,2,opt,name=src_seq,json=srcSeq,proto3" json:"src_seq,omitempty"` // TODO(jbd): Replace this with snapshot_id.
 	// Optional: The destination conversation ID.
 	// Generates a new UUID if not provided.
 	DestConversationId string `protobuf:"bytes,3,opt,name=dest_conversation_id,json=destConversationId,proto3" json:"dest_conversation_id,omitempty"`
@@ -895,20 +895,20 @@ type ForkRequest struct {
 	sizeCache          protoimpl.SizeCache
 }
 
-func (x *ForkRequest) Reset() {
-	*x = ForkRequest{}
+func (x *ForkConversationRequest) Reset() {
+	*x = ForkConversationRequest{}
 	mi := &file_proto_ax_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ForkRequest) String() string {
+func (x *ForkConversationRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ForkRequest) ProtoMessage() {}
+func (*ForkConversationRequest) ProtoMessage() {}
 
-func (x *ForkRequest) ProtoReflect() protoreflect.Message {
+func (x *ForkConversationRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_ax_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -920,53 +920,53 @@ func (x *ForkRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ForkRequest.ProtoReflect.Descriptor instead.
-func (*ForkRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ForkConversationRequest.ProtoReflect.Descriptor instead.
+func (*ForkConversationRequest) Descriptor() ([]byte, []int) {
 	return file_proto_ax_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ForkRequest) GetSrcConversationId() string {
+func (x *ForkConversationRequest) GetSrcConversationId() string {
 	if x != nil {
 		return x.SrcConversationId
 	}
 	return ""
 }
 
-func (x *ForkRequest) GetSrcSeq() int32 {
+func (x *ForkConversationRequest) GetSrcSeq() int32 {
 	if x != nil {
 		return x.SrcSeq
 	}
 	return 0
 }
 
-func (x *ForkRequest) GetDestConversationId() string {
+func (x *ForkConversationRequest) GetDestConversationId() string {
 	if x != nil {
 		return x.DestConversationId
 	}
 	return ""
 }
 
-type ForkResponse struct {
+type ForkConversationResponse struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"` // The ID of the new conversation
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *ForkResponse) Reset() {
-	*x = ForkResponse{}
+func (x *ForkConversationResponse) Reset() {
+	*x = ForkConversationResponse{}
 	mi := &file_proto_ax_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ForkResponse) String() string {
+func (x *ForkConversationResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ForkResponse) ProtoMessage() {}
+func (*ForkConversationResponse) ProtoMessage() {}
 
-func (x *ForkResponse) ProtoReflect() protoreflect.Message {
+func (x *ForkConversationResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_ax_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -978,12 +978,12 @@ func (x *ForkResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ForkResponse.ProtoReflect.Descriptor instead.
-func (*ForkResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ForkConversationResponse.ProtoReflect.Descriptor instead.
+func (*ForkConversationResponse) Descriptor() ([]byte, []int) {
 	return file_proto_ax_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *ForkResponse) GetConversationId() string {
+func (x *ForkConversationResponse) GetConversationId() string {
 	if x != nil {
 		return x.ConversationId
 	}
@@ -1041,15 +1041,15 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\fagent_config\x18\x05 \x01(\fR\vagentConfig\"G\n" +
 	"\fExecResponse\x12%\n" +
 	"\aoutputs\x18\x01 \x03(\v2\v.ax.MessageR\aoutputs\x12\x10\n" +
-	"\x03seq\x18\x02 \x01(\x05R\x03seq\"8\n" +
-	"\rDeleteRequest\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"\x10\n" +
-	"\x0eDeleteResponse\"\x88\x01\n" +
-	"\vForkRequest\x12.\n" +
+	"\x03seq\x18\x02 \x01(\x05R\x03seq\"D\n" +
+	"\x19DeleteConversationRequest\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"\x1c\n" +
+	"\x1aDeleteConversationResponse\"\x94\x01\n" +
+	"\x17ForkConversationRequest\x12.\n" +
 	"\x13src_conversation_id\x18\x01 \x01(\tR\x11srcConversationId\x12\x17\n" +
 	"\asrc_seq\x18\x02 \x01(\x05R\x06srcSeq\x120\n" +
-	"\x14dest_conversation_id\x18\x03 \x01(\tR\x12destConversationId\"7\n" +
-	"\fForkResponse\x12'\n" +
+	"\x14dest_conversation_id\x18\x03 \x01(\tR\x12destConversationId\"C\n" +
+	"\x18ForkConversationResponse\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId*X\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
@@ -1060,10 +1060,10 @@ const file_proto_ax_proto_rawDesc = "" +
 	"\aConnect\x12\x10.ax.AgentMessage\x1a\x10.ax.AgentMessage(\x010\x01\x12>\n" +
 	"\vHealthCheck\x12\x16.ax.HealthCheckRequest\x1a\x17.ax.HealthCheckResponse2@\n" +
 	"\x11ControllerService\x12+\n" +
-	"\x04Exec\x12\x0f.ax.ExecRequest\x1a\x10.ax.ExecResponse0\x012\x85\x01\n" +
-	"\x0fEventLogService\x12;\n" +
-	"\x12DeleteConversation\x12\x11.ax.DeleteRequest\x1a\x12.ax.DeleteResponse\x125\n" +
-	"\x10ForkConversation\x12\x0f.ax.ForkRequest\x1a\x10.ax.ForkResponseB\x1cZ\x1agithub.com/google/ax/protob\x06proto3"
+	"\x04Exec\x12\x0f.ax.ExecRequest\x1a\x10.ax.ExecResponse0\x012\xb9\x01\n" +
+	"\x13ConversationService\x12S\n" +
+	"\x12DeleteConversation\x12\x1d.ax.DeleteConversationRequest\x1a\x1e.ax.DeleteConversationResponse\x12M\n" +
+	"\x10ForkConversation\x12\x1b.ax.ForkConversationRequest\x1a\x1c.ax.ForkConversationResponseB\x1cZ\x1agithub.com/google/ax/protob\x06proto3"
 
 var (
 	file_proto_ax_proto_rawDescOnce sync.Once
@@ -1080,24 +1080,24 @@ func file_proto_ax_proto_rawDescGZIP() []byte {
 var file_proto_ax_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_proto_ax_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_proto_ax_proto_goTypes = []any{
-	(State)(0),                    // 0: ax.State
-	(*AgentStart)(nil),            // 1: ax.AgentStart
-	(*AgentOutputs)(nil),          // 2: ax.AgentOutputs
-	(*AgentEnd)(nil),              // 3: ax.AgentEnd
-	(*AgentMessage)(nil),          // 4: ax.AgentMessage
-	(*Message)(nil),               // 5: ax.Message
-	(*ConversationEvent)(nil),     // 6: ax.ConversationEvent
-	(*ExecutionEvent)(nil),        // 7: ax.ExecutionEvent
-	(*HealthCheckRequest)(nil),    // 8: ax.HealthCheckRequest
-	(*HealthCheckResponse)(nil),   // 9: ax.HealthCheckResponse
-	(*ExecRequest)(nil),           // 10: ax.ExecRequest
-	(*ExecResponse)(nil),          // 11: ax.ExecResponse
-	(*DeleteRequest)(nil),         // 12: ax.DeleteRequest
-	(*DeleteResponse)(nil),        // 13: ax.DeleteResponse
-	(*ForkRequest)(nil),           // 14: ax.ForkRequest
-	(*ForkResponse)(nil),          // 15: ax.ForkResponse
-	(*Content)(nil),               // 16: ax.Content
-	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
+	(State)(0),                         // 0: ax.State
+	(*AgentStart)(nil),                 // 1: ax.AgentStart
+	(*AgentOutputs)(nil),               // 2: ax.AgentOutputs
+	(*AgentEnd)(nil),                   // 3: ax.AgentEnd
+	(*AgentMessage)(nil),               // 4: ax.AgentMessage
+	(*Message)(nil),                    // 5: ax.Message
+	(*ConversationEvent)(nil),          // 6: ax.ConversationEvent
+	(*ExecutionEvent)(nil),             // 7: ax.ExecutionEvent
+	(*HealthCheckRequest)(nil),         // 8: ax.HealthCheckRequest
+	(*HealthCheckResponse)(nil),        // 9: ax.HealthCheckResponse
+	(*ExecRequest)(nil),                // 10: ax.ExecRequest
+	(*ExecResponse)(nil),               // 11: ax.ExecResponse
+	(*DeleteConversationRequest)(nil),  // 12: ax.DeleteConversationRequest
+	(*DeleteConversationResponse)(nil), // 13: ax.DeleteConversationResponse
+	(*ForkConversationRequest)(nil),    // 14: ax.ForkConversationRequest
+	(*ForkConversationResponse)(nil),   // 15: ax.ForkConversationResponse
+	(*Content)(nil),                    // 16: ax.Content
+	(*timestamppb.Timestamp)(nil),      // 17: google.protobuf.Timestamp
 }
 var file_proto_ax_proto_depIdxs = []int32{
 	5,  // 0: ax.AgentStart.messages:type_name -> ax.Message
@@ -1117,13 +1117,13 @@ var file_proto_ax_proto_depIdxs = []int32{
 	4,  // 14: ax.AgentService.Connect:input_type -> ax.AgentMessage
 	8,  // 15: ax.AgentService.HealthCheck:input_type -> ax.HealthCheckRequest
 	10, // 16: ax.ControllerService.Exec:input_type -> ax.ExecRequest
-	12, // 17: ax.EventLogService.DeleteConversation:input_type -> ax.DeleteRequest
-	14, // 18: ax.EventLogService.ForkConversation:input_type -> ax.ForkRequest
+	12, // 17: ax.ConversationService.DeleteConversation:input_type -> ax.DeleteConversationRequest
+	14, // 18: ax.ConversationService.ForkConversation:input_type -> ax.ForkConversationRequest
 	4,  // 19: ax.AgentService.Connect:output_type -> ax.AgentMessage
 	9,  // 20: ax.AgentService.HealthCheck:output_type -> ax.HealthCheckResponse
 	11, // 21: ax.ControllerService.Exec:output_type -> ax.ExecResponse
-	13, // 22: ax.EventLogService.DeleteConversation:output_type -> ax.DeleteResponse
-	15, // 23: ax.EventLogService.ForkConversation:output_type -> ax.ForkResponse
+	13, // 22: ax.ConversationService.DeleteConversation:output_type -> ax.DeleteConversationResponse
+	15, // 23: ax.ConversationService.ForkConversation:output_type -> ax.ForkConversationResponse
 	19, // [19:24] is the sub-list for method output_type
 	14, // [14:19] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name

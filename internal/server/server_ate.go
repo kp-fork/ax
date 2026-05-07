@@ -73,6 +73,9 @@ func createATEClient() any {
 
 func suspendActor(actorID string) {
 	client := createATEClient()
+	if client == nil {
+		return
+	}
 	c := client.(*ate.Client)
 	defer c.Close()
 

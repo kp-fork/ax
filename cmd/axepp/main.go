@@ -130,11 +130,11 @@ func (s *authServer) Check(ctx context.Context, req *authv3.CheckRequest) (*auth
 	case "/ax.ControllerService/Exec":
 		var execReq proto.ExecRequest
 		return route(ctx, s.sc, body, &execReq, path, func() string { return execReq.GetConversationId() })
-	case "/ax.EventLogService/DeleteConversation":
-		var delReq proto.DeleteRequest
+	case "/ax.ConversationService/DeleteConversation":
+		var delReq proto.DeleteConversationRequest
 		return route(ctx, s.sc, body, &delReq, path, func() string { return delReq.GetConversationId() })
-	case "/ax.EventLogService/ForkConversation":
-		var forkReq proto.ForkRequest
+	case "/ax.ConversationService/ForkConversation":
+		var forkReq proto.ForkConversationRequest
 		return route(ctx, s.sc, body, &forkReq, path, func() string { return forkReq.GetDestConversationId() })
 	}
 

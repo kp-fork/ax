@@ -36,7 +36,7 @@ import (
 // Server implements the AXService gRPC service.
 type Server struct {
 	proto.UnimplementedControllerServiceServer
-	proto.UnimplementedEventLogServiceServer
+	proto.UnimplementedConversationServiceServer
 
 	controller *controller.Controller
 	grpcServer *grpc.Server
@@ -62,7 +62,7 @@ func (s *Server) Exec(req *proto.ExecRequest, stream grpc.ServerStreamingServer[
 	return err
 }
 
-func (s *Server) ForkConversation(ctx context.Context, req *proto.ForkRequest) (*proto.ForkResponse, error) {
+func (s *Server) ForkConversation(ctx context.Context, req *proto.ForkConversationRequest) (*proto.ForkConversationResponse, error) {
 	if req.SrcConversationId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "src_conversation_id is required")
 	}
@@ -80,10 +80,10 @@ func (s *Server) ForkConversation(ctx context.Context, req *proto.ForkRequest) (
 		return nil, status.Errorf(codes.Internal, "failed to fork conversation: %v", err)
 	}
 	go suspendActor(destID) // TODO(jbd): Move to an interceptor.
-	return &proto.ForkResponse{ConversationId: destID}, nil
+	return &proto.ForkConversationResponse{ConversationId: destID}, nil
 }
 
-func (s *Server) DeleteConversation(ctx context.Context, req *proto.DeleteRequest) (*proto.DeleteResponse, error) {
+func (s *Server) DeleteConversation(ctx context.Context, req *proto.DeleteConversationRequest) (*proto.DeleteConversationResponse, error) {
 	if req.ConversationId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "conversation_id is required")
 	}
@@ -91,7 +91,7 @@ func (s *Server) DeleteConversation(ctx context.Context, req *proto.DeleteReques
 		return nil, status.Errorf(codes.Internal, "failed to delete conversation: %v", err)
 	}
 	go suspendActor(req.ConversationId) // TODO(jbd): Move to an interceptor.
-	return &proto.DeleteResponse{}, nil
+	return &proto.DeleteConversationResponse{}, nil
 }
 
 // Serve starts the gRPC server on the specified address.
@@ -103,7 +103,7 @@ func (s *Server) Serve(address string, opts ...grpc.ServerOption) error {
 
 	s.grpcServer = grpc.NewServer(opts...)
 	proto.RegisterControllerServiceServer(s.grpcServer, s)
-	proto.RegisterEventLogServiceServer(s.grpcServer, s)
+	proto.RegisterConversationServiceServer(s.grpcServer, s)
 
 	// Register standard gRPC Health Check server
 	hs := health.NewServer()

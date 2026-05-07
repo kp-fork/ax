@@ -297,145 +297,145 @@ var ControllerService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	EventLogService_DeleteConversation_FullMethodName = "/ax.EventLogService/DeleteConversation"
-	EventLogService_ForkConversation_FullMethodName   = "/ax.EventLogService/ForkConversation"
+	ConversationService_DeleteConversation_FullMethodName = "/ax.ConversationService/DeleteConversation"
+	ConversationService_ForkConversation_FullMethodName   = "/ax.ConversationService/ForkConversation"
 )
 
-// EventLogServiceClient is the client API for EventLogService service.
+// ConversationServiceClient is the client API for ConversationService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type EventLogServiceClient interface {
+type ConversationServiceClient interface {
 	// Deletes conversational events and all event log resources
 	// for its children executions.
-	DeleteConversation(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	DeleteConversation(ctx context.Context, in *DeleteConversationRequest, opts ...grpc.CallOption) (*DeleteConversationResponse, error)
 	// Fork forks an event log from a specific conversation.
-	ForkConversation(ctx context.Context, in *ForkRequest, opts ...grpc.CallOption) (*ForkResponse, error)
+	ForkConversation(ctx context.Context, in *ForkConversationRequest, opts ...grpc.CallOption) (*ForkConversationResponse, error)
 }
 
-type eventLogServiceClient struct {
+type conversationServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewEventLogServiceClient(cc grpc.ClientConnInterface) EventLogServiceClient {
-	return &eventLogServiceClient{cc}
+func NewConversationServiceClient(cc grpc.ClientConnInterface) ConversationServiceClient {
+	return &conversationServiceClient{cc}
 }
 
-func (c *eventLogServiceClient) DeleteConversation(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+func (c *conversationServiceClient) DeleteConversation(ctx context.Context, in *DeleteConversationRequest, opts ...grpc.CallOption) (*DeleteConversationResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, EventLogService_DeleteConversation_FullMethodName, in, out, cOpts...)
+	out := new(DeleteConversationResponse)
+	err := c.cc.Invoke(ctx, ConversationService_DeleteConversation_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *eventLogServiceClient) ForkConversation(ctx context.Context, in *ForkRequest, opts ...grpc.CallOption) (*ForkResponse, error) {
+func (c *conversationServiceClient) ForkConversation(ctx context.Context, in *ForkConversationRequest, opts ...grpc.CallOption) (*ForkConversationResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ForkResponse)
-	err := c.cc.Invoke(ctx, EventLogService_ForkConversation_FullMethodName, in, out, cOpts...)
+	out := new(ForkConversationResponse)
+	err := c.cc.Invoke(ctx, ConversationService_ForkConversation_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// EventLogServiceServer is the server API for EventLogService service.
-// All implementations must embed UnimplementedEventLogServiceServer
+// ConversationServiceServer is the server API for ConversationService service.
+// All implementations must embed UnimplementedConversationServiceServer
 // for forward compatibility.
-type EventLogServiceServer interface {
+type ConversationServiceServer interface {
 	// Deletes conversational events and all event log resources
 	// for its children executions.
-	DeleteConversation(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	DeleteConversation(context.Context, *DeleteConversationRequest) (*DeleteConversationResponse, error)
 	// Fork forks an event log from a specific conversation.
-	ForkConversation(context.Context, *ForkRequest) (*ForkResponse, error)
-	mustEmbedUnimplementedEventLogServiceServer()
+	ForkConversation(context.Context, *ForkConversationRequest) (*ForkConversationResponse, error)
+	mustEmbedUnimplementedConversationServiceServer()
 }
 
-// UnimplementedEventLogServiceServer must be embedded to have
+// UnimplementedConversationServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedEventLogServiceServer struct{}
+type UnimplementedConversationServiceServer struct{}
 
-func (UnimplementedEventLogServiceServer) DeleteConversation(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+func (UnimplementedConversationServiceServer) DeleteConversation(context.Context, *DeleteConversationRequest) (*DeleteConversationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteConversation not implemented")
 }
-func (UnimplementedEventLogServiceServer) ForkConversation(context.Context, *ForkRequest) (*ForkResponse, error) {
+func (UnimplementedConversationServiceServer) ForkConversation(context.Context, *ForkConversationRequest) (*ForkConversationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ForkConversation not implemented")
 }
-func (UnimplementedEventLogServiceServer) mustEmbedUnimplementedEventLogServiceServer() {}
-func (UnimplementedEventLogServiceServer) testEmbeddedByValue()                         {}
+func (UnimplementedConversationServiceServer) mustEmbedUnimplementedConversationServiceServer() {}
+func (UnimplementedConversationServiceServer) testEmbeddedByValue()                             {}
 
-// UnsafeEventLogServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to EventLogServiceServer will
+// UnsafeConversationServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ConversationServiceServer will
 // result in compilation errors.
-type UnsafeEventLogServiceServer interface {
-	mustEmbedUnimplementedEventLogServiceServer()
+type UnsafeConversationServiceServer interface {
+	mustEmbedUnimplementedConversationServiceServer()
 }
 
-func RegisterEventLogServiceServer(s grpc.ServiceRegistrar, srv EventLogServiceServer) {
-	// If the following call pancis, it indicates UnimplementedEventLogServiceServer was
+func RegisterConversationServiceServer(s grpc.ServiceRegistrar, srv ConversationServiceServer) {
+	// If the following call pancis, it indicates UnimplementedConversationServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&EventLogService_ServiceDesc, srv)
+	s.RegisterService(&ConversationService_ServiceDesc, srv)
 }
 
-func _EventLogService_DeleteConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRequest)
+func _ConversationService_DeleteConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteConversationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EventLogServiceServer).DeleteConversation(ctx, in)
+		return srv.(ConversationServiceServer).DeleteConversation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: EventLogService_DeleteConversation_FullMethodName,
+		FullMethod: ConversationService_DeleteConversation_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventLogServiceServer).DeleteConversation(ctx, req.(*DeleteRequest))
+		return srv.(ConversationServiceServer).DeleteConversation(ctx, req.(*DeleteConversationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EventLogService_ForkConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ForkRequest)
+func _ConversationService_ForkConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ForkConversationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EventLogServiceServer).ForkConversation(ctx, in)
+		return srv.(ConversationServiceServer).ForkConversation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: EventLogService_ForkConversation_FullMethodName,
+		FullMethod: ConversationService_ForkConversation_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventLogServiceServer).ForkConversation(ctx, req.(*ForkRequest))
+		return srv.(ConversationServiceServer).ForkConversation(ctx, req.(*ForkConversationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// EventLogService_ServiceDesc is the grpc.ServiceDesc for EventLogService service.
+// ConversationService_ServiceDesc is the grpc.ServiceDesc for ConversationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var EventLogService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ax.EventLogService",
-	HandlerType: (*EventLogServiceServer)(nil),
+var ConversationService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ax.ConversationService",
+	HandlerType: (*ConversationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "DeleteConversation",
-			Handler:    _EventLogService_DeleteConversation_Handler,
+			Handler:    _ConversationService_DeleteConversation_Handler,
 		},
 		{
 			MethodName: "ForkConversation",
-			Handler:    _EventLogService_ForkConversation_Handler,
+			Handler:    _ConversationService_ForkConversation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
