@@ -20,7 +20,7 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 
 	"google.golang.org/grpc"
@@ -51,8 +51,9 @@ func New(c *controller.Controller) *Server {
 
 // Exec executes a new agentic task with streaming responses.
 func (s *Server) Exec(req *proto.ExecRequest, stream grpc.ServerStreamingServer[proto.ExecResponse]) error {
-	log.Printf("Executing %q...", req.ConversationId)
 	ctx := stream.Context()
+	slog.InfoContext(ctx, "Executing...",
+		slog.String("conversation_id", req.ConversationId))
 
 	outputHandler := controller.ExecHandler(func(resp *proto.ExecResponse) error {
 		return stream.Send(resp)
@@ -63,6 +64,11 @@ func (s *Server) Exec(req *proto.ExecRequest, stream grpc.ServerStreamingServer[
 }
 
 func (s *Server) ForkConversation(ctx context.Context, req *proto.ForkConversationRequest) (*proto.ForkConversationResponse, error) {
+	slog.InfoContext(ctx, "Forking conversation...",
+		slog.String("src_conversation_id", req.SrcConversationId),
+		slog.Int("src_seq", int(req.SrcSeq)),
+		slog.String("dest_conversation_id", req.DestConversationId))
+
 	if req.SrcConversationId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "src_conversation_id is required")
 	}
@@ -84,6 +90,9 @@ func (s *Server) ForkConversation(ctx context.Context, req *proto.ForkConversati
 }
 
 func (s *Server) DeleteConversation(ctx context.Context, req *proto.DeleteConversationRequest) (*proto.DeleteConversationResponse, error) {
+	slog.InfoContext(ctx, "Deleting conversation...",
+		slog.String("conversation_id", req.ConversationId))
+
 	if req.ConversationId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "conversation_id is required")
 	}
@@ -118,6 +127,7 @@ func (s *Server) Serve(address string, opts ...grpc.ServerOption) error {
 
 // GracefulStop stops the gRPC server gracefully.
 func (s *Server) GracefulStop() {
+	slog.Info("Stopping server gracefully...")
 	if s.controller != nil {
 		s.controller.Close()
 	}
