@@ -343,7 +343,7 @@ export GOOGLE_GENAI_USE_VERTEXAI=True
 
 ### Skills
 
-AX includes built-in support for Agent Skills. See [Skills](docs/skills.md) for more.
+AX includes built-in support for Agent Skills. See [Skills](examples/skills) for more.
 
 ### Bash Tool
 
@@ -358,8 +358,9 @@ requires explicit user approval via a confirmation flow before running.
 
 Custom agents can be registered on the AX server:
 
-- [Remote Agent](docs/remote-agent.md)
-- [Colab Agents (Experimental)](docs/experimental/colab-agent.md)
+- [Remote Agent](examples/remote_agent)
+- [ADK Agent (Python Example)](examples/adk_agent)
+- [Colab Agents (Experimental)](examples/colab_agent)
 
 Please note that AX is actively developing a resumable streaming protocol;
 as a result, the server-to-agent communication protocol will undergo significant revisions.
@@ -370,7 +371,7 @@ See the `AgentService` in `proto/ax.proto` to implement remote agents.
   We aim to make it easy for users to deploy and operate it on
   their clusters.
 * An agentic framework. AX is agnostic of the framework used to build agents.
-  We are working with other framework authors (e.g., ADK)
+  We are working with other framework authors (e.g., [ADK](examples/adk_agent))
   to provide easy integration with them.
 * A specific harness like a coding agent. We allow bringing any
   harness as an agent.
