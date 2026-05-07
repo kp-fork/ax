@@ -64,7 +64,7 @@ func TestServer_Fork(t *testing.T) {
 
 	s := New(c)
 
-	resp, err := s.ForkConversation(ctx, &proto.ForkRequest{
+	resp, err := s.ForkConversation(ctx, &proto.ForkConversationRequest{
 		SrcConversationId:  srcCID,
 		DestConversationId: destCID,
 	})
@@ -120,7 +120,7 @@ func TestServer_Fork_RequiresDestID(t *testing.T) {
 
 	s := New(c)
 
-	if _, err := s.ForkConversation(ctx, &proto.ForkRequest{
+	if _, err := s.ForkConversation(ctx, &proto.ForkConversationRequest{
 		SrcConversationId: srcCID,
 		// DestConversationId intentionally left empty.
 	}); err == nil {

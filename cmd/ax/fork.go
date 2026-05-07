@@ -81,9 +81,9 @@ func runFork(cmd *cobra.Command, args []string) error {
 	}
 	defer conn.Close()
 
-	client := proto.NewEventLogServiceClient(conn)
+	client := proto.NewConversationServiceClient(conn)
 
-	resp, err := client.ForkConversation(ctx, &proto.ForkRequest{
+	resp, err := client.ForkConversation(ctx, &proto.ForkConversationRequest{
 		SrcConversationId:  forkSourceConversation,
 		SrcSeq:             forkSourceSeq,
 		DestConversationId: forkDestConversation,
