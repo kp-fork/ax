@@ -26,11 +26,8 @@ import asyncio
 import sys
 import os
 
-# Add proto path to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../proto')))
-
-import ax_pb2
-import content_pb2
+from python.proto import ax_pb2
+from python.proto import content_pb2
 from google.genai import types
 from google.adk.runners import Event
 

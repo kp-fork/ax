@@ -20,16 +20,14 @@ import asyncio
 import importlib.util
 import uuid
 
-# Add the root of the project to sys.path to find generated protos
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../proto')))
-
-import ax_pb2
-import ax_pb2_grpc
-import content_pb2
+from python.proto import ax_pb2
+from python.proto import ax_pb2_grpc
+from python.proto import content_pb2
 from google.adk.agents import Agent, InvocationContext
 from google.adk.sessions import Session, InMemorySessionService
 from google.genai import types
 from google.adk.runners import Runner, Event
+from .content_conversion import ax_content_to_adk_part, adk_part_to_ax_content
 
 class ADKAgentServicer(ax_pb2_grpc.AgentServiceServicer):
     def __init__(self, agent, debug=False):
@@ -62,8 +60,11 @@ class ADKAgentServicer(ax_pb2_grpc.AgentServiceServicer):
                 
                 # Hydrate past history into the session without executing them
                 for msg in historical_messages:
-                    # TODO - Conversion logic for different content types beyond text
-                    content = types.Content(role=msg.role, parts=[types.Part(text=msg.content.text.text)])
+                    part = ax_content_to_adk_part(msg.content)
+                    if not part:
+                        print(f"[WARNING] Skipping message with unsupported content type: {msg.content}")
+                        continue
+                    content = types.Content(role=msg.role, parts=[part])
                     event = Event(
                         invocation_id=str(uuid.uuid4()),
                         author=self.agent.name,
@@ -72,40 +73,26 @@ class ADKAgentServicer(ax_pb2_grpc.AgentServiceServicer):
                     await self.session_service.append_event(session, event)
 
                 # Execute only the latest query
-                content = types.Content(role=latest_message.role, parts=[types.Part(text=latest_message.content.text.text)])
-                async for event in self.runner.run_async(session_id=session.id, user_id=session.user_id, new_message=content):
-                    if event.content and event.content.parts:
-                        for part in event.content.parts:
-                            # TODO - Conversion logic for different content types beyond text
-                            if getattr(part, 'text', None):
-                                if part.thought:
-                                    thought_summary = content_pb2.ThoughtSummaryContent(
-                                        text=content_pb2.TextContent(text=part.text)
+                part = ax_content_to_adk_part(latest_message.content)
+                if not part:
+                    print(f"[WARNING] Skipping message with unsupported content type: {latest_message.content}")
+                else:
+                    content = types.Content(role=latest_message.role, parts=[part])
+                    async for event in self.runner.run_async(session_id=session.id, user_id=session.user_id, new_message=content):
+                        if event.content and event.content.parts:
+                            for part in event.content.parts:
+                                ax_content = adk_part_to_ax_content(part)
+                                if ax_content:
+                                    response_msg = ax_pb2.Message(role="assistant", content=ax_content)
+                                    # Sub agents should always send back the same IDs.
+                                    yield_msg = ax_pb2.AgentMessage(
+                                        conversation_id=conversation_id,
+                                        exec_id=exec_id,
+                                        outputs=ax_pb2.AgentOutputs(messages=[response_msg])
                                     )
-                                    response_msg = ax_pb2.Message(
-                                        role="assistant",
-                                        content=content_pb2.Content(
-                                            thought=content_pb2.ThoughtContent(
-                                                summary=[thought_summary]
-                                            )
-                                        )
-                                    )
-                                else:
-                                    response_msg = ax_pb2.Message(
-                                        role="assistant",
-                                        content=content_pb2.Content(
-                                            text=content_pb2.TextContent(text=part.text)
-                                        )
-                                    )
-                                # Send conversion_id and exec_id as it is, since ADK agent is stateless.
-                                yield_msg = ax_pb2.AgentMessage(
-                                    conversation_id=conversation_id,
-                                    exec_id=exec_id,
-                                    outputs=ax_pb2.AgentOutputs(messages=[response_msg])
-                                )
-                                if self.debug:
-                                    print(f"[DEBUG] Yielding AgentMessage Response Chunk:\n{yield_msg}\n{'-'*80}")
-                                yield yield_msg
+                                    if self.debug:
+                                        print(f"[DEBUG] Yielding AgentMessage Response Chunk:\n{yield_msg}\n{'-'*80}")
+                                    yield yield_msg
 
                 # Clean up/delete the stateless session to free resources
                 await self.session_service.delete_session(

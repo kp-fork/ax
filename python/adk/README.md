@@ -47,10 +47,10 @@ export GEMINI_API_KEY="your-gemini-api-key-here"
 
 ### 2. Start the Server
 
-Run the server using your Python virtual environment:
+Run the server using your Python virtual environment (from the project root):
 
 ```bash
-python python/adk/adk_agent_server.py [options]
+python -m python.adk.adk_agent_server [options]
 ```
 
 #### Available CLI Options:
@@ -62,13 +62,13 @@ python python/adk/adk_agent_server.py [options]
 
 ```bash
 # Start with default weather agent on port 50051
-python python/adk/adk_agent_server.py
+python -m python.adk.adk_agent_server
 
 # Start with debug logging enabled
-python python/adk/adk_agent_server.py --debug
+python -m python.adk.adk_agent_server --debug
 
 # Start with a custom agent file on a custom port with debug mode
-python python/adk/adk_agent_server.py --agent_file path/to/your_agent.py --port 50055 --debug
+python -m python.adk.adk_agent_server --agent_file path/to/your_agent.py --port 50055 --debug
 ```
 
 Once started, the server will print:
