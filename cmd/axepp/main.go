@@ -95,11 +95,12 @@ func runSession(ctx context.Context, sc ateapipb.ControlClient, sessionID string
 	}, nil
 }
 
-func route(ctx context.Context, sc ateapipb.ControlClient, body string, req protov2.Message, pathName string, extractor func() string) (*authv3.CheckResponse, error) {
+func route(ctx context.Context, sc ateapipb.ControlClient, body []byte, req protov2.Message, pathName string, extractor func() string) (*authv3.CheckResponse, error) {
 	if len(body) <= 5 {
 		return nil, fmt.Errorf("body too short for path %s", pathName)
 	}
-	payload := []byte(body)[5:]
+
+	payload := body[5:]
 	if err := protov2.Unmarshal(payload, req); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal request for path %s: %w", pathName, err)
 	}
@@ -124,20 +125,31 @@ func (s *authServer) Check(ctx context.Context, req *authv3.CheckRequest) (*auth
 		},
 	}
 
-	body := httpReq.GetBody()
+	body := httpReq.GetRawBody()
 
 	switch path {
 	case "/ax.ControllerService/Exec":
 		var execReq proto.ExecRequest
-		return route(ctx, s.sc, body, &execReq, path, func() string { return execReq.GetConversationId() })
+		resp, err := route(ctx, s.sc, body, &execReq, path, func() string { return execReq.GetConversationId() })
+		if err != nil {
+			slog.ErrorContext(ctx, "EPP routing failed", slog.String("path", path), slog.Any("error", err))
+		}
+		return resp, err
 	case "/ax.ConversationService/DeleteConversation":
 		var delReq proto.DeleteConversationRequest
-		return route(ctx, s.sc, body, &delReq, path, func() string { return delReq.GetConversationId() })
+		resp, err := route(ctx, s.sc, body, &delReq, path, func() string { return delReq.GetConversationId() })
+		if err != nil {
+			slog.ErrorContext(ctx, "EPP routing failed", slog.String("path", path), slog.Any("error", err))
+		}
+		return resp, err
 	case "/ax.ConversationService/ForkConversation":
 		var forkReq proto.ForkConversationRequest
-		return route(ctx, s.sc, body, &forkReq, path, func() string { return forkReq.GetDestConversationId() })
+		resp, err := route(ctx, s.sc, body, &forkReq, path, func() string { return forkReq.GetDestConversationId() })
+		if err != nil {
+			slog.ErrorContext(ctx, "EPP routing failed", slog.String("path", path), slog.Any("error", err))
+		}
+		return resp, err
 	}
-
 	return defaultResp, nil
 }
 

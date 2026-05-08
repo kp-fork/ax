@@ -97,7 +97,7 @@ data:
                   with_request_body:
                     max_request_bytes: 1048576
                     allow_partial_message: true
-                    pack_as_bytes: false
+                    pack_as_bytes: true
                   failure_mode_allow: false
               - name: envoy.filters.http.dynamic_forward_proxy
                 typed_config:
