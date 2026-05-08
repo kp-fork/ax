@@ -118,6 +118,7 @@ data:
                       prefix: "/"
                     route:
                       cluster: dynamic_forward_proxy_cluster
+                      timeout: 0s
                     typed_per_filter_config:
                       envoy.filters.http.dynamic_forward_proxy:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_forward_proxy.v3.PerRouteConfig
