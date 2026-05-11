@@ -133,7 +133,9 @@ ax exec \
 ### 2. Execute with Custom Agents
 
 Most developers want to build their own agents. AX allows running custom agents as remote
-or sandbox agents. This example demonstrates how the AX server executes remote agents
+or sandbox agents. See [Custom Agents](#custom-agents) for a full list of supported agents.
+
+This example demonstrates how the AX server executes remote agents
 through the `AgentService.Connect` RPC.
 
 **Terminal 1** - Start the remote agent server:
@@ -356,15 +358,25 @@ requires explicit user approval via a confirmation flow before running.
 
 ### Custom Agents
 
-Custom agents can be registered on the AX server:
+AX supports multiple ways to bring your own agents into the runtime.
 
-- [Remote Agent](examples/remote_agent)
-- [ADK Agent (Python Example)](examples/adk_agent)
-- [Colab Agents (Experimental)](examples/colab_agent)
+#### Remote agents
 
-Please note that AX is actively developing a resumable streaming protocol;
-as a result, the server-to-agent communication protocol will undergo significant revisions.
-See the `AgentService` in `proto/ax.proto` to implement remote agents.
+Remote agents run outside the AX controller and are invoked over a protocol boundary.
+
+- [Remote Agent](examples/remote_agent): implement AX's native `AgentService` directly.
+- [ADK Agent (Python)](examples/adk_agent): run a Google ADK agent behind the AX gRPC wrapper so it can be registered as a remote agent.
+- [A2A Agent](examples/a2a_agent): connect agents that speak the [A2A protocol](https://github.com/a2aproject/A2A) through AX's A2A bridge.
+
+#### Sandboxed agents
+
+Sandboxed agents execute user-provided code in an external execution environment managed by AX.
+
+- [Colab Agents](examples/colab_agent)(experimental): run Python scripts or notebooks in a remote Google Colab session.
+
+Please note that AX is actively developing its resumable streaming and agent communication protocols; these interfaces may change before a stable release.
+
+If you are implementing an AX-native remote agent, see `AgentService` in `proto/ax.proto`.
 
 ## What AX is NOT?
 * A managed service. AX is self-hosted and not a managed service.
