@@ -245,13 +245,14 @@ func (p *geminiPlannerAgent) process(ctx context.Context, start *proto.AgentStar
 			continue
 		}
 
-		if part.Text != "" {
+		trimmed := strings.TrimSpace(part.Text)
+		if trimmed != "" {
 			if err := handler(&proto.AgentOutputs{
 				Messages: []*proto.Message{{
 					Role: "model",
 					Content: &proto.Content{
 						Type: &proto.Content_Text{
-							Text: &proto.TextContent{Text: strings.TrimSpace(part.Text)},
+							Text: &proto.TextContent{Text: trimmed},
 						},
 					},
 				}},
