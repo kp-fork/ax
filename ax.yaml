@@ -47,11 +47,20 @@ registry:
   #     metadata:
   #       version: "1.0"
 
-  # remote_agents:
   #   - id: "weather-agent"
   #     name: "Weather agent"
   #     description: "Agent to answer questions about the weather in a city."
   #     address: "localhost:50051"
+  #     metadata:
+  #       version: "1.0"
+
+  #   - id: "coding-agent"
+  #     name: "Coding Agent (A2A)"
+  #     address: "http://localhost:41241"
+  #     protocol: "a2a"
+  #     auth:
+  #       type: "bearer"
+  #       credential_env: "CODING_AGENT_AUTH_TOKEN"
   #     metadata:
   #       version: "1.0"
 
