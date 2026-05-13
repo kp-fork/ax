@@ -4,18 +4,19 @@
 agent built on Google ADK's `LlmAgent` (Gemini). It demonstrates how to
 register and use any A2A-compliant agent from AX.
 
-The agent writes Python code on request, asks the user to confirm a save
-path before writing anything, and returns the saved source as a file
-attachment.
+The agent writes Python code on request, saves the source directly under
+`examples/a2a_agent/output/`, and returns the saved file as a
+`text/x-python` attachment alongside its text reply.
 
 ## What it demonstrates
 
 - **The full A2A integration surface AX supports**: AgentCard discovery,
   multi-transport (gRPC + JSON-RPC + HTTP+JSON REST), streaming and
   polling-fallback, FilePart artifacts.
-- **HITL via A2A's `TASK_STATE_INPUT_REQUIRED`** mapped to AX's
-  `ConfirmationContent`. The agent proposes a path; AX prompts the
-  user; the user's "yes" reply resumes the same A2A task.
+- **Inline tool calls inside a single A2A turn**: the agent calls
+  `save_python_file(filename, code)`, the file is written immediately,
+  and the same task transitions `SUBMITTED → WORKING → COMPLETED` without
+  pausing.
 - **Optional dual-scheme auth** (`--auth`): the AgentCard advertises
   Bearer and API-key as alternatives; the server enforces either via
   HTTP middleware and a gRPC interceptor.
@@ -59,6 +60,12 @@ This serves:
 | `--api-key-header` | Header name advertised on the AgentCard's `APIKeySecurityScheme.name`. Default: `X-API-Key`. |
 | `--log-level` | `DEBUG`, `INFO`, `WARNING`, `ERROR`. Default: `INFO`. |
 
+### Where saved files land
+
+The agent writes every generated file to `examples/a2a_agent/output/`
+(created on first save). Filenames are constrained to bare names ending
+in `.py` — no path components, no `..`.
+
 ## Register the agent in AX
 
 Add an entry under `registry.remote_agents` in your `ax.yaml`:
@@ -68,7 +75,7 @@ registry:
   remote_agents:
     - id: "coding-agent"
       name: "Coding Agent"
-      description: "Writes Python code and saves it to disk after the user confirms a path."
+      description: "Writes Python code and saves it under examples/a2a_agent/output/."
       address: "http://127.0.0.1:41241"
       protocol: "a2a"
 ```
@@ -80,7 +87,7 @@ registry:
   remote_agents:
     - id: "coding-agent"
       name: "Coding Agent"
-      description: "Writes Python code and saves it to disk after the user confirms a path."
+      description: "Writes Python code and saves it under examples/a2a_agent/output/."
       address: "http://127.0.0.1:41241"
       protocol: "a2a"
       auth:
@@ -89,7 +96,8 @@ registry:
 ```
 
 Make sure both AX's process and the agent process see the same value
-for `CODING_AGENT_AUTH_TOKEN`.
+for `CODING_AGENT_AUTH_TOKEN`. The api_key header name is auto-discovered
+from the AgentCard, so you don't need to configure it on the AX side.
 
 ## Try it
 
@@ -101,10 +109,9 @@ ax exec --input "Write me a Python flask hello-world server."
 
 The planner delegates to `coding-agent`, which:
 
-1. Generates the code
-2. Proposes a save path (e.g. `~/flask_app.py`) and pauses for confirmation
-3. AX prompts you `Confirm? [yes/no]`
-4. On `yes`, the agent writes the file and returns the source as a
-   `text/x-python` FilePart alongside its text reply
-5. On `no`, the agent emits the proposed code as a fenced markdown block
-   instead and skips the write
+1. Generates the code.
+2. Calls `save_python_file('flask_hello.py', '<code>')` inline. The file
+   is written to `examples/a2a_agent/output/flask_hello.py`.
+3. Returns its text reply plus the saved source as a `text/x-python`
+   FilePart attached to the same response artifact.
+   

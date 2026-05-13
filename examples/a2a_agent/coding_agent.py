@@ -30,23 +30,12 @@ Exposes an ADK Gemini agent over the A2A protocol on three transports
 
 What it does:
   - Writes Python code on request.
-  - Before saving anything, the agent proposes a full filesystem path
-    (directory + filename) and waits for the user's explicit confirmation.
-    Files are only written after the user replies "yes". The agent picks
-    the path each turn; there is no fixed sandbox - the user's confirmation
-    is the only gate.
-  - Returns the saved Python file as a FilePart (``text/x-python``)
-    alongside the agent's text reply, so clients can surface the actual
-    generated source.
+  - Saves the code to a file under examples/a2a_agent/output/.
+  - Returns the saved file as a FilePart (``text/x-python``) alongside the
+    agent's text reply, so clients can surface the actual generated source.
   - Optionally enforces auth (``--auth``): when enabled, the AgentCard
     advertises both Bearer and API-key schemes as alternatives, and the
     server accepts either credential on every request.
-
-The example uses a small in-process ``AdkAgentExecutor`` adapter rather than
-``google.adk.a2a.executor.A2aAgentExecutor`` because the latter (in
-google-adk 1.31.x) is pinned to a2a-sdk 0.3.x while this example targets
-a2a-sdk 1.0.x. The adapter implements the A2A long-running / INPUT_REQUIRED
-flow on top of ADK's ``LongRunningFunctionTool`` semantics.
 
 Auth (set one before launching):
   * Gemini API key:  export GOOGLE_API_KEY=...
@@ -68,7 +57,6 @@ import os
 import secrets
 
 from pathlib import Path
-from typing import Literal
 
 import grpc
 import uvicorn
@@ -111,16 +99,14 @@ from google.adk.events.event import Event as AdkEvent
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
-from google.adk.tools.long_running_tool import LongRunningFunctionTool
 from google.genai import types as genai_types
 
 
 logger = logging.getLogger(__name__)
 
 
-# Synonyms used to interpret the user's reply to a save-confirmation prompt.
-_AFFIRMATIVE = {"yes", "ok", "confirm", "go ahead", "approve", "approved"}
-_NEGATIVE = {"no", "nope", "stop", "abort", "decline", "declined"}
+# Generated files land here. Bare filenames only (no path components, no '..').
+_OUTPUT_DIR = Path(__file__).resolve().parent / "output"
 
 
 def _check_http_credential(
@@ -171,32 +157,46 @@ class _GrpcAuthInterceptor(grpc.aio.ServerInterceptor):
         return grpc.unary_unary_rpc_method_handler(_abort)
 
 
-def propose_save_python_file(path: str, code: str) -> dict:
-    """Stage a Python file for saving; pauses for user confirmation.
+def save_python_file(filename: str, code: str) -> dict:
+    """Save Python code to examples/a2a_agent/output/<filename>.
 
     Args:
-      path: Filesystem path where the file should be written. May be relative
-        (e.g. './scripts/hello.py'), absolute ('/tmp/hello.py'), or use '~' to
-        refer to the user's home directory ('~/Desktop/hello.py'). Must end
-        in '.py'. Parent directories are created if missing on confirmation.
-      code: The Python source to write.
+      filename: Bare filename (no path components, no '..', must end in '.py').
+      code: The Python source to write. Overwrites any existing file in the
+        output directory.
 
     Returns:
-      A status dict. The actual write happens after the user confirms; the
-      eventual response is {"status": "saved", "path": "..."},
-      {"status": "declined"}, or {"status": "error", "message": "..."}.
+      {"status": "saved", "path": "/abs/.../examples/a2a_agent/output/<filename>"}
+      on success, or {"status": "error", "message": "..."} on validation failure.
     """
-    return {"status": "pending_confirmation", "path": path}
+    name = (filename or "").strip()
+    if not name or "/" in name or "\\" in name or ".." in name:
+        return {"status": "error", "message": f"Invalid filename: {filename!r}"}
+    if not name.endswith(".py"):
+        return {"status": "error", "message": "Filename must end in .py"}
+    target = (_OUTPUT_DIR / name).resolve()
+    if target.parent != _OUTPUT_DIR:
+        return {
+            "status": "error",
+            "message": "Filename must not contain path components",
+        }
+    try:
+        _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        target.write_text(code, encoding="utf-8")
+    except OSError as exc:
+        return {"status": "error", "message": f"Failed to write file: {exc}"}
+    logger.info("[save_python_file] Saved %d bytes to %s", len(code), target)
+    return {"status": "saved", "path": str(target)}
 
 
 class AdkAgentExecutor(AgentExecutor):
-    """A2A AgentExecutor that bridges ADK's long-running tool semantics to
-    A2A's TASK_STATE_INPUT_REQUIRED flow.
+    """A2A AgentExecutor that runs a Google ADK LlmAgent.
 
-    Each A2A context is mapped 1:1 to an ADK session. When the agent calls
-    ``propose_save_python_file`` the task is paused; on the user's next
-    message the executor parses yes/no, performs (or skips) the file write,
-    and resumes ADK by feeding back a matching ``function_response``.
+    Each A2A context is mapped 1:1 to an ADK session. Each user turn is a
+    single straight-through invocation of ``Runner.run_async``: the agent
+    streams text (forwarded as TASK_STATE_WORKING status updates) and may
+    call ``save_python_file`` inline; any successfully saved files are
+    attached to the final artifact as text/x-python FileParts.
     """
 
     USER_ID = "a2a_user"
@@ -204,21 +204,12 @@ class AdkAgentExecutor(AgentExecutor):
     def __init__(self, runner: Runner) -> None:
         self._runner = runner
         self._running_tasks: set[str] = set()
-        # task_id -> {function_call_id, name, path, code}
-        self._pending_confirmations: dict[str, dict] = {}
-        # task_id -> resolved Path of a file just saved this turn (for FilePart attachment).
-        self._saved_files: dict[str, Path] = {}
-        # task_id -> proposed code that the user declined to save (for text Part attachment).
-        self._declined_codes: dict[str, str] = {}
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         """Marks an in-flight task as cancelled."""
         task_id = context.task_id
         if task_id in self._running_tasks:
             self._running_tasks.remove(task_id)
-        self._pending_confirmations.pop(task_id or "", None)
-        self._saved_files.pop(task_id or "", None)
-        self._declined_codes.pop(task_id or "", None)
 
         updater = TaskUpdater(
             event_queue=event_queue,
@@ -238,86 +229,34 @@ class AdkAgentExecutor(AgentExecutor):
 
         self._running_tasks.add(task_id)
 
-        # Branch A: follow-up reply for a paused (INPUT_REQUIRED) task.
-        pending = self._pending_confirmations.get(task_id)
-        is_resume = (
-            pending is not None
-            and context.current_task is not None
-            and context.current_task.status.state == TaskState.TASK_STATE_INPUT_REQUIRED
-        )
-
         updater = TaskUpdater(
             event_queue=event_queue, task_id=task_id, context_id=context_id
         )
 
-        if is_resume:
-            user_text = (context.get_user_input() or "").strip()
-            decision = self._parse_decision(user_text)
-
-            if decision is None:
-                # Ambiguous reply - keep the task paused and re-prompt.
-                await updater.update_status(
-                    state=TaskState.TASK_STATE_INPUT_REQUIRED,
-                    message=updater.new_agent_message(
-                        parts=[
-                            Part(
-                                text=(
-                                    f"I didn't catch that. Reply `yes` to save the file to "
-                                    f"`{pending['path']}` or `no` to skip."
-                                )
-                            )
-                        ]
-                    ),
-                )
-                return
-
-            if decision == "approved":
-                save_result = await self._save_file(
-                    task_id, pending["path"], pending["code"]
-                )
-            else:
-                save_result = {"status": "declined"}
-                self._declined_codes[task_id] = pending["code"]
-
-            self._pending_confirmations.pop(task_id, None)
-
-            new_message = genai_types.Content(
-                role="user",
-                parts=[
-                    genai_types.Part(
-                        function_response=genai_types.FunctionResponse(
-                            id=pending["function_call_id"],
-                            name=pending["name"],
-                            response=save_result,
-                        )
-                    )
-                ],
+        # Fresh turn: emit submitted/working events.
+        await event_queue.enqueue_event(
+            Task(
+                id=task_id,
+                context_id=context_id,
+                status=TaskStatus(state=TaskState.TASK_STATE_SUBMITTED),
+                history=[user_message],
             )
-        else:
-            # Branch B: fresh turn. Emit submitted/working events.
-            await event_queue.enqueue_event(
-                Task(
-                    id=task_id,
-                    context_id=context_id,
-                    status=TaskStatus(state=TaskState.TASK_STATE_SUBMITTED),
-                    history=[user_message],
-                )
+        )
+        await updater.start_work(
+            message=updater.new_agent_message(
+                parts=[Part(text="Processing your question...")],
             )
-            await updater.start_work(
-                message=updater.new_agent_message(
-                    parts=[Part(text="Processing your question...")],
-                )
-            )
+        )
 
-            user_text = context.get_user_input() or ""
-            new_message = genai_types.Content(
-                role="user",
-                parts=[genai_types.Part(text=user_text)],
-            )
+        new_message = genai_types.Content(
+            role="user",
+            parts=[genai_types.Part(text=context.get_user_input() or "")],
+        )
 
-        # Drive ADK and watch for long-running calls + text events.
-        pending_call: dict | None = None
+        # Stream ADK events: forward text as WORKING updates and harvest the
+        # paths of any files the save_python_file tool wrote.
         final_chunks: list[str] = []
+        saved_paths: list[str] = []
         try:
             async for adk_event in self._runner.run_async(
                 user_id=self.USER_ID,
@@ -327,9 +266,7 @@ class AdkAgentExecutor(AgentExecutor):
                 if task_id not in self._running_tasks:
                     return
 
-                # Capture the first long-running tool call we see, if any.
-                if pending_call is None and adk_event.long_running_tool_ids:
-                    pending_call = self._capture_long_running_call(adk_event)
+                saved_paths.extend(self._extract_saved_paths(adk_event))
 
                 event_text = self._extract_text(adk_event)
                 if not event_text:
@@ -350,72 +287,31 @@ class AdkAgentExecutor(AgentExecutor):
                 message=updater.new_agent_message(parts=[Part(text=str(exc))])
             )
             self._running_tasks.discard(task_id)
-            self._pending_confirmations.pop(task_id, None)
-            self._saved_files.pop(task_id, None)
-            self._declined_codes.pop(task_id, None)
             return
 
         if task_id not in self._running_tasks:
             return
 
-        # If the agent proposed a save, pause the task in INPUT_REQUIRED.
-        if pending_call is not None:
-            proposed_path = pending_call["args"].get("path", "")
-            proposed_code = pending_call["args"].get("code", "")
-            resolved = self._resolve_path(proposed_path)
-
-            self._pending_confirmations[task_id] = {
-                "function_call_id": pending_call["id"],
-                "name": pending_call["name"],
-                "path": str(resolved),
-                "code": proposed_code,
-            }
-
-            line_count = proposed_code.count("\n") + (
-                1 if proposed_code and not proposed_code.endswith("\n") else 0
-            )
-            preview = (
-                f"I'd like to save this Python code to `{resolved}` "
-                f"({len(proposed_code)} chars, {line_count} lines).\n"
-                "The full source will be returned as an attachment after you approve."
-            )
-            await updater.update_status(
-                state=TaskState.TASK_STATE_INPUT_REQUIRED,
-                message=updater.new_agent_message(parts=[Part(text=preview)]),
-            )
-            self._running_tasks.discard(task_id)
-            logger.info(
-                "[AdkAgentExecutor] Task %s paused for save confirmation: %s",
-                task_id,
-                resolved,
-            )
-            return
-
-        # Completion path: text reply + saved-file FilePart, or proposed-code text Part on decline.
+        # Build artifact: text reply + one FilePart per saved file (in call order).
         final_text = "".join(final_chunks).strip() or "(no response)"
         parts: list[Part] = [Part(text=final_text)]
-
-        saved_path = self._saved_files.pop(task_id, None)
-        declined_code = self._declined_codes.pop(task_id, None)
-
-        if saved_path is not None:
+        for raw_path in saved_paths:
+            path = Path(raw_path)
             try:
-                file_bytes = saved_path.read_bytes()
+                file_bytes = path.read_bytes()
                 parts.append(
                     Part(
                         raw=file_bytes,
                         media_type="text/x-python",
-                        filename=saved_path.name,
+                        filename=path.name,
                     )
                 )
             except OSError as exc:
                 logger.warning(
                     "[AdkAgentExecutor] Could not attach saved file %s: %s",
-                    saved_path,
+                    path,
                     exc,
                 )
-        elif declined_code is not None:
-            parts.append(Part(text=f"```python\n{declined_code}\n```"))
 
         await updater.add_artifact(parts=parts, name="response", last_chunk=True)
         await updater.complete()
@@ -434,74 +330,24 @@ class AdkAgentExecutor(AgentExecutor):
         )
 
     @staticmethod
-    def _capture_long_running_call(event: AdkEvent) -> dict | None:
-        """Returns ``{id, name, args}`` for the first long-running call, if any."""
-        ids = event.long_running_tool_ids or set()
+    def _extract_saved_paths(event: AdkEvent) -> list[str]:
+        """Returns absolute paths from successful save_python_file responses on this event."""
+        out: list[str] = []
         content = getattr(event, "content", None)
-        if not ids or not content or not getattr(content, "parts", None):
-            return None
+        if not content or not getattr(content, "parts", None):
+            return out
         for part in content.parts:
-            fc = getattr(part, "function_call", None)
-            if fc and fc.id in ids:
-                return {"id": fc.id, "name": fc.name, "args": dict(fc.args or {})}
-        return None
-
-    @staticmethod
-    def _parse_decision(text: str) -> Literal["approved", "declined"] | None:
-        """Classifies a user reply as approved / declined / ambiguous."""
-        normalized = text.strip().lower().rstrip(".!?")
-        if not normalized:
-            return None
-        if normalized in _AFFIRMATIVE:
-            return "approved"
-        if normalized in _NEGATIVE:
-            return "declined"
-        # Allow simple prefix matches ("yes please save it", "no thanks").
-        first_word = normalized.split(maxsplit=1)[0]
-        if first_word in _AFFIRMATIVE:
-            return "approved"
-        if first_word in _NEGATIVE:
-            return "declined"
-        return None
-
-    @staticmethod
-    def _resolve_path(raw_path: str) -> Path:
-        """Expands ~ and resolves the path without requiring it to exist."""
-        return Path(raw_path).expanduser().resolve(strict=False)
-
-    async def _save_file(self, task_id: str, raw_path: str, code: str) -> dict:
-        """Writes ``code`` to ``raw_path`` and stashes the resolved Path so the
-        caller can attach it as a FilePart."""
-        if not (raw_path or "").strip():
-            return {"status": "error", "message": "No path provided."}
-        try:
-            resolved = self._resolve_path(raw_path)
-            if not resolved.is_relative_to(Path.home()):
-                return {
-                    "status": "error",
-                    "message": f"Refusing to save to '{resolved}': path must be within the home directory.",
-                }
-        except (OSError, RuntimeError, ValueError) as exc:
-            return {"status": "error", "message": f"Invalid path: {exc}"}
-        if resolved.suffix != ".py":
-            return {
-                "status": "error",
-                "message": f"Refusing to save '{resolved}': filename must end in .py.",
-            }
-
-        # Hardcoded 1-second delay simulates long-running work so clients can
-        # exercise polling-fallback or long streaming-status code paths.
-        await asyncio.sleep(1)
-
-        try:
-            resolved.parent.mkdir(parents=True, exist_ok=True)
-            resolved.write_text(code, encoding="utf-8")
-        except OSError as exc:
-            return {"status": "error", "message": f"Failed to write file: {exc}"}
-
-        self._saved_files[task_id] = resolved
-        logger.info("[AdkAgentExecutor] Saved %d bytes to %s", len(code), resolved)
-        return {"status": "saved", "path": str(resolved)}
+            fr = getattr(part, "function_response", None)
+            if not fr or fr.name != "save_python_file":
+                continue
+            resp = getattr(fr, "response", None) or {}
+            if (
+                isinstance(resp, dict)
+                and resp.get("status") == "saved"
+                and resp.get("path")
+            ):
+                out.append(resp["path"])
+        return out
 
 
 async def serve(
@@ -560,9 +406,9 @@ async def serve(
     agent_card = AgentCard(
         name="Coding Agent",
         description=(
-            "A sample ADK agent that writes Python code and saves it to disk after user "
-            "confirmation. Saved files are returned as a FilePart attachment alongside the "
-            "agent's text reply."
+            "A sample ADK agent that writes Python code and saves it under "
+            "examples/a2a_agent/output/. Saved files are returned as FilePart "
+            "attachments alongside the agent's text reply."
         ),
         version="1.0.0",
         capabilities=AgentCapabilities(streaming=streaming, push_notifications=False),
@@ -573,14 +419,15 @@ async def serve(
                 id="coding_agent",
                 name="Coding Agent",
                 description=(
-                    "Write Python scripts and save them to a path of your choice after you "
-                    "confirm. The saved file is returned as a text/x-python attachment."
+                    "Write Python scripts. Each is saved to "
+                    "examples/a2a_agent/output/<filename>.py and returned as a "
+                    "text/x-python attachment."
                 ),
                 tags=["coding", "python", "code-generation"],
                 examples=[
                     "write me a hello world script",
                     "make a small fizzbuzz",
-                    "yes save it",
+                    "write a function that reverses a string",
                 ],
                 input_modes=["text"],
                 output_modes=["text", "file", "task-status"],
@@ -594,24 +441,18 @@ async def serve(
     adk_agent = Agent(
         name="coding_agent",
         model="gemini-3-flash-preview",
-        instruction="""You are a friendly Python coding assistant.
+        instruction="""You are a Python coding assistant.
 
-When the user asks you to write or save Python code:
-  1. Reply with the full code in a fenced ```python block so the user can read it.
-  2. To save the code, ALWAYS call the `propose_save_python_file` tool. You must pick the
-     path yourself - include both the directory and the filename. Use the user's hint if
-     they gave one (e.g. 'save it to my Desktop' -> '~/Desktop/<name>.py'). Otherwise
-     default to './agent_output/<name>.py' relative to the server's working directory.
-     Pick a short, descriptive filename ending in `.py`.
-  3. The tool itself triggers a confirmation prompt for the user; do NOT ask about saving
-     in plain text yourself.
-  4. The tool's response says whether the user approved (with the resolved path) or
-     declined. React briefly: a one-liner confirming the save, or a one-liner acknowledging
-     the decline. On decline, do NOT repeat the proposed code in your reply - the user will
-     see it in a separate response part.
+When the user asks you to write Python code:
+  1. Reply with the full code in a fenced ```python block.
+  2. Call `save_python_file(filename, code)` to persist the code. Pick a short,
+     descriptive filename ending in `.py` (e.g. 'fizzbuzz.py'). Filenames must be
+     bare names with no path components - the server saves them under
+     examples/a2a_agent/output/.
+  3. Briefly confirm the save in your reply, mentioning the filename.
 
-For non-coding messages, just respond conversationally and do not call any tools.""",
-        tools=[LongRunningFunctionTool(propose_save_python_file)],
+For non-coding messages, respond conversationally without calling any tools.""",
+        tools=[save_python_file],
     )
     runner = Runner(
         app_name="coding_agent",
