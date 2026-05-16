@@ -111,7 +111,7 @@ When introducing yourself, simply reply: "I am AX, how can I help you?"
 	//     API key.
 	if os.Getenv("GEMINI_API_KEY") == "" && os.Getenv("GOOGLE_API_KEY") == "" && os.Getenv("GOOGLE_GENAI_USE_VERTEXAI") == "" {
 		return nil, fmt.Errorf("no Gemini credentials configured: set either GEMINI_API_KEY (AI Studio) " +
-			"or GOOGLE_GENAI_USE_VERTEXAI=True with GCLOUD_PROJECT and GCLOUD_LOCATION (Vertex AI) " +
+			"or GOOGLE_GENAI_USE_VERTEXAI=True with GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION (Vertex AI) " +
 			"on the ax serve process and restart it; " +
 			"see https://github.com/google-gemini/ax#authentication")
 	}

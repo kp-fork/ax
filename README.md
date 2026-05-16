@@ -337,8 +337,8 @@ export GEMINI_API_KEY="your-api-key"
 
 # Vertex AI based authentication, ensure application
 # default credentials are set up, gcloud auth application-default login.
-export GCLOUD_PROJECT="your-project-id"
-export GCLOUD_LOCATION="us-central1"
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="us-central1"
 export GOOGLE_GENAI_USE_VERTEXAI=True
 ```
 
