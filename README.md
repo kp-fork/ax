@@ -31,14 +31,16 @@ Built-in consistency and resumability features:
 ```mermaid
 graph LR
     Client
+    Router["Router"]
     Controller["AX Controller<br/>(executor, event log, registry)"]
-    RemoteAgent["Agent (isolated actor)"]
-    Tool["Tool (MCP server)"]
-    Skill["Skill (isolated actor)"]
+    RemoteAgent["Agent<br/>(isolated actor)"]
+    Tool["Tool<br/>(MCP server)"]
+    Env["Environment with<br/>skills, built-in tools<br/>(isolated actor)"]
 
-    Client -->|resumable stream| Controller
+    Client -->|resumable stream| Router
+    Router --> Controller
     Controller <-->|resumable bidi stream| RemoteAgent
-    Controller --> Skill
+    Controller --> Env
     Controller --> Tool
 ```
 
