@@ -81,7 +81,7 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 First, clone the repo:
 
 ```
-git clone git@github.com:google-gemini/ax.git
+git clone git@github.com:google/ax.git
 ```
 
 If you already have cloned the repo locally, make sure that
@@ -111,7 +111,7 @@ Push the branch to the origin and open a pull request:
 git push origin my-feature
 ```
 
-Visit https://github.com/google-gemini/ax to open a pull request.
+Visit https://github.com/google/ax to open a pull request.
 
 
 ## Troubleshooting

@@ -113,7 +113,7 @@ When introducing yourself, simply reply: "I am AX, how can I help you?"
 		return nil, fmt.Errorf("no Gemini credentials configured: set either GEMINI_API_KEY (AI Studio) " +
 			"or GOOGLE_GENAI_USE_VERTEXAI=True with GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION (Vertex AI) " +
 			"on the ax serve process and restart it; " +
-			"see https://github.com/google-gemini/ax#authentication")
+			"see https://github.com/google/ax#authentication")
 	}
 
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{})
