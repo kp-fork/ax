@@ -97,3 +97,20 @@ Instructions go here.`
 		t.Error("Expected non-empty FuncDecl for SkillsTool")
 	}
 }
+
+// TestNewSkillsTool_NoDir verifies that NewSkillsTool returns a NoopTool
+// when both the specified directory and the SKILLS_DIR environment variable are empty.
+func TestNewSkillsTool_NoDir(t *testing.T) {
+	t.Setenv("SKILLS_DIR", "")
+
+	tool, err := NewSkillsTool("")
+	if err != nil {
+		t.Fatalf("NewSkillsTool failed for empty dir: %v", err)
+	}
+
+	// Verify it returned a NoopTool
+	if _, ok := tool.(*NoopTool); !ok {
+		t.Errorf("Expected NoopTool, got %T", tool)
+	}
+}
+

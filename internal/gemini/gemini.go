@@ -317,7 +317,8 @@ func NewSkillsTool(dir string) (Tool, error) {
 		resolvedDir = os.Getenv("SKILLS_DIR")
 	}
 	if resolvedDir == "" {
-		resolvedDir = skills.DefaultDir()
+		// No skills directory explicitly configured; disable skills completely.
+		return &NoopTool{}, nil
 	}
 	if _, err := os.Stat(resolvedDir); os.IsNotExist(err) {
 		return &NoopTool{}, nil

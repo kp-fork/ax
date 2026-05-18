@@ -436,3 +436,34 @@ func TestHandleSubagentCall_Panic(t *testing.T) {
 		t.Errorf("expected stack trace in error, got %s", errVal)
 	}
 }
+
+// TestNewGeminiPlannerAgent_NoSkillsPrompt verifies that the Gemini planner agent
+// system prompt does not contain the available_skills block when skills are disabled.
+func TestNewGeminiPlannerAgent_NoSkillsPrompt(t *testing.T) {
+	t.Setenv("GEMINI_API_KEY", "mock-key")
+	t.Setenv("SKILLS_DIR", "")
+
+	registry := &mockAgentRegistry{}
+	cfg := GeminiPlannerConfig{
+		GeminiConfig: &config.GeminiConfig{
+			SystemPrompt: "You are AX.",
+		},
+		SkillsDir: "",
+	}
+
+	agent, err := NewGeminiPlannerAgent(context.Background(), registry, cfg)
+	if err != nil {
+		t.Fatalf("NewGeminiPlannerAgent failed: %v", err)
+	}
+
+	p, ok := agent.(*geminiPlannerAgent)
+	if !ok {
+		t.Fatalf("expected agent to be *geminiPlannerAgent, got %T", agent)
+	}
+
+	prompt := p.config.GeminiConfig.SystemPrompt
+	if strings.Contains(prompt, "<available_skills>") {
+		t.Errorf("expected system prompt to not contain '<available_skills>', got: %s", prompt)
+	}
+}
+
