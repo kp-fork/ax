@@ -398,6 +398,13 @@ If you are implementing an AX-native remote agent, see `AgentService` in `proto/
   harnesses.
 * A model specific controller. AX is agnostic of the models used.
 
+## Roadmap
+
+Here are the features we are going to be implementing:
+1. Support BYOH (Bring Your Own Harness)
+2. Enable suspend/resume of multiple subagents
+3. Support tool call approvals for subagent
+
 ## Contributing
 
 Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) guide for instructions
