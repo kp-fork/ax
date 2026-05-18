@@ -20,8 +20,7 @@ eventlog:
     filename: "eventlog/log.sqlite"
 
 planner:
-  # Type of planner to use: "gemini" or "antigravity" (default: "gemini")
-  # Note: Only the configuration block matching this type will be active.
+  # Type of planner to use: "gemini" (default: "gemini")
   type: "gemini"
 
   # The Gemini planner uses Google's Gemini models for planning.

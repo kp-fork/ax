@@ -23,7 +23,6 @@ import (
 	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/controller"
 	"github.com/google/ax/internal/controller/executor"
-	"github.com/google/ax/internal/experimental/antigravity"
 	"github.com/google/ax/internal/gemini"
 )
 
@@ -31,7 +30,7 @@ import (
 func NewControllerFromConfig(ctx context.Context, cfg *config.Config) (*controller.Controller, error) {
 	// Validate planner type early
 	switch cfg.Planner.Type {
-	case "antigravity", "gemini":
+	case "gemini":
 		// valid
 	default:
 		return nil, fmt.Errorf("unknown planner type: %s", cfg.Planner.Type)
@@ -45,10 +44,6 @@ func NewControllerFromConfig(ctx context.Context, cfg *config.Config) (*controll
 	// Create planner builder
 	plannerBuilder := func(ctx context.Context, r *controller.Registry) (agent.Agent, error) {
 		switch cfg.Planner.Type {
-		case "antigravity":
-			return antigravity.NewAntigravityPlannerAgent(ctx, antigravity.AntigravityPlannerConfig{
-				Endpoint: cfg.Planner.Antigravity.Endpoint,
-			})
 		case "gemini":
 			timeout, err := time.ParseDuration(cfg.Planner.Gemini.Timeout)
 			if err != nil {

@@ -36,7 +36,7 @@ type Config struct {
 
 // RegistryConfig allows registring agents.
 type RegistryConfig struct {
-	RemoteAgents []RemoteAgentConfig `yaml:"remote_agents,omitempty"`
+	RemoteAgents    []RemoteAgentConfig    `yaml:"remote_agents,omitempty"`
 	ColabAgents     []ColabAgentConfig     `yaml:"colab_agents,omitempty"`
 	SubstrateAgents []SubstrateAgentConfig `yaml:"substrate_agents,omitempty"`
 }
@@ -62,22 +62,8 @@ type EventLogConfig struct {
 
 // PlannerConfig configures the planner.
 type PlannerConfig struct {
-	Type        string                   `yaml:"type"` // "gemini" or "antigravity"
-	Gemini      GeminiPlannerConfig      `yaml:"gemini,omitempty"`
-	Antigravity AntigravityPlannerConfig `yaml:"antigravity,omitempty"`
-}
-
-// AntigravityPlannerConfig configures the Antigravity-based planner.
-// TODO: Support additional Antigravity SDK features (e.g., custom tools, hooks, MCP servers, agentic mode).
-type AntigravityPlannerConfig struct {
-	Endpoint string `yaml:"endpoint,omitempty"` // URL of the Python sidecar
-}
-
-// setDefaults sets default values for AntigravityPlannerConfig.
-func (c *AntigravityPlannerConfig) setDefaults() {
-	if c.Endpoint == "" {
-		c.Endpoint = "http://localhost:8085/plan"
-	}
+	Type   string              `yaml:"type"` // "gemini"
+	Gemini GeminiPlannerConfig `yaml:"gemini,omitempty"`
 }
 
 // GeminiPlannerConfig configures the Gemini-based planner.
@@ -211,9 +197,6 @@ func (c *Config) setDefaults() {
 	}
 	if c.Planner.Type == "gemini" {
 		c.Planner.Gemini.setDefaults()
-	}
-	if c.Planner.Type == "antigravity" {
-		c.Planner.Antigravity.setDefaults()
 	}
 
 }

@@ -19,7 +19,7 @@ and execution resumption, even in complex distributed setups.
 - **Skills, Tools, Agents**: Support for skill, tool, and agent selection and execution
 - **Auditing & Policy**: All user and agentic calls are coordinated by a common controller, easy to control and audit the overall execution and skill/tool/agent calls
 - **Portability**: Runs anywhere, scales to small and large deployments
-- **Customizability**: Agnostic of harness and model, uses Antigravity as the default harness
+- **Customizability**: Agnostic of harness and model
 
 Built-in consistency and resumability features:
 - **Single-Writer Architecture**: Single controller ensures consistent state management
