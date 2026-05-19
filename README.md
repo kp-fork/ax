@@ -400,10 +400,13 @@ If you are implementing an AX-native remote agent, see `AgentService` in `proto/
 
 ## Roadmap
 
-Here are the features we are going to be implementing:
-1. Support BYOH (Bring Your Own Harness)
-2. Enable suspend/resume of multiple subagents
-3. Support tool call approvals for subagent
+Below is an overview of our upcoming features and planned changes:
+
+1. Antigravity as the built-in harness
+1. Support for BYOH (Bring Your Own Harness)
+1. Enabling suspension/resumption of subagents
+1. Support for tool call approvals in subagents
+1. Improvements to resumption protocols
 
 ## Contributing
 
