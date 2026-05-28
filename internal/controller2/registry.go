@@ -24,6 +24,7 @@ import (
 	"github.com/google/ax/internal/config"
 	"github.com/google/ax/internal/experimental/a2abridge"
 	expagent "github.com/google/ax/internal/experimental/agent"
+	"github.com/google/ax/internal/harness"
 )
 
 // Registry manages a collection of local and remote agents.
@@ -32,6 +33,7 @@ type Registry struct {
 	mu        sync.RWMutex
 	agents    map[string]agent.Agent
 	agentInfo map[string]*agent.AgentInfo
+	harnesses map[string]harness.Harness
 }
 
 // NewRegistry creates a new agent registry.
@@ -39,6 +41,7 @@ func NewRegistry() *Registry {
 	return &Registry{
 		agents:    make(map[string]agent.Agent),
 		agentInfo: make(map[string]*agent.AgentInfo),
+		harnesses: make(map[string]harness.Harness),
 	}
 }
 
@@ -236,4 +239,21 @@ func (r *Registry) Close() error {
 	}
 
 	return firstErr
+}
+// TODO(anj): Remove this registration once we have harness and agent registration consolidated.
+func (r *Registry) RegisterHarness(id string, h harness.Harness) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.harnesses[id] = h
+}
+
+// GetHarness retrieves a harness by ID.
+func (r *Registry) GetHarness(id string) (harness.Harness, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	h, ok := r.harnesses[id]
+	if !ok {
+		return nil, fmt.Errorf("harness %s not found", id)
+	}
+	return h, nil
 }

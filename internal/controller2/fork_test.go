@@ -49,7 +49,9 @@ func TestController_Fork(t *testing.T) {
 		},
 	}
 
+	reg := NewRegistry()
 	c, err := New(ctx, Config{
+		Registry: reg,
 		EventLogBuilder: func() (executor.EventLog, error) {
 			return log, nil
 		},
@@ -125,7 +127,9 @@ func TestController_Fork_SrcSeqNotFound(t *testing.T) {
 		},
 	}
 
+	reg := NewRegistry()
 	c, err := New(ctx, Config{
+		Registry: reg,
 		EventLogBuilder: func() (executor.EventLog, error) {
 			return log, nil
 		},
