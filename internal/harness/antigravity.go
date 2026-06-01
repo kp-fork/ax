@@ -17,30 +17,36 @@ package harness
 import (
 	"context"
 	"fmt"
-	"os/exec"
-	"strings"
+	"io"
 	"sync"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/google/ax/proto"
 	"github.com/google/uuid"
 )
 
-// AntigravityHarness implements the Harness interface by running the
-// Antigravity Python agent as a subprocess.
+// Compile-time interface assertions.
+var _ Harness = (*AntigravityHarness)(nil)
+var _ Execution = (*antigravityExecution)(nil)
+
+// AntigravityHarness implements the Harness interface by connecting to the
+// Antigravity Python agent server over gRPC.
 type AntigravityHarness struct {
-	scriptPath string
+	address string
 }
 
-// NewAntigravityHarness creates a new AntigravityHarness with a configurable script path.
-func NewAntigravityHarness(scriptPath string) *AntigravityHarness {
-	if scriptPath == "" {
-		scriptPath = "examples/antigravity_agent/agent.py"
+// NewAntigravityHarness creates a new AntigravityHarness with a configurable address.
+// Address defaults to "localhost:50053" (gRPC TCP connection).
+func NewAntigravityHarness(address string) *AntigravityHarness {
+	if address == "" {
+		address = "localhost:50053"
 	}
 	return &AntigravityHarness{
-		scriptPath: scriptPath,
+		address: address,
 	}
 }
-
 
 // Start implements Harness.Start.
 func (h *AntigravityHarness) Start(ctx context.Context, conversationID string) (Execution, error) {
@@ -72,79 +78,78 @@ func (e *antigravityExecution) Queue(ctx context.Context, msg ...*proto.Message)
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if e.closed {
-		return fmt.Errorf("execution is closed")
+		return fmt.Errorf("execution session already closed")
 	}
 	e.queued = append(e.queued, msg...)
 	return nil
 }
 
-// Run implements Execution.Run.
-// It executes the Python agent as a one-shot subprocess turn.
-//
-// NOTE: This is a stateless, subprocess-based validation harness. Because a new
-// subprocess is launched for every turn, it does not support persistent state
-// or dynamic input streaming. We retrieve all queued inputs at the start of the
-// turn, clear the queue, and pass only the last user prompt to the subprocess.
-// Full bidirectional streaming input/output will be supported once we migrate to
-// the gRPC HarnessService server as noted below.
+// Run executes the turn over gRPC bidirectional streaming and forwards events to the handler.
 func (e *antigravityExecution) Run(ctx context.Context, handler Handler) error {
 	e.mu.Lock()
+	if e.closed {
+		e.mu.Unlock()
+		return fmt.Errorf("execution session already closed")
+	}
+	// Retrieve queued inputs
 	inputs := e.queued
 	e.queued = nil
 	e.mu.Unlock()
 
-	// Extract only the latest user message since the CLI script only accepts a single prompt argument.
-	var prompt string
-	for i := len(inputs) - 1; i >= 0; i-- {
-		msg := inputs[i]
-		if msg.Role == "user" {
-			if textContent := msg.GetContent().GetText().GetText(); textContent != "" {
-				prompt = textContent
-				break
-			}
-		}
+	if len(inputs) == 0 {
+		return fmt.Errorf("no input messages queued for execution turn")
 	}
 
-	// TODO(anj): Upgrade this to a gRPC HarnessService server to support full bidirectional
-	// input/output streaming and avoid subprocess invocation overhead.
-	
-	// Prepare the command
-	args := []string{e.harness.scriptPath}
-	if prompt != "" {
-		args = append(args, prompt)
+	// 1. Connect to the gRPC server
+	conn, err := grpc.DialContext(ctx, e.harness.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to connect to gRPC harness server at %s: %w", e.harness.address, err)
 	}
+	defer conn.Close()
 
-	cmd := exec.CommandContext(ctx, "python3", args...)
-	
-	// Capture stdout and stderr
-	var stdout, stderr strings.Builder
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	// 2. Create AgentService client
+	client := proto.NewAgentServiceClient(conn)
 
-	// Run the command
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to run antigravity agent (stderr: %s): %w", stderr.String(), err)
-	}
-
-	output := strings.TrimSpace(stdout.String())
-
-	// Send the output back to the handler
-	msg := &proto.Message{
-		Role: "assistant",
-		Content: &proto.Content{
-			Type: &proto.Content_Text{
-				Text: &proto.TextContent{
-					Text: output,
-				},
-			},
+	// 3. Build standard AgentRequest
+	req := &proto.AgentRequest{
+		ConversationId: e.conversationID,
+		ExecId:         e.id,
+		Start: &proto.AgentStart{
+			AgentId:  "antigravity",
+			Messages: inputs,
 		},
 	}
 
-	if err := handler.OnMessage(ctx, e.id, msg); err != nil {
-		return fmt.Errorf("failed to send message to handler: %w", err)
+	// 4. Call Connect to start bidirectional streaming
+	stream, err := client.Connect(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to call gRPC AgentService.Connect: %w", err)
 	}
 
-	return handler.OnComplete(ctx, e.id)
+	// 5. Stream responses and trigger callbacks
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("gRPC harness streaming failure: %w", err)
+		}
+
+		switch payload := resp.Type.(type) {
+		case *proto.AgentResponse_Outputs:
+			for _, outMsg := range payload.Outputs.Messages {
+				if err := handler.OnMessage(ctx, e.id, outMsg); err != nil {
+					return fmt.Errorf("failed to dispatch streamed output: %w", err)
+				}
+			}
+		case *proto.AgentResponse_End:
+			// Standard turn complete callback
+			return handler.OnComplete(ctx, e.id)
+		}
+	}
+
+	return nil
 }
 
 // Close implements Execution.Close.

@@ -14,13 +14,23 @@
 
 // Package main implements an end-to-end demonstration of the Antigravity harness
 // integration with AX Controller V2.
+//
+// TO RUN THIS E2E DEMONSTRATION:
+//
+// Step 1: Start the Python gRPC Harness Server (in a separate terminal or background):
+//   PYTHONPATH=python:. /Users/anjalisridhar/.gemini/jetski/worktrees/harness-interface-3/implement-agy-sdk-streaming-20260528/.venv/bin/python python/antigravity/harness_server.py --port 50053
+//
+// Step 2: Run this Go E2E client:
+//   go run cmd/e2e/main.go
 package main
+
 
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
-	"os/exec"
+	"time"
 
 	"github.com/google/ax/internal/controller/executor"
 	"github.com/google/ax/internal/controller/executor/executortest"
@@ -46,46 +56,26 @@ func main() {
 	})
 
 	// -------------------------------------------------------------------------
-	// Demo 2: Build-time Fallback (Antigravity with bad script path)
+	// Demo 2: Antigravity Execution (Requires google-antigravity & GEMINI_API_KEY)
 	// -------------------------------------------------------------------------
-	fmt.Println("\n--- Demo 2: Build-time Fallback ---")
-	fmt.Println("Registering 'antigravity' with non-existent script. Should fallback to Test Harness.")
-	runDemo(ctx, "antigravity", func(reg *controller2.Registry) {
-		// Build harness with bad path, manually implementing fallback check
-		var badHarness harness.Harness
-		scriptPath := "non-existent-script.py"
-		if _, err := exec.LookPath("python3"); err != nil {
-			fmt.Printf("WARNING: python3 not found, falling back to test harness: %v\n", err)
-			badHarness = harnesstest.New()
-		} else if _, err := os.Stat(scriptPath); err != nil {
-			fmt.Printf("WARNING: Antigravity agent script not found at %s, falling back to test harness: %v\n", scriptPath, err)
-			badHarness = harnesstest.New()
-		} else {
-			badHarness = harness.NewAntigravityHarness(scriptPath)
-		}
-		reg.RegisterHarness("antigravity", badHarness)
-	})
-
-	// -------------------------------------------------------------------------
-	// Demo 3: Antigravity Execution (Requires google-antigravity & GEMINI_API_KEY)
-	// -------------------------------------------------------------------------
-	fmt.Println("\n--- Demo 3: Antigravity Execution ---")
+	fmt.Println("\n--- Demo 2: Antigravity Execution ---")
 	fmt.Println("Registering 'antigravity' with real script. Attempting execution.")
 	if os.Getenv("GEMINI_API_KEY") == "" {
 		fmt.Println("WARNING: GEMINI_API_KEY is not set. Execution will likely fail if dependencies are missing, but we will try anyway.")
 	}
 	runDemo(ctx, "antigravity", func(reg *controller2.Registry) {
-		// Build harness with real path, manually implementing fallback check
+		// With the new stateful gRPC-based streaming harness, connectivity checks on the
+		// server address replace the build-time checks for local script file presence.
 		var realHarness harness.Harness
-		scriptPath := "examples/antigravity_agent/agent.py"
-		if _, err := exec.LookPath("python3"); err != nil {
-			fmt.Printf("WARNING: python3 not found, falling back to test harness: %v\n", err)
-			realHarness = harnesstest.New()
-		} else if _, err := os.Stat(scriptPath); err != nil {
-			fmt.Printf("WARNING: Antigravity agent script not found at %s, falling back to test harness: %v\n", scriptPath, err)
+		address := "localhost:50053"
+		conn, err := net.DialTimeout("tcp", address, 1*time.Second)
+		if err != nil {
+			fmt.Printf("WARNING: Antigravity harness server not active at %s, falling back to test harness: %v\n", address, err)
 			realHarness = harnesstest.New()
 		} else {
-			realHarness = harness.NewAntigravityHarness(scriptPath)
+			conn.Close()
+			fmt.Printf("Connected to Antigravity gRPC harness server at %s\n", address)
+			realHarness = harness.NewAntigravityHarness(address)
 		}
 		reg.RegisterHarness("antigravity", realHarness)
 	})
@@ -112,6 +102,8 @@ func runDemo(ctx context.Context, agentID string, setupRegistry func(reg *contro
 		for _, out := range resp.Outputs {
 			if textContent := out.GetContent().GetText().GetText(); textContent != "" {
 				fmt.Printf("Agent Output: %s\n", textContent)
+			} else if toolCall := out.GetContent().GetToolCall(); toolCall != nil {
+				fmt.Printf("Agent Triggered Tool Call: %s (ID: %s)\n", toolCall.GetFunctionCall().Name, toolCall.Id)
 			}
 		}
 		return nil
@@ -122,7 +114,7 @@ func runDemo(ctx context.Context, agentID string, setupRegistry func(reg *contro
 			Role: "user",
 			Content: &proto.Content{
 				Type: &proto.Content_Text{
-					Text: &proto.TextContent{Text: "Who are you?"},
+					Text: &proto.TextContent{Text: "What is the weather in New York?"},
 				},
 			},
 		},

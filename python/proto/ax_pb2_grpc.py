@@ -17,7 +17,7 @@
 import grpc
 import warnings
 
-import ax_pb2 as proto_dot_ax__pb2
+from proto import ax_pb2 as proto_dot_ax__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
 GRPC_VERSION = grpc.__version__
@@ -55,10 +55,10 @@ class AgentServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Connect = channel.stream_stream(
+        self.Connect = channel.unary_stream(
                 '/ax.AgentService/Connect',
-                request_serializer=proto_dot_ax__pb2.AgentMessage.SerializeToString,
-                response_deserializer=proto_dot_ax__pb2.AgentMessage.FromString,
+                request_serializer=proto_dot_ax__pb2.AgentRequest.SerializeToString,
+                response_deserializer=proto_dot_ax__pb2.AgentResponse.FromString,
                 _registered_method=True)
         self.HealthCheck = channel.unary_unary(
                 '/ax.AgentService/HealthCheck',
@@ -77,7 +77,7 @@ class AgentServiceServicer(object):
     we are solidifying resumption on the wire.
     """
 
-    def Connect(self, request_iterator, context):
+    def Connect(self, request, context):
         """Connect is used by agents to connect to the controller.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -94,10 +94,10 @@ class AgentServiceServicer(object):
 
 def add_AgentServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Connect': grpc.stream_stream_rpc_method_handler(
+            'Connect': grpc.unary_stream_rpc_method_handler(
                     servicer.Connect,
-                    request_deserializer=proto_dot_ax__pb2.AgentMessage.FromString,
-                    response_serializer=proto_dot_ax__pb2.AgentMessage.SerializeToString,
+                    request_deserializer=proto_dot_ax__pb2.AgentRequest.FromString,
+                    response_serializer=proto_dot_ax__pb2.AgentResponse.SerializeToString,
             ),
             'HealthCheck': grpc.unary_unary_rpc_method_handler(
                     servicer.HealthCheck,
@@ -123,7 +123,7 @@ class AgentService(object):
     """
 
     @staticmethod
-    def Connect(request_iterator,
+    def Connect(request,
             target,
             options=(),
             channel_credentials=None,
@@ -133,12 +133,12 @@ class AgentService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_stream(
-            request_iterator,
+        return grpc.experimental.unary_stream(
+            request,
             target,
             '/ax.AgentService/Connect',
-            proto_dot_ax__pb2.AgentMessage.SerializeToString,
-            proto_dot_ax__pb2.AgentMessage.FromString,
+            proto_dot_ax__pb2.AgentRequest.SerializeToString,
+            proto_dot_ax__pb2.AgentResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -177,6 +177,78 @@ class AgentService(object):
             _registered_method=True)
 
 
+class HarnessServiceStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.Connect = channel.stream_stream(
+                '/ax.HarnessService/Connect',
+                request_serializer=proto_dot_ax__pb2.HarnessMessage.SerializeToString,
+                response_deserializer=proto_dot_ax__pb2.HarnessMessage.FromString,
+                _registered_method=True)
+
+
+class HarnessServiceServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def Connect(self, request_iterator, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_HarnessServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'Connect': grpc.stream_stream_rpc_method_handler(
+                    servicer.Connect,
+                    request_deserializer=proto_dot_ax__pb2.HarnessMessage.FromString,
+                    response_serializer=proto_dot_ax__pb2.HarnessMessage.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'ax.HarnessService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('ax.HarnessService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class HarnessService(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def Connect(request_iterator,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.stream_stream(
+            request_iterator,
+            target,
+            '/ax.HarnessService/Connect',
+            proto_dot_ax__pb2.HarnessMessage.SerializeToString,
+            proto_dot_ax__pb2.HarnessMessage.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
 class ControllerServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
@@ -191,11 +263,6 @@ class ControllerServiceStub(object):
                 request_serializer=proto_dot_ax__pb2.ExecRequest.SerializeToString,
                 response_deserializer=proto_dot_ax__pb2.ExecResponse.FromString,
                 _registered_method=True)
-        self.RegisterAgent = channel.unary_unary(
-                '/ax.ControllerService/RegisterAgent',
-                request_serializer=proto_dot_ax__pb2.RegisterAgentRequest.SerializeToString,
-                response_deserializer=proto_dot_ax__pb2.RegisterAgentResponse.FromString,
-                _registered_method=True)
 
 
 class ControllerServiceServicer(object):
@@ -209,13 +276,6 @@ class ControllerServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def RegisterAgent(self, request, context):
-        """RegisterAgent registers a new agent with the controller
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_ControllerServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -223,11 +283,6 @@ def add_ControllerServiceServicer_to_server(servicer, server):
                     servicer.Exec,
                     request_deserializer=proto_dot_ax__pb2.ExecRequest.FromString,
                     response_serializer=proto_dot_ax__pb2.ExecResponse.SerializeToString,
-            ),
-            'RegisterAgent': grpc.unary_unary_rpc_method_handler(
-                    servicer.RegisterAgent,
-                    request_deserializer=proto_dot_ax__pb2.RegisterAgentRequest.FromString,
-                    response_serializer=proto_dot_ax__pb2.RegisterAgentResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -267,35 +322,8 @@ class ControllerService(object):
             metadata,
             _registered_method=True)
 
-    @staticmethod
-    def RegisterAgent(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/ax.ControllerService/RegisterAgent',
-            proto_dot_ax__pb2.RegisterAgentRequest.SerializeToString,
-            proto_dot_ax__pb2.RegisterAgentResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
 
-
-class EventLogServiceStub(object):
+class ConversationServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -304,34 +332,22 @@ class EventLogServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.List = channel.unary_unary(
-                '/ax.EventLogService/List',
-                request_serializer=proto_dot_ax__pb2.ListRequest.SerializeToString,
-                response_deserializer=proto_dot_ax__pb2.ListResponse.FromString,
+        self.DeleteConversation = channel.unary_unary(
+                '/ax.ConversationService/DeleteConversation',
+                request_serializer=proto_dot_ax__pb2.DeleteConversationRequest.SerializeToString,
+                response_deserializer=proto_dot_ax__pb2.DeleteConversationResponse.FromString,
                 _registered_method=True)
-        self.Delete = channel.unary_unary(
-                '/ax.EventLogService/Delete',
-                request_serializer=proto_dot_ax__pb2.DeleteRequest.SerializeToString,
-                response_deserializer=proto_dot_ax__pb2.DeleteResponse.FromString,
-                _registered_method=True)
-        self.Fork = channel.unary_unary(
-                '/ax.EventLogService/Fork',
-                request_serializer=proto_dot_ax__pb2.ForkRequest.SerializeToString,
-                response_deserializer=proto_dot_ax__pb2.ForkResponse.FromString,
+        self.ForkConversation = channel.unary_unary(
+                '/ax.ConversationService/ForkConversation',
+                request_serializer=proto_dot_ax__pb2.ForkConversationRequest.SerializeToString,
+                response_deserializer=proto_dot_ax__pb2.ForkConversationResponse.FromString,
                 _registered_method=True)
 
 
-class EventLogServiceServicer(object):
+class ConversationServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def List(self, request, context):
-        """List conversational events.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def Delete(self, request, context):
+    def DeleteConversation(self, request, context):
         """Deletes conversational events and all event log resources
         for its children executions.
         """
@@ -339,7 +355,7 @@ class EventLogServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def Fork(self, request, context):
+    def ForkConversation(self, request, context):
         """Fork forks an event log from a specific conversation.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -347,36 +363,31 @@ class EventLogServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_EventLogServiceServicer_to_server(servicer, server):
+def add_ConversationServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'List': grpc.unary_unary_rpc_method_handler(
-                    servicer.List,
-                    request_deserializer=proto_dot_ax__pb2.ListRequest.FromString,
-                    response_serializer=proto_dot_ax__pb2.ListResponse.SerializeToString,
+            'DeleteConversation': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteConversation,
+                    request_deserializer=proto_dot_ax__pb2.DeleteConversationRequest.FromString,
+                    response_serializer=proto_dot_ax__pb2.DeleteConversationResponse.SerializeToString,
             ),
-            'Delete': grpc.unary_unary_rpc_method_handler(
-                    servicer.Delete,
-                    request_deserializer=proto_dot_ax__pb2.DeleteRequest.FromString,
-                    response_serializer=proto_dot_ax__pb2.DeleteResponse.SerializeToString,
-            ),
-            'Fork': grpc.unary_unary_rpc_method_handler(
-                    servicer.Fork,
-                    request_deserializer=proto_dot_ax__pb2.ForkRequest.FromString,
-                    response_serializer=proto_dot_ax__pb2.ForkResponse.SerializeToString,
+            'ForkConversation': grpc.unary_unary_rpc_method_handler(
+                    servicer.ForkConversation,
+                    request_deserializer=proto_dot_ax__pb2.ForkConversationRequest.FromString,
+                    response_serializer=proto_dot_ax__pb2.ForkConversationResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'ax.EventLogService', rpc_method_handlers)
+            'ax.ConversationService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('ax.EventLogService', rpc_method_handlers)
+    server.add_registered_method_handlers('ax.ConversationService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class EventLogService(object):
+class ConversationService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def List(request,
+    def DeleteConversation(request,
             target,
             options=(),
             channel_credentials=None,
@@ -389,9 +400,9 @@ class EventLogService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/ax.EventLogService/List',
-            proto_dot_ax__pb2.ListRequest.SerializeToString,
-            proto_dot_ax__pb2.ListResponse.FromString,
+            '/ax.ConversationService/DeleteConversation',
+            proto_dot_ax__pb2.DeleteConversationRequest.SerializeToString,
+            proto_dot_ax__pb2.DeleteConversationResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -403,7 +414,7 @@ class EventLogService(object):
             _registered_method=True)
 
     @staticmethod
-    def Delete(request,
+    def ForkConversation(request,
             target,
             options=(),
             channel_credentials=None,
@@ -416,36 +427,9 @@ class EventLogService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/ax.EventLogService/Delete',
-            proto_dot_ax__pb2.DeleteRequest.SerializeToString,
-            proto_dot_ax__pb2.DeleteResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def Fork(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/ax.EventLogService/Fork',
-            proto_dot_ax__pb2.ForkRequest.SerializeToString,
-            proto_dot_ax__pb2.ForkResponse.FromString,
+            '/ax.ConversationService/ForkConversation',
+            proto_dot_ax__pb2.ForkConversationRequest.SerializeToString,
+            proto_dot_ax__pb2.ForkConversationResponse.FromString,
             options,
             channel_credentials,
             insecure,
