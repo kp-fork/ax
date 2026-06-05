@@ -18,11 +18,12 @@ package cliutil
 
 import (
 	"context"
+	"fmt"
+	"os"
 
-	"github.com/google/ax/internal/config"
+	"github.com/google/ax/internal/config2"
 	"github.com/google/ax/internal/controller/executor"
 	"github.com/google/ax/internal/controller2"
-	"github.com/google/ax/internal/harness"
 )
 
 // Controller is the active controller type for this build.
@@ -31,10 +32,65 @@ type Controller = *controller2.Controller
 // ExecHandler is the handler type accepted by Controller.Exec.
 type ExecHandler = controller2.ExecHandler
 
-// NewControllerFromConfig creates a controller2.Controller.
-func NewControllerFromConfig(ctx context.Context, cfg *config.Config) (*controller2.Controller, error) {
+// Config is the configuration type for this build.
+type Config = config2.Config
+
+// LoadFromFile loads configuration from a YAML file.
+func LoadFromFile(path string) (*Config, error) {
+	return config2.LoadFromFile(path)
+}
+
+// DefaultConfig returns a configuration with default values set.
+func DefaultConfig() *Config {
+	return config2.DefaultConfig()
+}
+
+// NewControllerFromConfig creates a controller2.Controller instance based on the provided configuration.
+func NewControllerFromConfig(ctx context.Context, cfg *Config) (*controller2.Controller, error) {
 	reg := controller2.NewRegistry()
-	reg.RegisterHarness("antigravity", harness.NewAntigravityHarness(""))
+
+	// AX_SUBSTRATE selects how built-in harnesses run: locally (unset) or as
+	// substrate actors ("1").
+	substrateMode := os.Getenv("AX_SUBSTRATE") == "1"
+	// AX_SUBSTRATE_ENDPOINT is the control-plane endpoint for substrate server.
+	endpoint := os.Getenv("AX_SUBSTRATE_ENDPOINT")
+
+	// Built-in harnesses.
+	for _, hc := range cfg.Harnesses.Antigravity {
+		h, err := hc.NewHarness(substrateMode, endpoint)
+		if err != nil {
+			return nil, fmt.Errorf("antigravity harness %q: %w", hc.ID, err)
+		}
+		if err := reg.RegisterHarness(hc.ID, h); err != nil {
+			return nil, fmt.Errorf("register antigravity harness %q: %w", hc.ID, err)
+		}
+	}
+
+	// Custom substrate harnesses.
+	if len(cfg.Harnesses.Substrate) > 0 && !substrateMode {
+		return nil, fmt.Errorf("custom substrate harnesses require AX_SUBSTRATE=1")
+	}
+	for _, sc := range cfg.Harnesses.Substrate {
+		h, err := sc.NewHarness(endpoint)
+		if err != nil {
+			return nil, fmt.Errorf("substrate harness %q: %w", sc.ID, err)
+		}
+		if err := reg.RegisterHarness(sc.ID, h); err != nil {
+			return nil, fmt.Errorf("register substrate harness %q: %w", sc.ID, err)
+		}
+	}
+
+	// Register the configured default harness.
+	if id := cfg.Harnesses.Default; id != "" {
+		h, err := reg.Harness(id)
+		if err != nil {
+			return nil, fmt.Errorf("default harness %q not found", id)
+		}
+		if err := reg.RegisterHarness("", h); err != nil {
+			return nil, fmt.Errorf("register default harness %q: %w", id, err)
+		}
+	}
+
 	return controller2.New(ctx, controller2.Config{
 		Registry: reg,
 		EventLogBuilder: func() (executor.EventLog, error) {

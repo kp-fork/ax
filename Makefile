@@ -35,6 +35,8 @@ proto:
 test:
 	@echo "Running tests..."
 	@go test -v ./...
+	@echo "Running tests (harness path)..."
+	@go test -v -tags harness ./...
 
 # Clean build artifacts
 clean:
