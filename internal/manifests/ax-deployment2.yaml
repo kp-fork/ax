@@ -39,7 +39,7 @@ spec:
 apiVersion: ate.dev/v1alpha1
 kind: ActorTemplate
 metadata:
-  name: antigravity-template
+  name: ax-harness-template
   namespace: ax
 spec:
   workerPoolRef:
@@ -104,8 +104,6 @@ spec:
               value: "${GEMINI_API_KEY}"
             - name: AX_SUBSTRATE
               value: "1"
-            - name: AX_SUBSTRATE_ENDPOINT
-              value: "api.ate-system.svc:443"
           volumeMounts:
             - name: ax-config
               mountPath: /etc/ax
@@ -122,7 +120,5 @@ metadata:
 data:
   ax.yaml: |
     harnesses:
-      default: antigravity
-      # Built-in harness
       antigravity:
-        - id: antigravity
+        default: true
