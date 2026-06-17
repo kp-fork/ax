@@ -124,7 +124,7 @@ func runExec(cmd *cobra.Command, args []string) error {
 }
 
 func execLoop(ctx context.Context, id string, agentID string, input string, lastSeq int32) error {
-	d := internal.NewDisplay(id)
+	d := internal.NewDisplay(id, os.Stdout)
 	d.DisplayHeader()
 
 	var inputs []*proto.Message
@@ -341,38 +341,8 @@ func runExecServer(ctx context.Context, d *internal.Display, req *proto.ExecRequ
 
 func displayContents(d *internal.Display, contents []*proto.Message) {
 	for _, output := range contents {
-		content := output.GetContent()
-		if content == nil {
-			continue
-		}
-		switch o := content.Type.(type) {
-		case *proto.Content_Text:
-			d.DisplayOutput(o.Text.Text)
-		case *proto.Content_Confirmation:
-			// Let the confirmation prompt handle displaying the question.
-		case *proto.Content_ToolCall:
-			// No-op for cleaner CLI logs
-		case *proto.Content_ToolResult:
-			// Only print if the tool returned an error, otherwise skip
-			tr := o.ToolResult
-			if fr := tr.GetFunctionResult(); fr != nil {
-				if fr.GetResponse() != nil {
-					respMap := fr.GetResponse().AsMap()
-					if errStr, ok := respMap["error"]; ok {
-						d.DisplayOutput(fmt.Sprintf("\n[TOOL ERROR for %s]\n%v\n", fr.Name, errStr))
-					}
-				}
-			}
-		case *proto.Content_Thought:
-			for _, summary := range o.Thought.GetSummary() {
-				if textContent := summary.GetText(); textContent != nil {
-					d.DisplayOutput(fmt.Sprintf("Thinking: %s", textContent.Text))
-				}
-			}
-		case *proto.Content_Image, *proto.Content_Audio, *proto.Content_Video, *proto.Content_Document:
-			d.DisplayOutput(fmt.Sprintf("unsupported output type for display: %T", o))
-		default:
-			d.DisplayOutput(fmt.Sprintf("unknown output type: %v", o))
+		if content := output.GetContent(); content != nil {
+			d.Display(content)
 		}
 	}
 }
