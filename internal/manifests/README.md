@@ -120,11 +120,20 @@ The weather in New York is sunny with a temperature of 25 degrees Celsius (77 de
 
 ## 🧹 How to Uninstall
 
-To remove AX resources from your cluster, run:
+To remove the AX server and its components, run:
 
 ```bash
 ./internal/hack/install-ax.sh --delete-ax-server
 ```
+
+> [!NOTE]
+> The event-log database is preserved by default. If you want to
+> delete everything including the data, after the command above, be careful and
+> run:
+>
+> ```bash
+> kubectl delete namespace ax
+> ```
 
 ---
 
