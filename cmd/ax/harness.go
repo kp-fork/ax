@@ -70,6 +70,9 @@ func setHarnessWorkDir() error {
 	if dir == "" {
 		return nil
 	}
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("create harness working directory %q: %w", dir, err)
+	}
 	if err := os.Chdir(dir); err != nil {
 		return fmt.Errorf("set harness working directory %q: %w", dir, err)
 	}
@@ -174,9 +177,16 @@ func runAntigravityInteractionsHarness(ctx context.Context) error {
 		return err
 	}
 
+	// WorkDir is the agent's working directory. It is authoritative for built-in
+	// env tools (see AntigravityInteractionsConfig.WorkDir) so their execution
+	// does not depend on the process cwd. Empty falls back to the process cwd.
+	workDir := os.Getenv("AX_HARNESS_WORKDIR")
+
 	cfg := antigravityinteractions.AntigravityInteractionsConfig{
-		Agent:    agent,
-		StateDir: stateDir,
+		Agent:             agent,
+		StateDir:          stateDir,
+		WorkDir:           workDir,
+		SystemInstruction: antigravityinteractions.JoinSystemInstruction(hc.SystemInstruction, antigravityinteractions.WorkspaceSystemInstruction(workDir)),
 	}
 	return antigravityinteractions.Serve(ctx, cfg, harnessHost, harnessPort, harnessReadyzPort)
 }
