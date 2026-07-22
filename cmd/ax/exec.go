@@ -54,18 +54,22 @@ If no conversation ID is provided, a new UUID will be generated.`,
 	RunE:         runExec,
 }
 
+func registerExecFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&execConversationID, "conversation", "", "Conversation ID (optional, generates UUID if not provided)")
+	cmd.Flags().StringVar(&execHarnessID, "harness", "", "Harness ID (optional, default harness is used if not specified)")
+	cmd.Flags().StringVar(&execConfigFile, "config-file", "", "Path to a JSON file with per-request harness configuration")
+	cmd.Flags().StringVar(&execConfig, "config", "", "Per-request harness configuration as an inline JSON string (mutually exclusive with --config-file)")
+	cmd.Flags().StringVar(&execInput, "input", "", "Input message to send (optional)")
+	cmd.Flags().StringVar(&execServerAddr, "server", "", "gRPC controller server address (if specified, connects to remote server; otherwise runs with a local built-in AX server)")
+	cmd.Flags().StringVar(&execAXConfigFile, "ax-config", "ax.yaml", "Path to YAML configuration file (only used with a local built-in AX server)")
+	cmd.Flags().BoolVar(&execResume, "resume", false, "Resume a conversation without inputs")
+	cmd.Flags().Int32Var(&execLastStep, "last-step", 0, "Last step number seen by the client")
+	cmd.MarkFlagsMutuallyExclusive("input", "resume")
+	cmd.MarkFlagsMutuallyExclusive("config", "config-file")
+}
+
 func init() {
-	execCmd.Flags().StringVar(&execConversationID, "conversation", "", "Conversation ID (optional, generates UUID if not provided)")
-	execCmd.Flags().StringVar(&execHarnessID, "harness", "", "Harness ID (optional, default harness is used if not specified)")
-	execCmd.Flags().StringVar(&execConfigFile, "config-file", "", "Path to a JSON file with per-request harness configuration")
-	execCmd.Flags().StringVar(&execConfig, "config", "", "Per-request harness configuration as an inline JSON string (mutually exclusive with --config-file)")
-	execCmd.Flags().StringVar(&execInput, "input", "", "Input message to send (optional)")
-	execCmd.Flags().StringVar(&execServerAddr, "server", "", "gRPC controller server address (if specified, connects to remote server; otherwise runs with a local built-in AX server)")
-	execCmd.Flags().StringVar(&execAXConfigFile, "ax-config", "ax.yaml", "Path to YAML configuration file (only used with a local built-in AX server)")
-	execCmd.Flags().BoolVar(&execResume, "resume", false, "Resume a conversation without inputs")
-	execCmd.Flags().Int32Var(&execLastStep, "last-step", 0, "Last step number seen by the client")
-	execCmd.MarkFlagsMutuallyExclusive("input", "resume")
-	execCmd.MarkFlagsMutuallyExclusive("config", "config-file")
+	registerExecFlags(execCmd)
 }
 
 // TODO(jbd): Add multimodal input flags, e.g. --input-image.

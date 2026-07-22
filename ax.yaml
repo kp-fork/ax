@@ -14,7 +14,7 @@
 
 # Sample LOCAL configuration for the AX *harness* build (compiled with -tags=harness).
 # Usage:  ax serve --config ax.yaml
-#         ax exec  --config ax.yaml --input "hello"   # uses default harness (antigravity)
+#         ax --ax-config ax.yaml --input "hello"   # uses default harness (antigravity)
 version: v1alpha
 
 server:

@@ -37,13 +37,16 @@ func main() {
 
 var rootCmd = &cobra.Command{
 	Use:   "ax",
-	Short: "AX - Agent eXecutor",
-	Long: `ax provides a server and CLI tools for managing agent orchestrator tasks.
-It provides commands to execute tasks, resume from checkpoints,
-and run the controller server.`,
+	Short: "Execute a conversation or resume an existing one",
+	Long: `Execute a new conversation or resume an existing one.
+If no conversation ID is provided, a new UUID will be generated.`,
+	SilenceUsage: true,
+	RunE:         runExec,
 }
 
 func init() {
+	registerExecFlags(rootCmd)
+
 	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(serveCmd)
 }

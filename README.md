@@ -137,16 +137,16 @@ The CLI starts the built-in Antigravity harness automatically. No separate harne
 
 ```bash
 # Using the checked-in ax.yaml, which sets Antigravity as the default harness.
-ax exec --input "Can you list this directory?"
+ax --input "Can you list this directory?"
 
-# Using exec with an AX server
-ax exec --input "Can you list this directory?" --server localhost:8494
+# Executing with an AX server
+ax --input "Can you list this directory?" --server localhost:8494
 ```
 
 Conversations can be continued any time:
 
 ```bash
-ax exec \
+ax \
   --conversation d85a4b4e-c53b-4c84-b879-f10d905bce40 \
   --input "Show me the contents of README.md"
 ```
@@ -158,7 +158,7 @@ rewind the conversation.
 In this example, we catch up a client from step number 12:
 
 ```bash
-ax exec \
+ax \
   --conversation d85a4b4e-c53b-4c84-b879-f10d905bce40 \
   --last-step 12 \
   --resume
@@ -168,14 +168,14 @@ Instead of running the default harness, you can start executing
 any registered harness:
 
 ```bash
-ax exec \
+ax \
   --input "Can you write me a simple HTTP server in Python?"
 ```
 
 If anything goes wrong during the execution of a harness,
 you can resume an incomplete execution in a conversation:
 ```bash
-ax exec \
+ax \
   --conversation edf98ef5-4bb1-4a9e-a091-3a77e03727e6 \
   --resume
 ```
@@ -183,12 +183,10 @@ ax exec \
 
 ## Usage
 
-The `ax` command provides several subcommands:
-
 ### Execute
 
 ```bash
-ax exec \
+ax \
     [--input <text>] \
     [--conversation <id>] \
     [--harness <id>] \
@@ -217,21 +215,21 @@ Options:
 
 ```bash
 # Execute a new execution
-ax exec --input "Hello agents!"
+ax --input "Hello agents!"
 
 # Resume an existing execution with new input
-ax exec --conversation a53d4db3-1165-4925-87da-be6c72bbdeb1 --input "Ok, now let's do something else..."
+ax --conversation a53d4db3-1165-4925-87da-be6c72bbdeb1 --input "Ok, now let's do something else..."
 
 # Execute using server mode
-ax exec --server localhost:8494 --input "Hello agents!"
+ax --server localhost:8494 --input "Hello agents!"
 
 # Execute with per-request harness config
-ax exec \
+ax \
   --config '{"system_instructions":"Answer in one sentence.","model":"gemini-3.5-flash"}' \
   --input "Explain durable execution."
 
 # To keep the same JSON in a file, use `--config-file` instead:
-ax exec --config-file antigravity.json --input "Explain durable execution."
+ax --config-file antigravity.json --input "Explain durable execution."
 ```
 
 ### Serve
