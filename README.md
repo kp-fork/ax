@@ -176,7 +176,7 @@ ax --conversation edf98ef5-4bb1-4a9e-a091-3a77e03727e6 --resume
 
 ## Usage
 
-### Execute
+Execute a new conversation or resume an existing one. If no conversation ID is provided, a new UUID will be generated.
 
 ```bash
 ax \
@@ -191,18 +191,16 @@ ax \
     [--last-step <number>]
 ```
 
-Executes a new harness execution or automatically resumes an existing one. If the conversation ID already exists, the execution will be resumed from its last state.
-
 Options:
-- `--input`: Input message to send to agents (optional if `--resume` is set, otherwise required)
-- `--conversation`: Conversation ID (optional, generates UUID if not provided, or resumes if exists)
-- `--harness`: Harness ID to use (optional, defaults to the default harness)
-- `--config`: Per-request harness configuration as an inline JSON string (optional, mutually exclusive with `--config-file`)
-- `--config-file`: Path to a JSON file with per-request harness configuration (optional)
-- `--server`: gRPC controller server address (optional. If not provided, runs with a local built-in AX server)
-- `--ax-config`: Path to YAML configuration file (only used with a local built-in AX server, default: "ax.yaml")
-- `--resume`: Resume a conversation without inputs (optional, mutually exclusive with `--input`)
-- `--last-step`: Last step number seen by the client to resume from (optional). The server replays any later events so the client can catch up after a disconnect.
+- `--ax-config`: Path to YAML configuration file (only used with a local built-in AX server) (default "ax.yaml")
+- `--config`: Per-request harness configuration as an inline JSON string (mutually exclusive with `--config-file`)
+- `--config-file`: Path to a JSON file with per-request harness configuration
+- `--conversation`: Conversation ID (optional, generates UUID if not provided)
+- `--harness`: Harness ID (optional, default harness is used if not specified)
+- `--input`: Input message to send (optional)
+- `--last-step`: Last step number seen by the client
+- `--resume`: Resume a conversation without inputs
+- `--server`: gRPC controller server address (if specified, connects to remote server; otherwise runs with a local built-in AX server)
 
 **Examples:**
 
@@ -226,14 +224,14 @@ ax --config-file antigravity.json --input "Explain durable execution."
 
 ### Serve
 
+Run the AX controller as a gRPC server. Loads configuration from a YAML file (default: ax.yaml).
+
 ```bash
 ax serve [--config <path>]
 ```
 
-Starts the controller as a gRPC server using a YAML configuration file.
-
 Options:
-- `--config`: Path to YAML configuration file (default: "ax.yaml")
+- `--config`: Path to YAML configuration file (default "ax.yaml")
 
 Example configuration file (`ax.yaml`):
 ```yaml
@@ -253,7 +251,7 @@ Example:
 ax serve
 
 # Start server with custom config
-ax serve --ax-config my-config.yaml
+ax serve --config my-config.yaml
 ```
 
 ## Extensions
