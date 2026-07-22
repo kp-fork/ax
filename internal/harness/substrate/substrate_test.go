@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/google/ax/internal/harness/harnesstest"
-	"github.com/google/ax/internal/k8s/ate"
+	"github.com/google/ax/internal/ate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
