@@ -54,7 +54,7 @@ graph LR
     end
 
     SnapshotService["Snapshots"]
-    HarnessService["Harness or model<br/>service"]
+    HarnessService["Models"]
     MCPServer["MCP server"]
 
     Client <-->|resumable stream| Server
