@@ -111,6 +111,7 @@ func runAntigravityHarness(cmd *cobra.Command) error {
 		return fmt.Errorf("failed to resolve antigravity state dir: %w", err)
 	}
 
+	addr := net.JoinHostPort("127.0.0.1", strconv.Itoa(harnessPort))
 	cfg := pythonsidecar.Config{
 		Module: "python.antigravity.harness_server",
 		Args: []string{
@@ -118,9 +119,11 @@ func runAntigravityHarness(cmd *cobra.Command) error {
 			"--port", strconv.Itoa(harnessPort),
 			"--state-dir", stateDir,
 		},
-		Stdout:    os.Stdout,
-		Stderr:    os.Stderr,
-		ReadyFunc: pythonsidecar.TCPReady(net.JoinHostPort("127.0.0.1", strconv.Itoa(harnessPort))),
+		Stdout:      os.Stdout,
+		Stderr:      os.Stderr,
+		ReadyFunc:   pythonsidecar.TCPReady(addr),
+		KillOrphans: true,
+		Address:     addr,
 	}
 
 	sidecar := pythonsidecar.New(cfg)
