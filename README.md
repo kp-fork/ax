@@ -129,9 +129,7 @@ export GOOGLE_CLOUD_LOCATION="us-central1"
 export GOOGLE_GENAI_USE_VERTEXAI=true
 ```
 
-## Quick Start
-
-### Execute
+## Quickstart
 
 The CLI starts the built-in Antigravity harness automatically. No separate harness server setup is required.
 
@@ -172,8 +170,7 @@ ax --input "Can you write me a simple HTTP server in Python?"
 If anything goes wrong during the execution of a harness,
 you can resume an incomplete execution in a conversation:
 ```bash
-ax --conversation edf98ef5-4bb1-4a9e-a091-3a77e03727e6 \
-   --resume
+ax --conversation edf98ef5-4bb1-4a9e-a091-3a77e03727e6 --resume
 ```
 
 
