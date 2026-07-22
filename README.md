@@ -49,7 +49,7 @@ graph LR
     subgraph Cluster[" "]
         Server["AX Server<br/>(multi-tenant)"]
         DB[("Event Log"<br/>Storage)]
-        ControlService["Control API"]
+        ControlService["Actor Controller"]
         Actor["AX Harness Server<br/>(stateful session-tenant)"]
     end
 
