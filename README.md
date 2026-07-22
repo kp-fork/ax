@@ -20,9 +20,8 @@ and execution resumption, even in distributed setups.
 - **Distributed Runtime**: Harnesses, skills, tools, and agents can execute in isolation
 - **Resumption**: Automatic recovery from failures or interruptions
 - **Built-in Harnesses**: Support for frontier harnesses and custom implementations
-- **Auditing & Policy**: All user and agentic calls are coordinated by a common controller, easy to control and audit the overall execution and skill/tool/agent calls
 - **Portability**: Runs anywhere, scales to small and large deployments
-- **Customizability**: Agnostic of harness and model
+- **Customizability**: Bring custom environment, MCP tools, skills, instructions, and more
 
 Built-in consistency and resumability features:
 - **Single-Writer Architecture**: Single controller ensures consistent state management
