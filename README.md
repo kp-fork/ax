@@ -287,11 +287,6 @@ and making calls to MCP tools when they are configured.
   their Kubernetes clusters.
 * An agentic framework. AX is agnostic of the framework used
   to build agents.
-* A specific harness like a specific coding agent, e.g. Antigravity.
-  AX provides the serving layer around harnesses and is agnostic of the
-  harness implementation. Soon, we will allow users to bring their own
-  harnesses.
-* A model specific controller. AX is agnostic of the models used.
 
 ## Roadmap
 
