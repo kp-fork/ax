@@ -166,7 +166,7 @@ func runAntigravityInteractionsHarness(ctx context.Context) error {
 		} else if cfg, err := config.LoadFromBytes(data); err != nil {
 			log.Printf("AX_CONFIG_CONTENT: parse failed, using defaults: %v", err)
 		} else {
-			hc = cfg.Harnesses.AntigravityInteractions
+			hc = cfg.Registry.AntigravityInteractions
 		}
 	}
 	agent := hc.Agent
