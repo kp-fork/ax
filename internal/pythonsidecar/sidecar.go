@@ -80,6 +80,13 @@ func (s *Sidecar) Start(ctx context.Context, pythonPath string) error {
 		return fmt.Errorf("Module cannot be empty")
 	}
 
+	if s.cfg.ReadyFunc != nil {
+		if err := s.cfg.ReadyFunc(ctx); err == nil {
+			s.mu.Unlock()
+			return fmt.Errorf("cannot start sidecar: endpoint is already in use by another process")
+		}
+	}
+
 	// Prepare arguments: python -u -m module [args...]
 	// -u forces unbuffered stdout/stderr so logs stream to Go instantly
 	fullArgs := append([]string{"-u", "-m", s.cfg.Module}, s.cfg.Args...)

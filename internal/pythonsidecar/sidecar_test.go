@@ -156,3 +156,30 @@ func TestSidecar_ReadinessFailureOnPrematureExit(t *testing.T) {
 		t.Fatalf("expected IsRunning() to be false")
 	}
 }
+
+func TestSidecar_EndpointAlreadyInUse(t *testing.T) {
+	// Start a dummy TCP listener on a free port
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	defer l.Close()
+	addr := l.Addr().String()
+
+	cfg := pythonsidecar.Config{
+		Module:    "http.server",
+		ReadyFunc: pythonsidecar.TCPReady(addr),
+	}
+
+	s := pythonsidecar.New(cfg)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err = s.Start(ctx, "")
+	if err == nil {
+		t.Fatalf("expected Start() to fail when endpoint is already in use")
+	}
+	if !strings.Contains(err.Error(), "already in use") {
+		t.Fatalf("expected 'already in use' in error, got: %v", err)
+	}
+}
