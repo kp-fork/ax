@@ -8,10 +8,6 @@
 > changes prior to a stable release.
 >
 > **Temporary Policy:** We are temporarily pausing the acceptance of external Pull Requests while we stabilize the core architecture. We warmly encourage you to open Issues for feedback and feature requests instead.
->
-> We will announce this project
-> widely soon. If you are interested in collaborating with us,
-> please reach out to **ax-dev@google.com**!
 
 AX, short for Agent Executor, is a distributed harness runtime.
 It dynamically provisions isolated environments from suspendable/resumable
