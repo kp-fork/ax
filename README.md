@@ -114,13 +114,6 @@ use. For more details on setup and configuration, see the
 Read more about [this new layer](https://cloud.google.com/blog/products/containers-kubernetes/bringing-you-agent-sandbox-on-gke-and-agent-substrate)
 that provides higher density to agentic workloads on Kubernetes.
 
-### Built-in Antigravity harness
-
-Antigravity SDK is a reference harness implementation. Local execution needs
-`python3` and `pip` available on your `PATH`. AX handles the rest: on first
-`ax exec` it starts the harness server as a Python sidecar and installs the
-pinned Antigravity SDK dependencies for you.
-
 ## Authentication
 
 The built-in Antigravity harness supports Google AI Studio and Vertex AI.
