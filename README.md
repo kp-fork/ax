@@ -170,7 +170,6 @@ any registered harness:
 
 ```bash
 ax exec \
-  --harness antigravity \
   --input "Can you write me a simple HTTP server in Python?"
 ```
 
@@ -179,7 +178,6 @@ you can resume an incomplete execution in a conversation:
 ```bash
 ax exec \
   --conversation edf98ef5-4bb1-4a9e-a091-3a77e03727e6 \
-  --harness antigravity \
   --resume
 ```
 
@@ -195,10 +193,10 @@ ax exec \
     [--input <text>] \
     [--conversation <id>] \
     [--harness <id>] \
-    [--harness-config <file.json>] \
-    [--harness-config-json <json>] \
+    [--config <file.json>] \
+    [--config-json <json>] \
     [--server <address>] \
-    [--config <file>] \
+    [--ax-config <file>] \
     [--resume] \
     [--last-seq <number>]
 ```
@@ -209,10 +207,10 @@ Options:
 - `--input`: Input message to send to agents (optional if `--resume` is set, otherwise required)
 - `--conversation`: Conversation ID (optional, generates UUID if not provided, or resumes if exists)
 - `--harness`: Harness ID to use (optional, defaults to the default harness)
-- `--harness-config`: Path to a JSON file with per-request harness configuration (optional)
-- `--harness-config-json`: Per-request harness configuration as an inline JSON string (optional, mutually exclusive with `--harness-config`)
+- `--config`: Path to a JSON file with per-request harness configuration (optional)
+- `--config-json`: Per-request harness configuration as an inline JSON string (optional, mutually exclusive with `--config`)
 - `--server`: gRPC controller server address (optional. If not provided, runs with a local built-in AX server)
-- `--config`: Path to YAML configuration file (only used with a local built-in AX server, default: "ax.yaml")
+- `--ax-config`: Path to YAML configuration file (only used with a local built-in AX server, default: "ax.yaml")
 - `--resume`: Resume a conversation without inputs (optional, mutually exclusive with `--input`)
 - `--last-seq`: Last sequence number seen by the client to resume from (optional). The server replays any later events so the client can catch up after a disconnect.
 
@@ -228,16 +226,13 @@ ax exec --conversation a53d4db3-1165-4925-87da-be6c72bbdeb1 --input "Ok, now let
 # Execute using server mode
 ax exec --server localhost:8494 --input "Hello agents!"
 
-# Execute using a specific harness
-ax exec --harness antigravity --input "Write me a cool Go program!"
-
 # Execute with per-request harness config
 ax exec \
-  --harness-config-json '{"system_instructions":"Answer in one sentence.","model":"gemini-3.5-flash"}' \
+  --config-json '{"system_instructions":"Answer in one sentence.","model":"gemini-3.5-flash"}' \
   --input "Explain durable execution."
 
-# To keep the same JSON in a file, use `--harness-config` instead:
-ax exec --harness-config antigravity.json --input "Explain durable execution."
+# To keep the same JSON in a file, use `--config` instead:
+ax exec --config antigravity.json --input "Explain durable execution."
 ```
 
 ### Serve
