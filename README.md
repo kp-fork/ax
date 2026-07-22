@@ -193,8 +193,8 @@ ax exec \
     [--input <text>] \
     [--conversation <id>] \
     [--harness <id>] \
-    [--config <file.json>] \
-    [--config-json <json>] \
+    [--config <json>] \
+    [--config-file <file.json>] \
     [--server <address>] \
     [--ax-config <file>] \
     [--resume] \
@@ -207,8 +207,8 @@ Options:
 - `--input`: Input message to send to agents (optional if `--resume` is set, otherwise required)
 - `--conversation`: Conversation ID (optional, generates UUID if not provided, or resumes if exists)
 - `--harness`: Harness ID to use (optional, defaults to the default harness)
-- `--config`: Path to a JSON file with per-request harness configuration (optional)
-- `--config-json`: Per-request harness configuration as an inline JSON string (optional, mutually exclusive with `--config`)
+- `--config`: Per-request harness configuration as an inline JSON string (optional, mutually exclusive with `--config-file`)
+- `--config-file`: Path to a JSON file with per-request harness configuration (optional)
 - `--server`: gRPC controller server address (optional. If not provided, runs with a local built-in AX server)
 - `--ax-config`: Path to YAML configuration file (only used with a local built-in AX server, default: "ax.yaml")
 - `--resume`: Resume a conversation without inputs (optional, mutually exclusive with `--input`)
@@ -228,11 +228,11 @@ ax exec --server localhost:8494 --input "Hello agents!"
 
 # Execute with per-request harness config
 ax exec \
-  --config-json '{"system_instructions":"Answer in one sentence.","model":"gemini-3.5-flash"}' \
+  --config '{"system_instructions":"Answer in one sentence.","model":"gemini-3.5-flash"}' \
   --input "Explain durable execution."
 
-# To keep the same JSON in a file, use `--config` instead:
-ax exec --config antigravity.json --input "Explain durable execution."
+# To keep the same JSON in a file, use `--config-file` instead:
+ax exec --config-file antigravity.json --input "Explain durable execution."
 ```
 
 ### Serve
