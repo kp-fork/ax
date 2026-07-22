@@ -256,7 +256,7 @@ Example:
 ax serve
 
 # Start server with custom config
-ax serve --config my-config.yaml
+ax serve --ax-config my-config.yaml
 ```
 
 ## Extensions
