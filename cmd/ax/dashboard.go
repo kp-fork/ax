@@ -60,7 +60,7 @@ type ConversationResponse struct {
 	ID       string `json:"id"`
 	Agent    string `json:"agent"`
 	Status   string `json:"status"`
-	LastSeq  int32  `json:"last_seq"`
+	LastStep int32  `json:"last_step"`
 	Duration string `json:"duration"`
 }
 
@@ -194,18 +194,18 @@ func fetchConversations(ctx context.Context, db *sql.DB) ([]ConversationResponse
 	query := `
 SELECT 
     c.conversation_id,
-    c.last_seq,
+    c.last_step,
     c.state,
     e.agent_id,
     e.start_time,
     e.end_time
 FROM (
-    SELECT conversation_id, seq AS last_seq,
+    SELECT conversation_id, step AS last_step,
            json_extract(payload, '$.exec_id') AS exec_id,
            json_extract(payload, '$.state') AS state
     FROM conversation_log
-    WHERE (conversation_id, seq) IN (
-        SELECT conversation_id, MAX(seq)
+    WHERE (conversation_id, step) IN (
+        SELECT conversation_id, MAX(step)
         FROM conversation_log
         GROUP BY conversation_id
     )
@@ -229,12 +229,12 @@ LEFT JOIN (
 	convs := []ConversationResponse{}
 	for rows.Next() {
 		var id string
-		var lastSeq int32
+		var lastStep int32
 		var state string
 		var agentID sql.NullString
 		var startTimeStr, endTimeStr sql.NullString
 
-		err := rows.Scan(&id, &lastSeq, &state, &agentID, &startTimeStr, &endTimeStr)
+		err := rows.Scan(&id, &lastStep, &state, &agentID, &startTimeStr, &endTimeStr)
 		if err != nil {
 			return nil, err
 		}
@@ -272,7 +272,7 @@ LEFT JOIN (
 			ID:       id,
 			Agent:    agent,
 			Status:   status,
-			LastSeq:  lastSeq,
+			LastStep: lastStep,
 			Duration: durationStr,
 		})
 	}

@@ -831,7 +831,7 @@ body {
             <th>Conversation ID</th>
             <th>Agent</th>
             <th>Status</th>
-            <th>Last Seq</th>
+            <th>Last Step</th>
             <th>Duration</th>
             <th>Actions</th>
           </tr>
@@ -984,7 +984,7 @@ function renderDashboard() {
             ${esc(c.status)}
           </span>
         </td>
-        <td>${c.last_seq}</td>
+        <td>${c.last_step}</td>
         <td>${esc(c.duration)}</td>
         <td>
           <button class="btn-trace" onclick="openTraceView('${esc(c.id)}')">

@@ -42,7 +42,7 @@ var (
 	execServerAddr     string
 	execAXConfigFile   string
 	execResume         bool // allow resuming an execution without inputs
-	execLastSeq        int32
+	execLastStep       int32
 )
 
 var execCmd = &cobra.Command{
@@ -63,7 +63,7 @@ func init() {
 	execCmd.Flags().StringVar(&execServerAddr, "server", "", "gRPC controller server address (if specified, connects to remote server; otherwise runs with a local built-in AX server)")
 	execCmd.Flags().StringVar(&execAXConfigFile, "ax-config", "ax.yaml", "Path to YAML configuration file (only used with a local built-in AX server)")
 	execCmd.Flags().BoolVar(&execResume, "resume", false, "Resume a conversation without inputs")
-	execCmd.Flags().Int32Var(&execLastSeq, "last-seq", 0, "Last sequence number seen by the client")
+	execCmd.Flags().Int32Var(&execLastStep, "last-step", 0, "Last step number seen by the client")
 	execCmd.MarkFlagsMutuallyExclusive("input", "resume")
 	execCmd.MarkFlagsMutuallyExclusive("config", "config-file")
 }
@@ -134,10 +134,10 @@ func runExec(cmd *cobra.Command, args []string) error {
 		harnessConfig = []byte(execConfig)
 	}
 
-	return execLoop(ctx, execConversationID, execHarnessID, harnessConfig, execInput, execLastSeq)
+	return execLoop(ctx, execConversationID, execHarnessID, harnessConfig, execInput, execLastStep)
 }
 
-func execLoop(ctx context.Context, id string, harnessID string, harnessConfig []byte, input string, lastSeq int32) error {
+func execLoop(ctx context.Context, id string, harnessID string, harnessConfig []byte, input string, lastStep int32) error {
 	d := internal.NewDisplay(id, os.Stdout)
 	d.DisplayHeader()
 
@@ -175,9 +175,9 @@ func execLoop(ctx context.Context, id string, harnessID string, harnessConfig []
 			HarnessId:      harnessID,
 			HarnessConfig:  harnessConfig,
 			Inputs:         inputs,
-			LastSeq:        lastSeq,
+			LastStep:       lastStep,
 		})
-		lastSeq = 0 // disable resuming from sequence, user sees the seq on the screen
+		lastStep = 0 // disable resuming from step, user sees the step on the screen
 
 		interruptHandler.ClearActiveCancel()
 		cancel()
@@ -297,14 +297,14 @@ func runAutoExec(ctx context.Context, d *internal.Display, req *proto.ExecReques
 
 func runExecHeadless(ctx context.Context, d *internal.Display, req *proto.ExecRequest) (*proto.ConfirmationContent, error) {
 	var confirmation *proto.ConfirmationContent
-	var lastSeq int32
+	var lastStep int32
 	outputHandler := cliutil.ExecHandler(func(resp *proto.ExecResponse) error {
 		for _, m := range resp.Outputs {
 			if conf := m.GetContent().GetConfirmation(); conf != nil {
 				confirmation = conf
 			}
 		}
-		lastSeq = resp.Seq
+		lastStep = resp.Step
 		displayContents(d, resp.Outputs)
 		return nil
 	})
@@ -313,7 +313,7 @@ func runExecHeadless(ctx context.Context, d *internal.Display, req *proto.ExecRe
 	}
 
 	if confirmation == nil {
-		d.FinishOutput(fmt.Sprintf("seq=%d", lastSeq))
+		d.FinishOutput(fmt.Sprintf("step=%d", lastStep))
 	}
 	return confirmation, nil
 }
@@ -332,7 +332,7 @@ func runExecServer(ctx context.Context, d *internal.Display, req *proto.ExecRequ
 	}
 
 	var confirmation *proto.ConfirmationContent
-	var lastSeq int32
+	var lastStep int32
 	for {
 		resp, err := stream.Recv()
 		if err == io.EOF {
@@ -341,7 +341,7 @@ func runExecServer(ctx context.Context, d *internal.Display, req *proto.ExecRequ
 		if err != nil {
 			return nil, fmt.Errorf("error receiving response: %w", err)
 		}
-		lastSeq = resp.Seq
+		lastStep = resp.Step
 		if resp.Outputs != nil {
 			for _, m := range resp.Outputs {
 				if conf := m.GetContent().GetConfirmation(); conf != nil {
@@ -352,7 +352,7 @@ func runExecServer(ctx context.Context, d *internal.Display, req *proto.ExecRequ
 		}
 	}
 	if confirmation == nil {
-		d.FinishOutput(fmt.Sprintf("seq=%d", lastSeq))
+		d.FinishOutput(fmt.Sprintf("step=%d", lastStep))
 	}
 	return confirmation, nil
 }

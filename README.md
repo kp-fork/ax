@@ -151,16 +151,16 @@ ax exec \
   --input "Show me the contents of README.md"
 ```
 
-If the client gets disconnected, pass the last sequence it saw to
+If the client gets disconnected, pass the last step it saw to
 replay the events it missed. This catches the client up; it does not
 rewind the conversation.
 
-In this example, we catch up a client from sequence number 12:
+In this example, we catch up a client from step number 12:
 
 ```bash
 ax exec \
   --conversation d85a4b4e-c53b-4c84-b879-f10d905bce40 \
-  --last-seq 12 \
+  --last-step 12 \
   --resume
 ```
 
@@ -197,7 +197,7 @@ ax exec \
     [--server <address>] \
     [--ax-config <file>] \
     [--resume] \
-    [--last-seq <number>]
+    [--last-step <number>]
 ```
 
 Executes a new harness execution or automatically resumes an existing one. If the conversation ID already exists, the execution will be resumed from its last state.
@@ -211,7 +211,7 @@ Options:
 - `--server`: gRPC controller server address (optional. If not provided, runs with a local built-in AX server)
 - `--ax-config`: Path to YAML configuration file (only used with a local built-in AX server, default: "ax.yaml")
 - `--resume`: Resume a conversation without inputs (optional, mutually exclusive with `--input`)
-- `--last-seq`: Last sequence number seen by the client to resume from (optional). The server replays any later events so the client can catch up after a disconnect.
+- `--last-step`: Last step number seen by the client to resume from (optional). The server replays any later events so the client can catch up after a disconnect.
 
 **Examples:**
 

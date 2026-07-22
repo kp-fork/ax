@@ -35,7 +35,7 @@ func TestFetchConversations(t *testing.T) {
 	schema := `
 	CREATE TABLE conversation_log (
 		conversation_id TEXT,
-		seq INTEGER,
+		step INTEGER,
 		timestamp DATETIME,
 		payload TEXT
 	);
@@ -53,7 +53,7 @@ func TestFetchConversations(t *testing.T) {
 	// Insert test data
 	// Conversation 1: Only conversation_log (V2 execution without execution_log)
 	_, err = db.Exec(`
-		INSERT INTO conversation_log (conversation_id, seq, timestamp, payload) 
+		INSERT INTO conversation_log (conversation_id, step, timestamp, payload) 
 		VALUES ('conv-1', 1, ?, '{"exec_id": "exec-1", "state": "STATE_PENDING"}')
 	`, time.Now().Format(time.RFC3339))
 	if err != nil {
@@ -66,7 +66,7 @@ func TestFetchConversations(t *testing.T) {
 	end := now
 
 	_, err = db.Exec(`
-		INSERT INTO conversation_log (conversation_id, seq, timestamp, payload) 
+		INSERT INTO conversation_log (conversation_id, step, timestamp, payload) 
 		VALUES ('conv-2', 5, ?, '{"exec_id": "exec-2", "state": "STATE_COMPLETED"}')
 	`, end.Format(time.RFC3339))
 	if err != nil {
@@ -114,8 +114,8 @@ func TestFetchConversations(t *testing.T) {
 	if c1.Duration != "N/A" {
 		t.Errorf("conv-1 expected duration N/A, got %q", c1.Duration)
 	}
-	if c1.LastSeq != 1 {
-		t.Errorf("conv-1 expected last_seq 1, got %d", c1.LastSeq)
+	if c1.LastStep != 1 {
+		t.Errorf("conv-1 expected last_step 1, got %d", c1.LastStep)
 	}
 
 	// Check conv-2
@@ -133,7 +133,7 @@ func TestFetchConversations(t *testing.T) {
 	if c2.Duration != "5.0s" {
 		t.Errorf("conv-2 expected duration 5.0s, got %q", c2.Duration)
 	}
-	if c2.LastSeq != 5 {
-		t.Errorf("conv-2 expected last_seq 5, got %d", c2.LastSeq)
+	if c2.LastStep != 5 {
+		t.Errorf("conv-2 expected last_step 5, got %d", c2.LastStep)
 	}
 }
